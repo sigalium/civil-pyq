@@ -187,8 +187,7 @@
     max-height: 100vh;
     border-radius: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
+    display: block;
     position: relative;
   }
 
@@ -202,17 +201,20 @@
     padding: 0.7rem 1rem;
     background-color: var(--secondary);
     border-radius: 0;
+    height: 56px;
+    box-sizing: border-box;
   }
 
   .pdf-viewer-content,
   .pdf-viewer-content-mobile {
-    flex: 1;
-    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    position: relative;
+    padding: 0.5rem;
     margin-top: 56px;
     margin-bottom: 64px;
-    max-height: calc(100vh - 120px);
+    height: calc(100vh - 56px - 64px);
     overflow-y: auto;
     overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .pdf-placeholder {
@@ -232,6 +234,11 @@
     padding: 0.5rem;
     border-radius: 0;
     border-top: 1px solid rgba(136, 146, 176, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 64px;
+    box-sizing: border-box;
   }
 
   .control-btn,
