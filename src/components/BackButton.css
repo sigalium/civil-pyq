@@ -1,0 +1,21 @@
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: var(--transition);
+  padding-top: 40px;
+}
+
+.back-btn:hover {
+  color: var(--accent);
+}
+
+.back-icon {
+  font-size: 1.2rem;
+}

@@ -1,0 +1,146 @@
+.contribute {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: calc(100vh - 150px);
+}
+
+.contribute-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  padding-top: 60px;
+}
+
+.contribute-hero {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--secondary);
+  border-radius: 8px;
+  animation: fadeIn 0.8s ease-in-out;
+}
+
+.contribute-hero h1 {
+  color: var(--accent);
+  margin-bottom: 1rem;
+  font-size: 2.2rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.perks {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+.contribute-btn {
+  padding: 0.8rem 1.8rem;
+  background-color: var(--accent);
+  color: var(--primary);
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.contribute-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+}
+
+.contributors-section {
+  animation: fadeIn 0.8s ease-in-out 0.2s both;
+}
+
+.contributors-section h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--accent);
+}
+
+.contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.contributor-card {
+  background-color: var(--secondary);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: var(--transition);
+}
+
+.contributor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(2, 12, 27, 0.5);
+}
+
+.contributor-pfp {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: rgba(100, 255, 218, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.pfp-placeholder {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.contributor-card h3 {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.contributor-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.pfp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .contribute {
+    padding: 1rem;
+  }
+
+  .contribute-hero {
+    padding: 1.5rem;
+  }
+
+  .contribute-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .contributors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,32 @@
+.semester-card {
+  background-color: var(--secondary);
+  border: none;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  height: 120px;
+}
+
+.semester-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(2, 12, 27, 0.5);
+}
+
+.semester-card span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.semester-card h3 {
+  font-size: 2.2rem;
+  color: var(--accent);
+  font-weight: 800;
+  margin-top: 0.5rem;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(100, 255, 218, 0.1);
+}

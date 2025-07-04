@@ -1,0 +1,158 @@
+.domains {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: calc(100vh - 150px);
+}
+
+.domains-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-top:60px;
+}
+
+.domains h1 {
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 2.2rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.domains-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.domain-card {
+  background-color: var(--secondary);
+  border-radius: 8px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: var(--transition);
+  border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.domain-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(2, 12, 27, 0.5);
+  border-color: rgba(100, 255, 218, 0.3);
+}
+
+.domain-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(100, 255, 218, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.domain-card h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.domain-card p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+  font-size: 0.95rem;
+}
+
+.domain-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent);
+  text-decoration: none;
+  transition: var(--transition);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.domain-link:hover {
+  background-color: rgba(100, 255, 218, 0.1);
+}
+
+.domains-info {
+  background-color: var(--secondary);
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.domains-info h2 {
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.domains-info p {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.home-link {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background-color: var(--accent);
+  color: var(--primary);
+  border-radius: 4px;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.home-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+}
+
+@media (max-width: 768px) {
+  .domains {
+    padding: 1rem;
+  }
+
+  .domains h1 {
+    font-size: 1.8rem;
+  }
+
+  .domains-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .domains-grid {
+    justify-content: center;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 900px;
+  }
+}

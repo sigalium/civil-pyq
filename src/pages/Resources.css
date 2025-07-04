@@ -1,0 +1,155 @@
+.resources {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.resources-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+.semester-selection h2 {
+  margin-bottom: 2rem;
+  color: var(--accent);
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  padding-top: 40px;
+  letter-spacing: 1px;
+}
+
+.select-semester-heading {
+  color: var(--accent);
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 2rem;
+  margin-top: 40px;
+  position: relative;
+}
+
+.select-semester-heading::after {
+  content: '';
+  display: block;
+  margin: 0.7rem auto 0 auto;
+  width: 70px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+.semester-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 900px) {
+  .semester-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .semester-grid {
+    grid-template-columns: 1fr;
+  }
+  .semester-selection h2 {
+    font-size: 1.4rem;
+    padding-top: 20px;
+  }
+}
+.subject-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.subject-btn {
+  padding: 1rem;
+  background-color: var(--secondary);
+  border: none;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.subject-btn:hover {
+  background-color: rgba(100, 255, 218, 0.1);
+  transform: translateY(-3px);
+}
+
+.resource-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.subject-title {
+  text-align: center;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.syllabus-btn {
+  align-self: center;
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 2rem;
+}
+
+.syllabus-btn:hover {
+  background-color: rgba(100, 255, 218, 0.1);
+}
+
+.resource-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .resources {
+    padding: 1rem;
+  }
+  .resource-sections {
+    grid-template-columns: 1fr;
+  }
+}
+.semester-title {
+  color: var(--accent);
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 40px;
+  margin-bottom: 0.7rem;
+  letter-spacing: 1px;
+}
+.select-subject-heading {
+  color: #fff;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  margin-top: 1.2rem;
+  letter-spacing: 1px;
+  position: relative;
+}
+.select-subject-heading::after {
+  content: '';
+  display: block;
+  margin: 0.7rem auto 0 auto;
+  width: 50px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}

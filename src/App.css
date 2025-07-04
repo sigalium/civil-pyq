@@ -1,0 +1,23 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+  transition: var(--transition);
+}
+
+.content.blur {
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+  }
+}
