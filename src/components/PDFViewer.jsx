@@ -8,12 +8,11 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const isMobile = window.matchMedia('(max-width: 600px)').matches;
 
-  const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
+const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [numPages, setNumPages] = useState(null);
   const [scale, setScale] = useState(isMobile ? 0.5 : 1.0);
   const [isClosing, setIsClosing] = useState(false);
   const modalRef = useRef(null);
-
 
   const handleClose = () => {
     setIsClosing(true);
@@ -21,7 +20,6 @@ const isMobile = window.matchMedia('(max-width: 600px)').matches;
       onClose();
     }, 300);
   };
-
 
   useEffect(() => {
     if (isMobile) setScale(0.5);
@@ -48,10 +46,12 @@ const isMobile = window.matchMedia('(max-width: 600px)').matches;
     };
   }, []);
 
-
   useEffect(() => {
     if (!isMobile) return;
-    window.history.pushState({ pdfModal: true }, '');
+
+    if (!window.history.state || !window.history.state.pdfModal) {
+      window.history.pushState({ pdfModal: true }, '');
+    }
 
     const handlePopState = (event) => {
       if (event.state && event.state.pdfModal) {
@@ -63,12 +63,10 @@ const isMobile = window.matchMedia('(max-width: 600px)').matches;
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-
       if (window.history.state && window.history.state.pdfModal) {
         window.history.back();
       }
     };
-
   }, []);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
