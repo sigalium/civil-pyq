@@ -87,10 +87,12 @@ const resources = {
       { name: 'Sessional 2 CE June 2025', path: '/pdfs/Semester2/Mathematics II/MathS2_June2025.pdf' },
       { name: 'Sessional 1 CSE June 2025', path: '/pdfs/Semester2/Mathematics II/Sessional_1_CSE_2025.pdf' },
       { name: 'Sessional 2 CSE June 2025', path: '/pdfs/Semester2/Mathematics II/Sessional_2_CSE_2025.pdf' }
-    ]
-    ,
+    ],
     lab: [
-      { name: 'Title Box Dimention', path: '/pdfs/Semester1/Mathematics II/TitleboxDimention.pdf' }
+      { name: 'Method Of Variation Of Parameter', path: '/pdfs/Semester2/Mathematics II/Extras/Method_of_variation_of_parameters.pdf' },
+      { name: 'DE of Order 1 But Higher Degree', path: '/pdfs/Semester2/Mathematics II/Extras/DEOrder1HigherDegree.pdf' },
+      { name: 'Legendres Function', path: '/pdfs/Semester2/Mathematics II/Extras/Legendres_Function.pdf' },
+      { name: 'Bessels Function', path: '/pdfs/Semester2/Mathematics II/Extras/Bessels_Function.pdf' }
     ]
   },
   'Chemistry': {
