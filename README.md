@@ -1,16 +1,32 @@
-npm install pdfjs-dist
-npm install gsap
+# CivilPYQ - Civil Engineering Past Year Question Papers
 
-https://www.streamlinehq.com/emojis/download/office-building--10159
+![image](https://github.com/user-attachments/assets/9cf230eb-79c7-4bcc-b89b-02813f476a55)
 
 
-Add sessionals
+A modern, mobile-responsive web application for hosting Civil Engineering past year question papers, lab manuals, and study resources. Built with React, Vite, and Material UI.
 
-Think of other social links for linkdin
+## Features
 
-Add old astu papers, add whatsapp papers
+- 🎨 **Dark Theme** with smooth animations
+- 📱 **Fully Responsive** design for all devices
+- 📚 **Organized Resources** by semester and subject
+- 🔍 **PDF Viewer** with zoom and download functionality
+- ✨ **Modern UI** with fluid transitions
+- 📁 **Multi-domain Support** for reliability
+- 🤝 **Contribution System** for community growth
 
-2 deploy
+## Tech Stack
 
-https://gcu-dl.bsmlib.com/
+- **Frontend**: React, Vite
+- **Styling**: CSS Modules
+- **Icons**: Material UI Icons
+- **PDF Viewer**: react-pdf (PDF.js)
+- **Animation**: CSS Transitions
+- **Hosting**: Vercel/Netlify (recommended)
 
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/civilpyq.git
+   cd civilpyq
