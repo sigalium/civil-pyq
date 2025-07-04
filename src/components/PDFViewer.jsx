@@ -13,6 +13,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [scale, setScale] = useState(isMobile ? 0.5 : 1.0);
   const [isClosing, setIsClosing] = useState(false);
   const modalRef = useRef(null);
+  const closedByPopState = useRef(false);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -46,20 +47,16 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     };
   }, []);
 
-  // Mobile back button
+  // mobile back button handling
   useEffect(() => {
     if (!isMobile) return;
 
-    let popped = false;
 
-
-    if (!window.history.state || !window.history.state.pdfModal) {
-      window.history.pushState({ pdfModal: true }, '');
-    }
+    window.history.pushState({ pdfModal: true }, '');
 
     const handlePopState = (event) => {
-      if (!popped && event.state && event.state.pdfModal) {
-        popped = true;
+      if (event.state && event.state.pdfModal && !closedByPopState.current) {
+        closedByPopState.current = true;
         handleClose();
       }
     };
@@ -68,7 +65,8 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      if (window.history.state && window.history.state.pdfModal) {
+      if (window.history.state && window.history.state.pdfModal && !closedByPopState.current) {
+        closedByPopState.current = true;
         window.history.back();
       }
     };
