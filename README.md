@@ -22,7 +22,7 @@ A modern, mobile-responsive web application for hosting Civil Engineering past y
 - **Icons**: Material UI Icons
 - **PDF Viewer**: react-pdf (PDF.js)
 - **Animation**: CSS Transitions
-- **Hosting**: Vercel/Netlify (recommended)
+- **Hosting**: Netflify
 
 ## Installation
 
