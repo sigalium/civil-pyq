@@ -46,15 +46,20 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     };
   }, []);
 
+  // Mobile back button
   useEffect(() => {
     if (!isMobile) return;
+
+    let popped = false;
+
 
     if (!window.history.state || !window.history.state.pdfModal) {
       window.history.pushState({ pdfModal: true }, '');
     }
 
     const handlePopState = (event) => {
-      if (event.state && event.state.pdfModal) {
+      if (!popped && event.state && event.state.pdfModal) {
+        popped = true;
         handleClose();
       }
     };
