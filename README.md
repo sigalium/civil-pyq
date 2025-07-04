@@ -28,5 +28,5 @@ A modern, mobile-responsive web application for hosting Civil Engineering past y
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/civilpyq.git
+   git clone https://github.com/sigalium/civilpyq.git
    cd civilpyq
