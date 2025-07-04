@@ -51,26 +51,22 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   useEffect(() => {
     if (!isMobile) return;
 
-
     window.history.pushState({ pdfModal: true }, '');
 
-    const handlePopState = (event) => {
-      if (event.state && event.state.pdfModal && !closedByPopState.current) {
-        closedByPopState.current = true;
-        handleClose();
-      }
+    const handlePopState = () => {
+
+      handleClose();
     };
 
     window.addEventListener('popstate', handlePopState);
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      if (window.history.state && window.history.state.pdfModal && !closedByPopState.current) {
-        closedByPopState.current = true;
+      if (!isClosing) {
         window.history.back();
       }
     };
-  }, []);
+  }, [isClosing]);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
