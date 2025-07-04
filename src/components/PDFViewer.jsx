@@ -8,12 +8,20 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const isMobile = window.matchMedia('(max-width: 600px)').matches;
 
-const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
+  const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [numPages, setNumPages] = useState(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(isMobile ? 0.5 : 1.0);
   const [isClosing, setIsClosing] = useState(false);
   const modalRef = useRef(null);
+
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
 
   useEffect(() => {
     if (isMobile) setScale(0.5);
@@ -25,7 +33,6 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
       }
     };
 
- 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         handleClose();
@@ -41,6 +48,29 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     };
   }, []);
 
+
+  useEffect(() => {
+    if (!isMobile) return;
+    window.history.pushState({ pdfModal: true }, '');
+
+    const handlePopState = (event) => {
+      if (event.state && event.state.pdfModal) {
+        handleClose();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+
+      if (window.history.state && window.history.state.pdfModal) {
+        window.history.back();
+      }
+    };
+
+  }, []);
+
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
   };
@@ -49,26 +79,19 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
   const handleDownload = () => window.open(pdfPath, '_blank');
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
-
   return (
     <div className={`pdf-viewer-overlay ${isClosing ? 'closing' : ''}`}>
       <div 
         className={`pdf-viewer-container ${isClosing ? 'closing' : ''}`}
         ref={modalRef}
       >
-        <div className="pdf-viewer-header">
+        <div className="pdf-viewer-header pdf-viewer-header-fixed">
           <h3>{pdfName}</h3>
           <button className="close-btn" onClick={handleClose}>
             <Close />
           </button>
         </div>
-        <div className="pdf-viewer-content">
+        <div className="pdf-viewer-content pdf-viewer-content-mobile">
           <div className="pdf-placeholder" style={{ padding: '20px' }}>
             <Document
               file={pdfPath}
@@ -89,7 +112,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
             </Document>
           </div>
         </div>
-        <div className="pdf-viewer-controls">
+        <div className="pdf-viewer-controls pdf-viewer-controls-fixed">
           <button className="control-btn" onClick={handleZoomOut}>
             <ZoomOut />
           </button>
@@ -99,7 +122,6 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
           <button className="control-btn" onClick={handleZoomIn}>
             <ZoomIn />
           </button>
-          
           <button className="control-btn download-btn" onClick={handleDownload}>
             <Download />
             <span>Download</span>
