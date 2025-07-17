@@ -74,7 +74,14 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 5.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
-  const handleDownload = () => window.open(pdfPath, '_blank');
+  const handleDownload = () => {
+      const link = document.createElement('a');
+          link.href = pdfPath;
+          link.download = pdfName || 'document.pdf';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+    };
 
   return (
     <div className={`pdf-viewer-overlay ${isClosing ? 'closing' : ''}`}>
