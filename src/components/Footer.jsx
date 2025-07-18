@@ -21,8 +21,9 @@ const Footer = () => {
         </div>
         <div className="footer-contact">
           <h4>Contact</h4>
+          <a href="https://priyangkam.netlify.app" target="_blank" rel="noopener noreferrer">Website</a>
           <a href="https://github.com/sigalium" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="mailto:contact@civilpyq.com">priyangkam.bhuyan@gmail.com</a>     
+          <a href="mailto:contact@civilpyq.com">Email</a>     
         </div>
       </div>
       <div className="footer-bottom">
