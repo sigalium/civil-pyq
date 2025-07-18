@@ -37,6 +37,9 @@ const About = () => {
               <a href="#" className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-linkedin"></i>
               </a>
+              <a href="https://priyangkam.netlify.app" className="social-link" target="_blank" rel="noopener noreferrer">
+                <i className="fas fa-globe"></i>
+              </a>
               <a href="https://www.instagram.com/priyangkamb/" className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-instagram"></i>
               </a>
