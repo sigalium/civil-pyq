@@ -25,7 +25,8 @@ const resources = {
   'Biology': {
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Biology/ESE_Dec_2024.pdf' },
-      { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Biology/BioS1_Dec2024.pdf' }
+      { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Biology/BioS1_Dec2024.pdf' },
+      { name: 'Sessional 2 Dec 2024', path: '/pdfs/Semester1/Biology/BioS2_Dec2024.pdf' }
     ],
     lab: [
       { name: 'Note: Protein', path: '/pdfs/Semester1/Biology/Extras/Protein.pdf' },
