@@ -5,7 +5,7 @@ import SemesterCard from '../components/SemesterCard'
 import ResourceList from '../components/ResourceList'
 import PDFViewer from '../components/PDFViewer'
 import NoContent from './NoContent'
-import './Resources.css'
+import './styles/Resources.css'
 import subjects from '../data/subjects'
 import resources from '../data/resources'
 

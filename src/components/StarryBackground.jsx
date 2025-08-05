@@ -1,4 +1,4 @@
-import './StarryBackground.css'
+import './css/StarryBackground.css'
 
 export default function StarryBackground() {
   return (

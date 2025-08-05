@@ -1,4 +1,4 @@
-import './SemesterCard.css'
+import './css/SemesterCard.css'
 
 const SemesterCard = ({ semester, onClick }) => {
   return (

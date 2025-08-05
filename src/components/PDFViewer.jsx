@@ -1,7 +1,7 @@
 import { Close, ZoomIn, ZoomOut, Download } from '@mui/icons-material';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useState, useEffect, useRef } from 'react';
-import './PDFViewer.css';
+import './css/PDFViewer.css';
 
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;

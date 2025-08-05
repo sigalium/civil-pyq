@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import BackButton from '../components/BackButton'
-import './NoContent.css'
+import './styles/NoContent.css'
 
 const NoContent = ({ semester }) => {
   return (

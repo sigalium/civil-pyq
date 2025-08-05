@@ -1,4 +1,4 @@
-import './ResourceList.css'
+import './css/ResourceList.css'
 
 const ResourceList = ({ title, items, onItemClick }) => {
   return (

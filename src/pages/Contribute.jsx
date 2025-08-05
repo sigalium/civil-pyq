@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import './Contribute.css'
+import './styles/Contribute.css'
 import contributors from '../data/contributors'
 
 const Contribute = () => {

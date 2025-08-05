@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './NotFound.css'
+import './styles/NotFound.css'
 import gsap from 'gsap'
 
 const NotFound = () => {

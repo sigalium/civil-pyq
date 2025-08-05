@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { OpenInNew, Domain } from '@mui/icons-material'
-import './Domains.css'
+import './styles/Domains.css'
 
 const Domains = () => {
   const domains = [

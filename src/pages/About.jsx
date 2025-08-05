@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import profileImage from '../assets/profile3.png'
-import './About.css'
+import './styles/About.css'
 
 const About = () => {
   useEffect(() => {

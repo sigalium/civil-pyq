@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import MenuIcon from '@mui/icons-material/Menu'
 import CloseIcon from '@mui/icons-material/Close'
-import './Navbar.css'
+import './css/Navbar.css'
 
 const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
   const [scrolled, setScrolled] = useState(false)
