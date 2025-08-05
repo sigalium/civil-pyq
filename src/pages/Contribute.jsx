@@ -1,12 +1,6 @@
 import { useEffect } from 'react'
 import './Contribute.css'
-
-const contributors = [
-  { name: 'John Doe', batchYear: '2077', profilePic: '/Contributor/male01.png' },
-  { name: 'Jane Doe', batchYear: '2077', profilePic: '/Contributor/female02.png' }, 
-  { name: 'Add Yours Here', batchYear: '2025' },
-  // profilePic: '/images/john.jpg', saved in public folder
-]
+import contributors from '../data/contributors'
 
 const Contribute = () => {
   useEffect(() => {
