@@ -9,7 +9,9 @@ import './styles/Resources.css'
 import subjects from '../data/subjects'
 import resources from '../data/resources'
 
-const semesters = [1, 2, 3, 4, 5, 6, 7, 8]
+const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
+
+const emptySemesters = [4, 5, 6, 7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams()
@@ -38,8 +40,8 @@ const Resources = () => {
     setShowPdfViewer(true)
   }
 
-  if (semester && (semester > 2 || semester < 1)) {
-    return <NoContent semester={semester} />
+  if (semester && emptySemesters.includes(Number(semester))) {
+  return <NoContent semester={semester} />;
   }
 
   return (

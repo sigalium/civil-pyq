@@ -71,28 +71,74 @@
 
 @media (max-width: 768px) {
   .footer {
-    padding: 2rem 1rem;
+    padding: 2.5rem 1.5rem 1rem;
+    background-color: var(--secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-
+  .footer-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+  }
   .footer-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     grid-template-areas:
-      "gcu useful"
-      "contact contact";
-    gap: 1.5rem;
-    align-items: center;
-    text-align: center;
+      "contact"
+      "gcu"
+      "useful";
   }
-
+  .footer-contact {
+    grid-area: contact;
+  }
   .footer-links:first-child {
     grid-area: gcu;
   }
   .footer-links:last-child {
     grid-area: useful;
   }
+
+  .footer-links, 
   .footer-contact {
-    grid-area: contact;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    width: 100%;
+  }
+
+  .footer-links h4,
+  .footer-contact h4 {
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .footer-links a,
+  .footer-contact a {
+    display: block;
+    padding: 0.6rem 0;
+    margin: 0 auto;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    max-width: fit-content;
+  }
+
+  .footer-bottom {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    width: 100%;
   }
 }

@@ -177,9 +177,66 @@ const resources = {
     lab: [
       { name: 'Viva June 2025', path: '/pdfs/Semester2/Russian/Viva.pdf' }
     ]
-  }
+  },
 
-  // Semester 3 Resources 
+  // Semester 3 Resources
+  'Mathematics III': {
+    pyq: [
+      { name: 'ASTU SET A Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setA_DEC_2024.pdf' },
+      { name: 'ASTU SET B Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setB_DEC_2024.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'CADD': {
+    pyq: [
+      { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/CADD/ASTU_DEC_2024.pdf' },
+    ],
+  },
+  'CMTE': {
+    pyq: [
+       ],
+    lab: [
+    ]
+  },
+  'Concrete Technology': {
+    pyq: [
+      { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_June_2025.pdf' },
+      ],
+    lab: [
+    ]
+  },
+  'Fluid Mechanics': {
+    pyq: [
+      { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ASTU_DEC_2024.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'Solid Mechanics': {
+    pyq: [
+      { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Solid Mechanics/ASTU_DEC_2024.pdf' },
+    ],
+    lab: [
+      { name: 'Lab Manual', path: '/pdfs/Semester3/Solid Mechanics/Extras/Lab_Manual.pdf' },
+    ]
+  },
+  'MNCAC': {
+    pyq: [
+      
+    ],
+    lab: [
+    ]
+  },
+  'IKS': {
+    pyq: [
+      
+    ],
+    lab: [
+    ]
+  },
+
+  // Semester 4 Resources
 };
 
 export default resources;
