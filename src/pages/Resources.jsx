@@ -29,13 +29,13 @@ const Resources = () => {
   }
 
   const handlePdfClick = (item) => {
-    setSelectedPdf(item.name || item)
+    setSelectedPdf(`${subject} - ${item.name || item}`)
     setSelectedPdfPath(item.path || '')
     setShowPdfViewer(true)
   }
 
   const handleViewSyllabus = () => {
-    setSelectedPdf(`${subject} Syllabus`)
+    setSelectedPdf(`${subject} - Syllabus`)
     setSelectedPdfPath(`/pdfs/Semester${semester}/${subject}/Syllabus.pdf`)
     setShowPdfViewer(true)
   }

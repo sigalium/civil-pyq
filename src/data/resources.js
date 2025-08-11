@@ -35,13 +35,13 @@ const resources = {
   },
   'Basic Electrical Engineering': {
     pyq: [
-      { name: 'ESE Dec 2024', path: '/pdfs/Semester1/BEE/ESE_Dec_2024.pdf' },
-      { name: 'ESE Dec 2023', path: '/pdfs/Semester1/BEE/ESE_Dec_2023.pdf' },
-      { name: 'ASTU June 2023', path: '/pdfs/Semester1/BEE/ASTU_June_2023.pdf' }
+      { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Basic Electrical Engineering/ESE_Dec_2024.pdf' },
+      { name: 'ESE Dec 2023', path: '/pdfs/Semester1/Basic Electrical Engineering/ESE_Dec_2023.pdf' },
+      { name: 'ASTU June 2023', path: '/pdfs/Semester1/Basic Electrical Engineering/ASTU_June_2023.pdf' }
     ],
     lab: [
-      { name: 'Lab Manual', path: '/pdfs/Semester1/BEE/Lab_Manual.pdf' },
-      { name: 'Data Sheet', path: '/pdfs/Semester1/BEE/Data_Sheet.pdf' }
+      { name: 'Lab Manual', path: '/pdfs/Semester1/Basic Electrical Engineering/Lab_Manual.pdf' },
+      { name: 'Data Sheet', path: '/pdfs/Semester1/Basic Electrical Engineering/Data_Sheet.pdf' }
     ]
   },
   'Workshop I': {
@@ -223,14 +223,14 @@ const resources = {
   },
   'MNCAC': {
     pyq: [
-      
+      { name: 'ESE Dec 2024', path: '/pdfs/Semester3/MNCAC/ESE_DEC_2024.pdf' },
     ],
     lab: [
     ]
   },
   'IKS': {
     pyq: [
-      
+      { name: 'ESE Dec 2024', path: '/pdfs/Semester3/IKS/ESE_DEC_2024.pdf' },
     ],
     lab: [
     ]
