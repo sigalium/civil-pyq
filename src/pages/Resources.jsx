@@ -11,7 +11,7 @@ import resources from '../data/resources'
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const emptySemesters = [4, 5, 6, 7, 8];
+const emptySemesters = [ 5, 6, 7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams()

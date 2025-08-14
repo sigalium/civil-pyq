@@ -5,31 +5,28 @@
   min-height: calc(100vh - 150px);
   text-align: center;
 }
-
 .home-content {
   max-width: 800px;
   padding: 2rem;
 }
-
 .home h1 {
   font-size: 3rem;
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
-
 .home h1 span {
   color: var(--accent);
 }
-
 .subtitle {
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin-bottom: 2.5rem;
   line-height: 1.6;
 }
-
 .resources-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 1rem 2rem;
   background-color: transparent;
   color: var(--accent);
@@ -41,13 +38,12 @@
   transition: var(--transition);
   position: relative;
   overflow: hidden;
+  gap: 8px;
 }
-
 .resources-btn:hover {
   background-color: rgba(100, 255, 218, 0.1);
   transform: translateY(-3px);
 }
-
 .resources-btn::before {
   content: '';
   position: absolute;
@@ -55,25 +51,140 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(100, 255, 218, 0.4),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(100, 255, 218, 0.4), transparent);
   transition: 0.5s;
 }
-
 .resources-btn:hover::before {
   left: 100%;
 }
-
+.resources-btn .MuiSvgIcon-root {
+  font-size: 1.2em;
+  margin-left: 4px;
+  margin-bottom: -1px;
+}
 @media (max-width: 768px) {
   .home h1 {
     font-size: 2.2rem;
   }
-
   .subtitle {
     font-size: 1rem;
+  }
+}
+@media (max-width: 768px) {
+  .home h1 {
+    font-size: 2.2rem;
+  }
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+  .resources-btn {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    background-color: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    width: auto;
+    display: inline-flex;
+    margin: 0;
+    box-shadow: none;
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.4);
+    transition: all 0.3s ease;
+    animation: pulseGlow 2.5s infinite ease-in-out;
+  }
+  .resources-btn:hover {
+    transform: none;
+    background-color: rgba(100, 255, 218, 0.1);
+    box-shadow: 0 0 10px 3px rgba(100, 255, 218, 0.4);
+  }
+  .resources-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(100, 255, 218, 0.3), transparent);
+    transition: 0.5s;
+  }
+  .resources-btn:hover::before {
+    left: 150%;
+  }
+}
+@keyframes pulseGlow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 10px 3px rgba(100, 255, 218, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.4);
+  }
+}
+@media (max-width: 768px) {
+  .resources-btn {
+    animation: mobilePulse 3s infinite ease-in-out;
+  }
+  @keyframes mobilePulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.3);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 0 8px 2px rgba(100, 255, 218, 0.4);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.3);
+    }
+  }
+  .resources-btn:hover {
+    animation: none;
+    transform: scale(1.03);
+    box-shadow: 0 0 12px 4px rgba(100, 255, 218, 0.5);
+  }
+}
+.resources-btn:active {
+  animation: none;
+  background-color: rgba(100, 255, 218, 0.1);
+  transform: scale(0.98);
+}
+.resources-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(100, 255, 218, 0.3), transparent);
+  transition: none;
+  animation: mobileShine 3.5s infinite;
+}
+@keyframes mobileShine {
+  0% {
+    left: -100%;
+  }
+  20% {
+    left: 100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+.resources-btn:active::before {
+  animation: mobileShineFast 0.75s;
+}
+@keyframes mobileShineFast {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
   }
 }

@@ -201,7 +201,7 @@ const resources = {
   },
   'Concrete Technology': {
     pyq: [
-      { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_June_2025.pdf' },
+      { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_JUNE_2025.pdf' },
       ],
     lab: [
     ]
@@ -211,6 +211,8 @@ const resources = {
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ASTU_DEC_2024.pdf' },
     ],
     lab: [
+      { name: 'Lab Syllabus', path: '/pdfs/Semester3/Fluid Mechanics/Extras/FM_lab_syllabus.pdf' },
+      { name: 'Lab Manual', path: '/pdfs/Semester3/Fluid Mechanics/Extras/FM_Lab_Manual.pdf' },
     ]
   },
   'Solid Mechanics': {
@@ -218,7 +220,8 @@ const resources = {
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Solid Mechanics/ASTU_DEC_2024.pdf' },
     ],
     lab: [
-      { name: 'Lab Manual', path: '/pdfs/Semester3/Solid Mechanics/Extras/Lab_Manual.pdf' },
+      { name: 'Lab Syllabus', path: '/pdfs/Semester3/Solid Mechanics/Extras/Sm_lab_syllabus.pdf' },
+      { name: 'Lab Manual', path: '/pdfs/Semester3/Solid Mechanics/Extras/SM_lab_manual.pdf' },
     ]
   },
   'MNCAC': {
@@ -237,6 +240,60 @@ const resources = {
   },
 
   // Semester 4 Resources
+  'Surveying and Geomatics': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S2_JUNE_2025.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'Geotechnical Engineering': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S2_JUNE_2025.pdf' },
+    ],
+  },
+  'Hydraulic Engineering': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S2_JUNE_2025.pdf' },
+       ],
+    lab: [
+    ]
+  },
+  'Transportation Engineering': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S2_JUNE_2025.pdf' },
+      ],
+    lab: [
+    ]
+  },
+  'Structural Analysis': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S2_JUNE_2025.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'Construction Engineering & Management': {
+    pyq: [
+      { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2025.pdf' },
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S2_JUNE_2025.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'Civil Engineering Societal & Global Impact': {
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+
+  // Semester 5 Resources
 };
 
 export default resources;

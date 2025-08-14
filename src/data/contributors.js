@@ -1,5 +1,6 @@
 
 const contributors = [
+  { name: 'Mrinmoy Bora', batchYear: '2027', profilePic: '/Contributor/Default/male02.png'},
   { name: 'Pragyan Borah', batchYear: '2028', profilePic: '/Contributor/Pragyan2028.jpg' },
   { name: 'Bastab Baruah', batchYear: '2028', profilePic: '/Contributor/Bastab2028.jpg' }, 
   { name: 'Janki Pegu', batchYear: '2028', profilePic: '/Contributor/Janki2028.jpg' },

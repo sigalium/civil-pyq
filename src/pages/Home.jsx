@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { East } from '@mui/icons-material';
 import './styles/Home.css'
 
 const Home = () => {
@@ -10,7 +11,7 @@ const Home = () => {
           Your one-stop destination for past year question papers, lab manuals, and study resources for Civil Engineering students of GCU.
         </p>
         <Link to="/resources" className="resources-btn">
-          To Resources
+          To Resources <East className="btn-arrow" />
         </Link>
       </div>
     </div>
