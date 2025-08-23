@@ -11,6 +11,7 @@ import './App.css'
 import StarryBackground from './components/StarryBackground'
 import NotFound from './pages/NotFound'
 import Domains from './pages/Domains'
+import BottomNavbar from './components/BottomNavbar';
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -20,6 +21,7 @@ function App() {
       <ScrollToTop />
       <div className="app">
         <StarryBackground />
+        <BottomNavbar />
         <Navbar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
         <div className={`content ${isMenuOpen ? 'blur' : ''}`}>
           <Routes>
