@@ -9,7 +9,7 @@ const resources = {
     ],
     lab: [
       { name: 'Assignment 2024', path: '/pdfs/Semester1/Mathematics I/Extras/Assignment2.pdf' },
-      { name: 'Note: Partial Differentiation', path: '/pdfs/Semester1/Mathematics I/Extras/Partial_Differentiation.pdf' }
+      { name: 'Notes: Partial Differentiation', path: '/pdfs/Semester1/Mathematics I/Extras/Partial_Differentiation.pdf' }
     ]
   },
   'Physics': {
@@ -29,8 +29,8 @@ const resources = {
       { name: 'Sessional 2 Dec 2024', path: '/pdfs/Semester1/Biology/BioS2_Dec2024.pdf' }
     ],
     lab: [
-      { name: 'Note: Protein', path: '/pdfs/Semester1/Biology/Extras/Protein.pdf' },
-      { name: 'Note: Dna', path: '/pdfs/Semester1/Biology/Extras/DNA.pdf' }
+      { name: 'Notes: Protein', path: '/pdfs/Semester1/Biology/Extras/Protein.pdf' },
+      { name: 'Notes: Dna', path: '/pdfs/Semester1/Biology/Extras/DNA.pdf' }
     ]
   },
   'Basic Electrical Engineering': {
@@ -182,6 +182,7 @@ const resources = {
   // Semester 3 Resources
   'Mathematics III': {
     pyq: [
+      { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Mathematics III/ESE_DEC_2024.pdf' },
       { name: 'ASTU SET A Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setA_DEC_2024.pdf' },
       { name: 'ASTU SET B Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setB_DEC_2024.pdf' },
     ],
@@ -208,6 +209,8 @@ const resources = {
   },
   'Fluid Mechanics': {
     pyq: [
+      { name: 'ESE Supplementary Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ESE_Supplementary_Dec_2024.pdf' },
+      { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ESE_DEC_2024.pdf' },
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ASTU_DEC_2024.pdf' },
     ],
     lab: [
@@ -236,6 +239,9 @@ const resources = {
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/IKS/ESE_DEC_2024.pdf' },
     ],
     lab: [
+      { name: 'Notes: Understanding Human Body', path: '/pdfs/Semester3/IKS/Extras/Understanding_Human_Body.pdf' },
+      { name: 'Notes: Understanding Swastha Vritta', path: '/pdfs/Semester3/IKS/Extras/Understanding_Swastha_Vritta.pdf' },
+      { name: 'Notes: Trividha Upastambha', path: '/pdfs/Semester3/IKS/Extras/Trividha_Upastambha.pdf' },
     ]
   },
 
@@ -256,6 +262,7 @@ const resources = {
   },
   'Hydraulic Engineering': {
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S2_JUNE_2025.pdf' },
        ],

@@ -85,6 +85,15 @@
   transition: var(--transition);
 }
 
+.contributor-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+  width: 100%;
+}
+
 .contributor-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(2, 12, 27, 0.5);
