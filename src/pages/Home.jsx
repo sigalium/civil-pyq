@@ -6,7 +6,7 @@ const Home = () => {
   return (
     <div className="home fade-in">
       <div className="home-content">
-        <h1>Welcome to <span>CivilPYQ</span></h1>
+        <h1>Welcome to Civil<span>PYQ</span></h1>
         <p className="subtitle">
           Your one-stop destination for past year question papers, lab manuals, and study resources for Civil Engineering students of GCU.
         </p>

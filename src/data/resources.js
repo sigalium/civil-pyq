@@ -232,6 +232,10 @@ const resources = {
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/MNCAC/ESE_DEC_2024.pdf' },
     ],
     lab: [
+      { name: 'NOTES: Appraoches to disability', path: '/pdfs/Semester3/MNCAC/Extras/Appraoches_to_disability.pdf' },
+      { name: 'NOTES: Understanding Disability', path: '/pdfs/Semester3/MNCAC/Extras/UNDERSTANDING_DISABILITY.pdf' },
+      { name: 'NOTES: Difficulties Faced By PWD', path: '/pdfs/Semester3/MNCAC/Extras/MNCAC_DIFFICULTIES_FACED_BY_PERSONS_WITH_DISABILITIES.pdf' },
+      { name: 'NOTES: Prevailing Legilations', path: '/pdfs/Semester3/MNCAC/Extras/PREVAILING_LEGISLATIONS.pdf' },
     ]
   },
   'IKS': {
@@ -242,6 +246,8 @@ const resources = {
       { name: 'Notes: Understanding Human Body', path: '/pdfs/Semester3/IKS/Extras/Understanding_Human_Body.pdf' },
       { name: 'Notes: Understanding Swastha Vritta', path: '/pdfs/Semester3/IKS/Extras/Understanding_Swastha_Vritta.pdf' },
       { name: 'Notes: Trividha Upastambha', path: '/pdfs/Semester3/IKS/Extras/Trividha_Upastambha.pdf' },
+      { name: 'Notes: Ritu Charya', path: '/pdfs/Semester3/IKS/Extras/RITU_CHARYA.pdf' },
+      { name: 'Notes: Sadvritta', path: '/pdfs/Semester3/IKS/Extras/Sadvritta.pdf' },
     ]
   },
 

@@ -45,8 +45,14 @@
   transition: var(--transition);
 }
 
+.nav-link.active,
 .nav-link:not(.disabled):hover {
   color: var(--accent);
+}
+
+.nav-link.active::after,
+.nav-link:not(.disabled):hover::after {
+  width: 100%;
 }
 
 .nav-link:not(.disabled)::after {

@@ -15,10 +15,11 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [showPageIndicator, setShowPageIndicator] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
+  const [barFilled, setBarFilled] = useState(false);
   const modalRef = useRef(null);
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
-  const closedByPopState = useRef(false);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -50,22 +51,18 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     }
   };
 
-  // Handle fullscreen change events
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+    setShowPdf(false);
+    setBarFilled(false);
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+    const fillTimer = setTimeout(() => setBarFilled(true), 50);
+    const pdfTimer = setTimeout(() => setShowPdf(true), 1800); // Loader time
 
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+      clearTimeout(fillTimer);
+      clearTimeout(pdfTimer);
     };
-  }, []);
+  }, [pdfPath]);
 
   useEffect(() => {
     if (isMobile) setScale(0.5);
@@ -152,26 +149,6 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     };
   }, [numPages]);
 
-  // mobile back button handling
-  useEffect(() => {
-    if (!isMobile) return;
-
-    window.history.pushState({ pdfModal: true }, '');
-
-    const handlePopState = () => {
-      handleClose();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      if (!isClosing) {
-        window.history.back();
-      }
-    };
-  }, [isClosing]);
-
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
   };
@@ -201,28 +178,51 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
             </button>
           </div>
         </div>
-        <div 
-          className="pdf-viewer-content pdf-viewer-content-mobile"
-          ref={contentRef}
-        >
+        <div className="pdf-viewer-content pdf-viewer-content-mobile" ref={contentRef}>
           <div className="pdf-placeholder" style={{ padding: '20px' }}>
-            <Document
-              file={pdfPath}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={<p style={{ color: 'var(--text-primary)' }}>Loading PDF...</p>}
-              error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF.</p>}
-            >
-              {numPages &&
-                Array.from({ length: numPages }, (_, index) => (
-                  <Page
-                    key={`page_${index + 1}`}
-                    pageNumber={index + 1}
-                    scale={scale}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                  />
-                ))}
-            </Document>
+            {!showPdf ? (
+              <div className="pdf-loader-wrapper">
+                <div className="pdf-circle-loader"></div>
+                <div className="pdf-bar-loader">
+                  <div
+                    className="pdf-bar-loader-fill"
+                    style={{
+                      width: barFilled ? '100%' : '0%',
+                    }}
+                  ></div>
+                </div>
+              </div>
+            ) : (
+              <Document
+                file={pdfPath}
+                onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF.</p>}
+                loading={
+                  <div className="pdf-loader-wrapper">
+                    <div className="pdf-circle-loader"></div>
+                    <div className="pdf-bar-loader">
+                      <div
+                        className="pdf-bar-loader-fill"
+                        style={{
+                          width: '100%',
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                }
+              >
+                {numPages &&
+                  Array.from({ length: numPages }, (_, index) => (
+                    <Page
+                      key={`page_${index + 1}`}
+                      pageNumber={index + 1}
+                      scale={scale}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                    />
+                  ))}
+              </Document>
+            )}
           </div>
         </div>
         
@@ -231,32 +231,30 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
           Page {currentPage} of {numPages || '--'}
         </div>
         
-          <div className="pdf-viewer-controls pdf-viewer-controls-fixed">
-              <button className="control-btn" onClick={handleZoomOut}>
-                <ZoomOut />
-              </button>
-              <span className="zoom-counter">
-                {(scale * 100).toFixed(0)}%
-              </span>
-              <button className="control-btn" onClick={handleZoomIn}>
-                <ZoomIn />
-              </button>
-              <button className="control-btn download-btn" onClick={handleDownload}>
-                <Download />
-                <span>Download</span>
-              </button>
-              
-              {/* Fullscreen Button */}
-              {!isMobile && (
-                <button 
-                    className="control-btn fullscreen-bottom-btn" 
-                    onClick={toggleFullscreen} 
-                    title="Toggle Fullscreen (F)"
-                  >
-                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-                </button>
-            )}
-          </div>
+        <div className="pdf-viewer-controls pdf-viewer-controls-fixed">
+          <button className="control-btn" onClick={handleZoomOut}>
+            <ZoomOut />
+          </button>
+          <span className="zoom-counter">
+            {(scale * 100).toFixed(0)}%
+          </span>
+          <button className="control-btn" onClick={handleZoomIn}>
+            <ZoomIn />
+          </button>
+          <button className="control-btn download-btn" onClick={handleDownload}>
+            <Download />
+            <span>Download</span>
+          </button>
+          {!isMobile && (
+            <button 
+              className="control-btn fullscreen-bottom-btn" 
+              onClick={toggleFullscreen} 
+              title="Toggle Fullscreen (F)"
+            >
+              {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

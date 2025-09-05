@@ -7,6 +7,7 @@
   color: var(--text-secondary);
   font-size: 1rem;
   cursor: pointer;
+  margin-top: 10px;
   margin-bottom: 1rem;
   transition: var(--transition);
   padding-top: 40px;
