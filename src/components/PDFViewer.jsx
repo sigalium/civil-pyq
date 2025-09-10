@@ -71,7 +71,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
       });
     }, 300);
 
-    // Fallback: if PDF doesn't load within 8 seconds
+    // Fallback: if PDF doesn't load within 5 seconds
     const fallbackTimer = setTimeout(() => {
       if (!isDocumentLoaded) {
         setLoadingProgress(100);
@@ -80,7 +80,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
           clearInterval(progressIntervalRef.current);
         }
       }
-    }, 8000);
+    }, 5000);
 
     return () => {
       clearTimeout(fallbackTimer);
