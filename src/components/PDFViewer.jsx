@@ -16,10 +16,12 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [showPageIndicator, setShowPageIndicator] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  const [barFilled, setBarFilled] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isDocumentLoaded, setIsDocumentLoaded] = useState(false);
   const modalRef = useRef(null);
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
+  const progressIntervalRef = useRef(null);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -53,14 +55,38 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
   useEffect(() => {
     setShowPdf(false);
-    setBarFilled(false);
+    setLoadingProgress(0);
+    setIsDocumentLoaded(false);
 
-    const fillTimer = setTimeout(() => setBarFilled(true), 50);
-    const pdfTimer = setTimeout(() => setShowPdf(true), 1800); // Loader time
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    progressIntervalRef.current = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressIntervalRef.current);
+          return prev;
+        }
+        return prev + 10;
+      });
+    }, 300);
+
+    // Fallback: if PDF doesn't load within 5 seconds
+    const fallbackTimer = setTimeout(() => {
+      if (!isDocumentLoaded) {
+        setLoadingProgress(100);
+        setShowPdf(true);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
+      }
+    }, 5000);
 
     return () => {
-      clearTimeout(fillTimer);
-      clearTimeout(pdfTimer);
+      clearTimeout(fallbackTimer);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
     };
   }, [pdfPath]);
 
@@ -83,7 +109,6 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
         }
       }
       
-      // 'F' key for toggling fullscreen
       if (!isMobile && (event.key === 'f' || event.key === 'F')) {
         toggleFullscreen();
         event.preventDefault();
@@ -151,6 +176,21 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
+    setIsDocumentLoaded(true);
+    setLoadingProgress(100);
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    setTimeout(() => setShowPdf(true), 200);
+  };
+
+  const onDocumentLoadError = (error) => {
+    console.error('Failed to load PDF:', error);
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    setLoadingProgress(100);
+    setTimeout(() => setShowPdf(true), 200);
   };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 5.0));
@@ -187,29 +227,22 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
                   <div
                     className="pdf-bar-loader-fill"
                     style={{
-                      width: barFilled ? '100%' : '0%',
+                      width: `${loadingProgress}%`,
+                      transition: 'width 0.3s ease-out'
                     }}
                   ></div>
                 </div>
+                <p style={{ marginTop: '1rem', color: 'var(--accent)', fontSize: '0.9rem' }}>
+                  Loading... {loadingProgress}%
+                </p>
               </div>
             ) : (
               <Document
                 file={pdfPath}
-                onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF.</p>}
-                loading={
-                  <div className="pdf-loader-wrapper">
-                    <div className="pdf-circle-loader"></div>
-                    <div className="pdf-bar-loader">
-                      <div
-                        className="pdf-bar-loader-fill"
-                        style={{
-                          width: '100%',
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                }
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF. Please try downloading it.</p>}
+                loading={null}
               >
                 {numPages &&
                   Array.from({ length: numPages }, (_, index) => (

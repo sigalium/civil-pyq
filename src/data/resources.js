@@ -182,7 +182,9 @@ const resources = {
   // Semester 3 Resources
   'Mathematics III': {
     pyq: [
+      { name: 'Sessional 1 Dec 2025', path: '/pdfs/Semester3/Mathematics III/MathsS1_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Mathematics III/ESE_DEC_2024.pdf' },
+      { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester3/Mathematics III/MathsS1_2024.pdf' },
       { name: 'ASTU SET A Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setA_DEC_2024.pdf' },
       { name: 'ASTU SET B Dec 2024', path: '/pdfs/Semester3/Mathematics III/ASTU_setB_DEC_2024.pdf' },
     ],
