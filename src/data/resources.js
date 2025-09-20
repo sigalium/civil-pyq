@@ -204,6 +204,7 @@ const resources = {
   },
   'Concrete Technology': {
     pyq: [
+      { name: 'Sessional 1 Dec 2025', path: '/pdfs/Semester3/Concrete Technology/CTs1_2025.pdf' },
       { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_JUNE_2025.pdf' },
       ],
     lab: [

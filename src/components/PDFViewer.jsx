@@ -15,13 +15,9 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [showPageIndicator, setShowPageIndicator] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showPdf, setShowPdf] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [isDocumentLoaded, setIsDocumentLoaded] = useState(false);
   const modalRef = useRef(null);
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
-  const progressIntervalRef = useRef(null);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -52,43 +48,6 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
       setIsFullscreen(false);
     }
   };
-
-  useEffect(() => {
-    setShowPdf(false);
-    setLoadingProgress(0);
-    setIsDocumentLoaded(false);
-
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-    progressIntervalRef.current = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressIntervalRef.current);
-          return prev;
-        }
-        return prev + 10;
-      });
-    }, 300);
-
-    // Fallback: if PDF doesn't load within 5 seconds
-    const fallbackTimer = setTimeout(() => {
-      if (!isDocumentLoaded) {
-        setLoadingProgress(100);
-        setShowPdf(true);
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-      }
-    }, 5000);
-
-    return () => {
-      clearTimeout(fallbackTimer);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [pdfPath]);
 
   useEffect(() => {
     if (isMobile) setScale(0.5);
@@ -176,21 +135,10 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
-    setIsDocumentLoaded(true);
-    setLoadingProgress(100);
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-    setTimeout(() => setShowPdf(true), 200);
   };
 
   const onDocumentLoadError = (error) => {
     console.error('Failed to load PDF:', error);
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-    setLoadingProgress(100);
-    setTimeout(() => setShowPdf(true), 200);
   };
 
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 5.0));
@@ -220,42 +168,24 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
         </div>
         <div className="pdf-viewer-content pdf-viewer-content-mobile" ref={contentRef}>
           <div className="pdf-placeholder" style={{ padding: '20px' }}>
-            {!showPdf ? (
-              <div className="pdf-loader-wrapper">
-                <div className="pdf-circle-loader"></div>
-                <div className="pdf-bar-loader">
-                  <div
-                    className="pdf-bar-loader-fill"
-                    style={{
-                      width: `${loadingProgress}%`,
-                      transition: 'width 0.3s ease-out'
-                    }}
-                  ></div>
-                </div>
-                <p style={{ marginTop: '1rem', color: 'var(--accent)', fontSize: '0.9rem' }}>
-                  Loading... {loadingProgress}%
-                </p>
-              </div>
-            ) : (
-              <Document
-                file={pdfPath}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={onDocumentLoadError}
-                error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF. Please try downloading it.</p>}
-                loading={null}
-              >
-                {numPages &&
-                  Array.from({ length: numPages }, (_, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      scale={scale}
-                      renderTextLayer={false}
-                      renderAnnotationLayer={false}
-                    />
-                  ))}
-              </Document>
-            )}
+            <Document
+              file={pdfPath}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              error={<p style={{ color: 'var(--text-primary)' }}>Failed to load PDF. Please try downloading it.</p>}
+              loading={<div>Loading PDF...</div>}
+            >
+              {numPages &&
+                Array.from({ length: numPages }, (_, index) => (
+                  <Page
+                    key={`page_${index + 1}`}
+                    pageNumber={index + 1}
+                    scale={scale}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                  />
+                ))}
+            </Document>
           </div>
         </div>
         
