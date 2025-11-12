@@ -182,6 +182,7 @@ const resources = {
   // Semester 3 Resources
   'Mathematics III': {
     pyq: [
+      { name: 'Sessional 2 Dec 2025', path: '/pdfs/Semester3/Mathematics III/MathsS2_2025.pdf' },
       { name: 'Sessional 1 Dec 2025', path: '/pdfs/Semester3/Mathematics III/MathsS1_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Mathematics III/ESE_DEC_2024.pdf' },
       { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester3/Mathematics III/MathsS1_2024.pdf' },
@@ -193,7 +194,9 @@ const resources = {
   },
   'CADD': {
     pyq: [
+      { name: 'Lab Test 1 June 2025', path: '/pdfs/Semester3/CADD/CADD_LAB_TEST_1_june_2025.pdf' },
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/CADD/ASTU_DEC_2024.pdf' },
+      
     ],
   },
   'CMTE': {
@@ -212,6 +215,9 @@ const resources = {
   },
   'Fluid Mechanics': {
     pyq: [
+      { name: 'CT 2 Lateral Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_CLASS_TEST_2_dec_2025_Lateral.pdf' },
+      { name: 'CT 2 Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_CLASS_TEST_2_dec_2025.pdf' },
+      { name: 'Quiz 1 Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_quiz1.pdf' },
       { name: 'ESE Supplementary Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ESE_Supplementary_Dec_2024.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ESE_DEC_2024.pdf' },
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Fluid Mechanics/ASTU_DEC_2024.pdf' },
@@ -223,6 +229,7 @@ const resources = {
   },
   'Solid Mechanics': {
     pyq: [
+      { name: 'CT 2 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_CT_2_dec_2025 .pdf' },
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Solid Mechanics/ASTU_DEC_2024.pdf' },
     ],
     lab: [
@@ -243,6 +250,7 @@ const resources = {
   },
   'IKS': {
     pyq: [
+      { name: 'Sessional 2 June 2025', path: '/pdfs/Semester3/IKS/Sessional_2_June_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/IKS/ESE_DEC_2024.pdf' },
     ],
     lab: [
@@ -250,7 +258,10 @@ const resources = {
       { name: 'Notes: Understanding Swastha Vritta', path: '/pdfs/Semester3/IKS/Extras/Understanding_Swastha_Vritta.pdf' },
       { name: 'Notes: Trividha Upastambha', path: '/pdfs/Semester3/IKS/Extras/Trividha_Upastambha.pdf' },
       { name: 'Notes: Ritu Charya', path: '/pdfs/Semester3/IKS/Extras/RITU_CHARYA.pdf' },
-      { name: 'Notes: Sadvritta', path: '/pdfs/Semester3/IKS/Extras/Sadvritta.pdf' },
+      { name: 'Notes: Kostha', path: '/pdfs/Semester3/IKS/Extras/Kostha.pdf' },
+      { name: 'Notes: Sara', path: '/pdfs/Semester3/IKS/Extras/Sara.pdf' },
+      { name: 'Notes: IP', path: '/pdfs/Semester3/IKS/Extras/IP.pdf' },
+      { name: 'Notes: Yoga', path: '/pdfs/Semester3/IKS/Extras/YOGA.pdf' },
     ]
   },
 

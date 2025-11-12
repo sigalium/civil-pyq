@@ -19,8 +19,23 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
 
-  const handleClose = () => {
+  // history state refs to handle mobile back button
+  const hasPushedStateRef = useRef(false);
+  const prevHistoryStateRef = useRef(null);
+
+  // handleClose now uses replaceState to clean up the pushed entry when closed via UI
+  const handleClose = (calledFromPopstate = false) => {
     setIsClosing(true);
+    if (hasPushedStateRef.current) {
+      if (!calledFromPopstate) {
+        try {
+          window.history.replaceState(prevHistoryStateRef.current, '', window.location.href);
+        } catch (e) {
+        }
+      }
+      hasPushedStateRef.current = false;
+    }
+
     setTimeout(() => {
       onClose();
     }, 300);
@@ -48,6 +63,40 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
       setIsFullscreen(false);
     }
   };
+
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.history && window.history.pushState) {
+      prevHistoryStateRef.current = window.history.state;
+      try {
+        window.history.pushState({ __pdfViewer: true }, '');
+        hasPushedStateRef.current = true;
+      } catch (e) {
+      }
+    }
+
+    const handlePopState = (event) => {
+      if (!hasPushedStateRef.current) return;
+
+      hasPushedStateRef.current = false;
+      handleClose(true);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+
+      if (hasPushedStateRef.current) {
+        try {
+          window.history.replaceState(prevHistoryStateRef.current, '', window.location.href);
+        } catch (e) {
+        }
+        hasPushedStateRef.current = false;
+      }
+    };
+    // run once on mount
+  }, []);
 
   useEffect(() => {
     if (isMobile) setScale(0.5);
@@ -161,7 +210,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
         <div className="pdf-viewer-header pdf-viewer-header-fixed">
           <h3>{pdfName}</h3>
           <div className="header-actions">
-            <button className="close-btn" onClick={handleClose}>
+            <button className="close-btn" onClick={() => handleClose(false)}>
               <Close />
             </button>
           </div>
