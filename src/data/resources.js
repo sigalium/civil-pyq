@@ -192,10 +192,11 @@ const resources = {
     lab: [
     ]
   },
-  'CADD': {
+  'Building Planning': {
     pyq: [
-      { name: 'Lab Test 1 June 2025', path: '/pdfs/Semester3/CADD/CADD_LAB_TEST_1_june_2025.pdf' },
-      { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/CADD/ASTU_DEC_2024.pdf' },
+      { name: 'Lab Test 3 June 2025', path: '/pdfs/Semester3/Building Planning/CADD_LAB_TEST_3_june_2025.pdf' },
+      { name: 'Lab Test 1 June 2025', path: '/pdfs/Semester3/Building Planning/CADD_LAB_TEST_1_june_2025.pdf' },
+      { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Building Planning/ASTU_DEC_2024.pdf' },
       
     ],
   },
@@ -211,6 +212,8 @@ const resources = {
       { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_JUNE_2025.pdf' },
       ],
     lab: [
+      { name: 'IS-456 (2000)', path: '/pdfs/Semester3/Concrete Technology/Extras/IS_456_2000.pdf' },
+      { name: 'IS-10262 (2019)', path: '/pdfs/Semester3/Concrete Technology/Extras/IS_10262_2019.pdf' },
     ]
   },
   'Fluid Mechanics': {
@@ -230,6 +233,8 @@ const resources = {
   'Solid Mechanics': {
     pyq: [
       { name: 'CT 2 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_CT_2_dec_2025 .pdf' },
+      { name: 'CT 1 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_CT_1_dec_2025 .pdf' },
+      { name: 'Quiz 1 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_quiz1.pdf' },
       { name: 'ASTU Dec 2024', path: '/pdfs/Semester3/Solid Mechanics/ASTU_DEC_2024.pdf' },
     ],
     lab: [
