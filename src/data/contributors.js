@@ -1,6 +1,8 @@
 const contributors = [
   // Student contributors
+  { name: 'Resham Ahmed', batchYear: '2028', profilePic: '/Contributor/Resham2028.jpg', type: 'student' },
   { name: 'Rikim Sarma', batchYear: '2028', profilePic: '/Contributor/Rikim2028.jpg', type: 'student' },
+  { name: 'Namrata Priyam Saikia', batchYear: '2028', profilePic: '/Contributor/NPS2028.jpg', type: 'student' },
   { name: 'Mrinmoy Bora', batchYear: '2027', profilePic: '/Contributor/Default/male02.png', type: 'student' },
   { name: 'Pragyan Borah', batchYear: '2028', profilePic: '/Contributor/Pragyan2028.jpg', type: 'student' },
   { name: 'Bastab Baruah', batchYear: '2028', profilePic: '/Contributor/Bastab2028.jpg', type: 'student' }, 
