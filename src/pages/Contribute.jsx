@@ -1,14 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './styles/Contribute.css'
 import contributors from '../data/contributors'
 
 const Contribute = () => {
+  const [showOptions, setShowOptions] = useState(false)
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
+  const handleContributeClick = () => {
+    setShowOptions(true)
+  }
+
   const openGoogleForm = () => {
     window.open('https://forms.gle/nASVybF4tGw635jU9', '_blank')
+  }
+
+  const openWhatsApp = () => {
+    // Replace with your actual WhatsApp number
+    window.open('https://chat.whatsapp.com/LhmeXEsQB9o0hkMp1Pm6jp', '_blank') 
   }
 
   // Filter contributors by type
@@ -25,16 +36,41 @@ const Contribute = () => {
             Contribute to our growing collection and support students like you.
           </p>
           <p className="perks">Bonus: A special spot for you on our contributors page! 💖🌟</p>
-          <button className="contribute-btn" onClick={openGoogleForm}>
-            Click here to contribute
-          </button>
+          
+          {/* Interactive Button Section */}
+          <div className="cta-container">
+            {!showOptions ? (
+              <button className="contribute-btn-main pulse-animation" onClick={handleContributeClick}>
+                🚀 Click here to Contribute
+              </button>
+            ) : (
+              <div className="contribution-options fade-in-up">
+                <button className="option-btn whatsapp-btn" onClick={openWhatsApp}>
+                  <span className="btn-icon">💬</span> Contact via WhatsApp
+                </button>
+                <button className="option-btn form-btn" onClick={openGoogleForm}>
+                  <span className="btn-icon">📝</span> Fill Google Form
+                </button>
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="contributors-section">
           <h2>Our Student Contributors</h2>
           <div className="contributors-grid">
             {studentContributors.map((contributor, index) => (
-              <div key={index} className="contributor-card">
+              <div 
+                key={index} 
+                className={`contributor-card ${contributor.isTopContributor ? 'top-contributor-glow' : ''}`}
+              >
+                {/* Top Contributor Badge (Absolute Positioned) */}
+                {contributor.isTopContributor && (
+                  <div className="top-contributor-tag">
+                    <span>👑</span> Top Contributor
+                  </div>
+                )}
+
                 <div className="contributor-pfp">
                   {contributor.profilePic ? (
                     <img

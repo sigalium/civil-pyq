@@ -4,7 +4,7 @@ const subjects = {
   3: ['Mathematics III','Fluid Mechanics', 'Solid Mechanics', 'CMTE', 'Building Planning', 'Concrete Technology', 'IKS','MNCAC'],
   4: ['Transportation Engineering', 'Surveying and Geomatics', 'Geotechnical Engineering', 'Hydraulic Engineering', 'Structural Analysis',
       'Construction Engineering & Management', 'Civil Engineering Societal & Global Impact'],
-  5: null,
+  5: ['Structural Design I', 'Environmental Engineering', 'Engineering Estimation & Costing', 'Hydrology & Water Resources Engineering', 'Plumbing (Water and Sanitation)',  'Professional Practice Law & Ethics',],
   6: null,
   7: null,
   8: null,

@@ -14,10 +14,11 @@
 
 .contribute-hero {
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
   background-color: var(--secondary);
-  border-radius: 8px;
+  border-radius: 12px;
   animation: fadeIn 0.8s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .contribute-hero h1 {
@@ -38,26 +39,110 @@
 
 .perks {
   font-size: 1.1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   color: var(--text-primary);
-}
-
-.contribute-btn {
-  padding: 0.8rem 1.8rem;
-  background-color: var(--accent);
-  color: var(--primary);
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
 }
 
-.contribute-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+/* --- Contribute buttons --- */
+
+.cta-container {
+  min-height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+.contribute-btn-main {
+  padding: 1rem 2.5rem;
+  background: linear-gradient(45deg, var(--accent), #64ffda);
+  color: #0a192f;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(100, 255, 218, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.contribute-btn-main:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(100, 255, 218, 0.5);
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(100, 255, 218, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(100, 255, 218, 0); }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Options Container */
+.contribution-options {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Option Buttons (WhatsApp/Form) */
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.85rem 1.6rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  min-width: 210px;
+  justify-content: center;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 
+              0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.btn-icon {
+  font-size: 1.3rem;
+}
+.whatsapp-btn {
+  background: linear-gradient(180deg, #25D366 0%, #1a9c4b 100%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.whatsapp-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 
+                    0 8px 22px rgba(37, 211, 102, 0.45);
+  filter: brightness(1.05);
+}
+.form-btn {
+  background: linear-gradient(180deg, #8B5CF6 0%, #5b21b6 100%);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.form-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 
+              0 8px 22px rgba(139, 92, 246, 0.45);
+  filter: brightness(1.05);
+}
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- GRID & CARD STYLES --- */
 
 .contributors-section {
   animation: fadeIn 0.8s ease-in-out 0.2s both;
@@ -72,17 +157,27 @@
 .contributors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 2rem;
+  gap: 2.5rem; /* Gap ensures badges don't overlap */
 }
 
+/* Card - Relative positioning is key for the badge */
 .contributor-card {
+  position: relative; 
   background-color: var(--secondary);
   border-radius: 8px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: var(--transition);
+  justify-content: flex-start;
+  transition: all 0.3s ease;
+  height: 100%;
+  border: 1px solid transparent;
+}
+
+.contributor-card h3 {
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 .contributor-card p {
@@ -99,6 +194,7 @@
   box-shadow: 0 10px 20px rgba(2, 12, 27, 0.5);
 }
 
+/* Profile Picture */
 .contributor-pfp {
   width: 80px;
   height: 80px;
@@ -117,24 +213,58 @@
   color: var(--accent);
 }
 
-.contributor-card h3 {
-  margin-bottom: 0.5rem;
-  text-align: center;
-}
-
-.contributor-card p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
 .pfp-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 50%;
   display: block;
 }
 
+/* --- TOP CONTRIBUTOR STYLES --- */
+
+/* The Hanging Crown Badge */
+.top-contributor-tag {
+  position: absolute;
+  top: -12px;
+  left: -10px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: 4px;
+  box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+  z-index: 10;
+  transform: rotate(-5deg);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.top-contributor-tag::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  border-top: 4px solid #cc8400;
+  border-left: 4px solid transparent;
+  width: 0;
+}
+
+/* Gold Glow for the card */
+.contributor-card.top-contributor-glow {
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.15);
+}
+
+.contributor-card.top-contributor-glow:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.3);
+}
+
+/* Mobile Adjustments */
 @media (max-width: 768px) {
   .contribute {
     padding: 1rem;
@@ -143,13 +273,28 @@
   .contribute-hero {
     padding: 1.5rem;
   }
-
+  
   .contribute-hero h1 {
     font-size: 1.8rem;
   }
 
   .contributors-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
+  }
+
+  .contribute-btn-main {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .contribution-options {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .option-btn {
+    width: 100%;
   }
 }

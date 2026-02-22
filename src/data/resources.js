@@ -1,6 +1,7 @@
 const resources = {
     // Semester 1 Resources
   'Mathematics I': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Mathematics I/ESE_Dec_2024.pdf' },
       { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Mathematics I/MathS1_Dec2024.pdf' },
@@ -13,6 +14,7 @@ const resources = {
     ]
   },
   'Physics': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Physics/ESE_Dec_2024.pdf' },
       { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Physics/PhysS1_Dec2024.pdf' },
@@ -23,6 +25,7 @@ const resources = {
     ]
   },
   'Biology': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Biology/ESE_Dec_2024.pdf' },
       { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Biology/BioS1_Dec2024.pdf' },
@@ -34,6 +37,7 @@ const resources = {
     ]
   },
   'Basic Electrical Engineering': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Basic Electrical Engineering/ESE_Dec_2024.pdf' },
       { name: 'ESE Dec 2023', path: '/pdfs/Semester1/Basic Electrical Engineering/ESE_Dec_2023.pdf' },
@@ -45,6 +49,7 @@ const resources = {
     ]
   },
   'Workshop I': {
+    syllabus: false,
     pyq: [
       { name: 'All Assignments Solution', path: '/pdfs/Semester1/Workshop I/MPWAssignments.pdf' },
       { name: 'Final Assignment Fitting', path: '/pdfs/Semester1/Workshop I/FinalAssignmentFitting.pdf' },
@@ -61,6 +66,7 @@ const resources = {
     ]
   },
   'Idea Lab': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Idea Lab/ESE_Dec_2024.pdf' }
     ],
@@ -69,6 +75,7 @@ const resources = {
     ]
   },
   'Engineering Graphics Design': {
+    syllabus: false,
     pyq: [
       { name: 'ESE Dec 2024', path: '/pdfs/Semester1/Engineering Graphics Design/ESE_Dec_2024.pdf' },
       { name: 'Sessional 1 Dec 2024', path: '/pdfs/Semester1/Engineering Graphics Design/EGDs1_Dec2024.pdf' },
@@ -82,6 +89,7 @@ const resources = {
     // Semester 2 Resources
 
   'Mathematics II': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/Mathematics II/ESE_June_2025.pdf' },
       { name: 'Sessional 1 CE June 2025', path: '/pdfs/Semester2/Mathematics II/MathS1_June2025.pdf' },
@@ -97,6 +105,7 @@ const resources = {
     ]
   },
   'Chemistry': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/Chemistry/ESE_June_2025.pdf' },
       { name: 'ESE LAB June 2025', path: '/pdfs/Semester2/Chemistry/ESE_Lab_June_2025.pdf' },
@@ -119,6 +128,7 @@ const resources = {
     ]
   },
   'Programming in C': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/Programming in C/ESE_June_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester2/Programming in C/ESE_Dec_2024.pdf' }
@@ -130,6 +140,7 @@ const resources = {
     ]
   },
   'UHV': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/UHV/ESE_June_2025.pdf' },
       { name: 'Sessional 1 2025', path: '/pdfs/Semester2/UHV/Session1_2025.pdf' },
@@ -145,12 +156,14 @@ const resources = {
     ]
   },
   'Workshop II': {
+    syllabus: false,
     pyq: [
       { name: 'Turing All Experiments', path: '/pdfs/Semester2/Workshop II/Turing_All_Experiment.pdf' },
       { name: 'Machining Experiment', path: '/pdfs/Semester2/Workshop II/Machining_merged.pdf' }
     ]
   },
   'ETC': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/ETC/ESE_June_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester2/ETC/ETCs2_June2025.pdf' },
@@ -164,11 +177,13 @@ const resources = {
     ]
   },
   'Japanese': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/Japanese/ESE_June_2025.pdf' }
     ]
   },
   'Russian': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester2/Russian/ESE_June_2025.pdf' },
       { name: 'Sessional 1 2025', path: '/pdfs/Semester2/Russian/Sessional_1.pdf' },
@@ -181,7 +196,9 @@ const resources = {
 
   // Semester 3 Resources
   'Mathematics III': {
+    syllabus: true,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/Mathematics III/ESE_DEC_2025.pdf' },
       { name: 'Sessional 2 Dec 2025', path: '/pdfs/Semester3/Mathematics III/MathsS2_2025.pdf' },
       { name: 'Sessional 1 Dec 2025', path: '/pdfs/Semester3/Mathematics III/MathsS1_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Mathematics III/ESE_DEC_2024.pdf' },
@@ -193,7 +210,9 @@ const resources = {
     ]
   },
   'Building Planning': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/Building Planning/ESE_BUILDING_DEC_2025.pdf' },
       { name: 'Lab Test 3 June 2025', path: '/pdfs/Semester3/Building Planning/CADD_LAB_TEST_3_june_2025.pdf' },
       { name: 'Lab Test 1 June 2025', path: '/pdfs/Semester3/Building Planning/CADD_LAB_TEST_1_june_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Building Planning/ESE_BUILDING_DEC_2024.pdf' },
@@ -201,14 +220,18 @@ const resources = {
     ],
   },
   'CMTE': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/CMTE/ESE_CMTE_DEC_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/CMTE/ESE_CMTE_DEC_2024.pdf' },
        ],
     lab: [
     ]
   },
   'Concrete Technology': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/Concrete Technology/ESE_CT_DEC_2025.pdf' },
       { name: 'Sessional 1 Dec 2025', path: '/pdfs/Semester3/Concrete Technology/CTs1_2025.pdf' },
       { name: 'ASTU June 2025', path: '/pdfs/Semester3/Concrete Technology/ASTU_JUNE_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/Concrete Technology/ESE_CT_DEC_2024.pdf' },
@@ -219,7 +242,9 @@ const resources = {
     ]
   },
   'Fluid Mechanics': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/ESE_DEC_2025.pdf' },
       { name: 'CT 2 Lateral Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_CLASS_TEST_2_dec_2025_Lateral.pdf' },
       { name: 'CT 2 Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_CLASS_TEST_2_dec_2025.pdf' },
       { name: 'Quiz 1 Dec 2025', path: '/pdfs/Semester3/Fluid Mechanics/FM_quiz1.pdf' },
@@ -233,7 +258,9 @@ const resources = {
     ]
   },
   'Solid Mechanics': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/ESE_SM_DEC_2025.pdf' },
       { name: 'CT 2 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_CT_2_dec_2025 .pdf' },
       { name: 'CT 1 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_CT_1_dec_2025 .pdf' },
       { name: 'Quiz 1 Dec 2025', path: '/pdfs/Semester3/Solid Mechanics/SM_quiz1.pdf' },
@@ -246,7 +273,9 @@ const resources = {
     ]
   },
   'MNCAC': {
+    syllabus: false,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/MNCAC/ESE_DEC_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/MNCAC/ESE_DEC_2024.pdf' },
     ],
     lab: [
@@ -257,7 +286,9 @@ const resources = {
     ]
   },
   'IKS': {
+    syllabus: true,
     pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester3/IKS/ESE_DEC_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester3/IKS/Sessional_2_June_2025.pdf' },
       { name: 'ESE Dec 2024', path: '/pdfs/Semester3/IKS/ESE_DEC_2024.pdf' },
     ],
@@ -275,6 +306,7 @@ const resources = {
 
   // Semester 4 Resources
   'Surveying and Geomatics': {
+    syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S2_JUNE_2025.pdf' },
@@ -283,21 +315,25 @@ const resources = {
     ]
   },
   'Geotechnical Engineering': {
+    syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S2_JUNE_2025.pdf' },
     ],
   },
   'Hydraulic Engineering': {
+    syllabus: false,
     pyq: [
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S2_JUNE_2025.pdf' },
        ],
     lab: [
+      { name: 'HE Lab Manual', path: '/pdfs/Semester4/Hydraulic Engineering/Extras/Hydraulic_Lab_Manual.pdf' },
     ]
   },
   'Transportation Engineering': {
+    syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S2_JUNE_2025.pdf' },
@@ -306,6 +342,7 @@ const resources = {
     ]
   },
   'Structural Analysis': {
+    syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S2_JUNE_2025.pdf' },
@@ -314,6 +351,7 @@ const resources = {
     ]
   },
   'Construction Engineering & Management': {
+    syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S2_JUNE_2025.pdf' },
@@ -322,6 +360,7 @@ const resources = {
     ]
   },
   'Civil Engineering Societal & Global Impact': {
+    syllabus: false,
     pyq: [
     ],
     lab: [
@@ -329,6 +368,53 @@ const resources = {
   },
 
   // Semester 5 Resources
+  'Structural Design I': {
+    syllabus: false,
+    pyq: [
+
+    ],
+    lab: [
+    ]
+  },
+  'Environmental Engineering': {
+    syllabus: false,
+    pyq: [
+
+    ],
+  },
+  'Engineering Estimation & Costing': {
+    syllabus: false,
+    pyq: [
+
+       ],
+    lab: [
+    ]
+  },
+  'Hydrology & Water Resources Engineering': {
+    syllabus: false,
+    pyq: [
+
+      ],
+    lab: [
+    ]
+  },
+  'Plumbing (Water and Sanitation)': {
+    syllabus: false,
+    pyq: [
+
+    ],
+    lab: [
+    ]
+  },
+  'Professional Practice Law & Ethics': {
+    syllabus: false,
+    pyq: [
+
+    ],
+    lab: [
+    ]
+  },
+  // Semester 6 Resources
 };
 
 export default resources;

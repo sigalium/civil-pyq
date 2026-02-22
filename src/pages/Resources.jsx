@@ -11,7 +11,7 @@ import resources from '../data/resources'
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const emptySemesters = [ 5, 6, 7, 8];
+const emptySemesters = [ 6, 7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams()
@@ -36,8 +36,19 @@ const Resources = () => {
 
   const handleViewSyllabus = () => {
     setSelectedPdf(`${subject} - Syllabus`)
-    setSelectedPdfPath(`/pdfs/Semester${semester}/${subject}/Syllabus.pdf`)
+    const hasSubjectSpecificSyllabus = resources[subject]?.syllabus === true;
+
+    if (hasSubjectSpecificSyllabus) {
+      setSelectedPdfPath(`/pdfs/Semester${semester}/${subject}/Syllabus.pdf`)
+    } else {
+      setSelectedPdfPath(`/pdfs/Semester${semester}/Syllabus.pdf`)
+    }
     setShowPdfViewer(true)
+  }
+
+
+  if (semester && emptySemesters.includes(Number(semester))) {
+    return <NoContent semester={semester} />;
   }
 
   if (semester && emptySemesters.includes(Number(semester))) {
