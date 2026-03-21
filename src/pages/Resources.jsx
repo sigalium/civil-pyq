@@ -6,12 +6,12 @@ import ResourceList from '../components/ResourceList'
 import PDFViewer from '../components/PDFViewer'
 import NoContent from './NoContent'
 import './styles/Resources.css'
-import subjects from '../data/subjects'
+import subjects, { electives } from '../data/subjects'
 import resources from '../data/resources'
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const emptySemesters = [ 6, 7, 8];
+const emptySemesters = [ 7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams()
@@ -75,21 +75,25 @@ const Resources = () => {
 
         {semester && !subject && (
           <div className="subject-selection">
-            <BackButton onClick={() => navigate('/resources')} text="Select Semester" />
-            <h2 className="semester-title">Semester {semester}</h2>
-            <h3 className="select-subject-heading">Select Subject</h3>
-            <div className="subject-list">
-              {subjects[semester]?.map((subj) => (
-                <button
-                  key={subj}
-                  className="subject-btn"
-                  onClick={() => handleSubjectClick(subj)}
-                >
-                  {subj}
-                </button>
-              ))}
+              <BackButton onClick={() => navigate('/resources')} text="Select Semester" />
+              <h2 className="semester-title">Semester {semester}</h2>
+              <h3 className="select-subject-heading">Select Subject</h3>
+              <div className="subject-list">
+                {subjects[semester]?.map((subj) => {
+                  const isElective = electives.includes(subj); // Check mapping
+                  return (
+                    <button
+                      key={subj}
+                      className={`subject-btn ${isElective ? 'elective-glass' : ''}`}
+                      onClick={() => handleSubjectClick(subj)}
+                    >
+                      {subj}
+                      {isElective && <span className="elective-badge">Elective</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
         )}
 
         {subject && (

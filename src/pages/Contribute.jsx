@@ -18,11 +18,10 @@ const Contribute = () => {
   }
 
   const openWhatsApp = () => {
-    // Replace with your actual WhatsApp number
     window.open('https://chat.whatsapp.com/LhmeXEsQB9o0hkMp1Pm6jp', '_blank') 
   }
 
-  // Filter contributors by type
+
   const studentContributors = contributors.filter(contributor => contributor.type === 'student');
   const facultyContributors = contributors.filter(contributor => contributor.type === 'faculty');
 
@@ -46,10 +45,10 @@ const Contribute = () => {
             ) : (
               <div className="contribution-options fade-in-up">
                 <button className="option-btn whatsapp-btn" onClick={openWhatsApp}>
-                  <span className="btn-icon">💬</span> Contact via WhatsApp
+                  <span className="btn-icon">💬</span> Upload via WhatsApp
                 </button>
                 <button className="option-btn form-btn" onClick={openGoogleForm}>
-                  <span className="btn-icon">📝</span> Fill Google Form
+                  <span className="btn-icon">📝</span> Upload via Google Form
                 </button>
               </div>
             )}
@@ -64,7 +63,7 @@ const Contribute = () => {
                 key={index} 
                 className={`contributor-card ${contributor.isTopContributor ? 'top-contributor-glow' : ''}`}
               >
-                {/* Top Contributor Badge (Absolute Positioned) */}
+                {/* Top Contributor Badge */}
                 {contributor.isTopContributor && (
                   <div className="top-contributor-tag">
                     <span>👑</span> Top Contributor

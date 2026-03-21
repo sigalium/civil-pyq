@@ -308,6 +308,7 @@ const resources = {
   'Surveying and Geomatics': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/SG_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S2_JUNE_2025.pdf' },
     ],
@@ -317,6 +318,7 @@ const resources = {
   'Geotechnical Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/GTE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S2_JUNE_2025.pdf' },
     ],
@@ -324,7 +326,7 @@ const resources = {
   'Hydraulic Engineering': {
     syllabus: false,
     pyq: [
-      { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/ESE_JUNE_2025.pdf' },
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/HE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S2_JUNE_2025.pdf' },
        ],
@@ -335,6 +337,7 @@ const resources = {
   'Transportation Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Transportation Engineering/TE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S2_JUNE_2025.pdf' },
       ],
@@ -344,6 +347,8 @@ const resources = {
   'Structural Analysis': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_S1_JUNE_2026.pdf' },
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Structural Analysis/SA_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S2_JUNE_2025.pdf' },
     ],
@@ -353,15 +358,17 @@ const resources = {
   'Construction Engineering & Management': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S2_JUNE_2025.pdf' },
     ],
     lab: [
     ]
   },
-  'Civil Engineering Societal & Global Impact': {
+  'MNCAC 2': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2025', path: '/pdfs/Semester4/MNCAC 2/MNCAC2_ESE_JUNE_2025.pdf' },
     ],
     lab: [
     ]
@@ -371,7 +378,7 @@ const resources = {
   'Structural Design I': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Structural Design I/SD1_ESE_DEC_2025.pdf' },
     ],
     lab: [
     ]
@@ -379,13 +386,13 @@ const resources = {
   'Environmental Engineering': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Environmental Engineering/EE_ESE_DEC_2025.pdf' },
     ],
   },
   'Engineering Estimation & Costing': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Engineering Estimation & Costing/ESTM_ESE_DEC_2025.pdf' },
        ],
     lab: [
     ]
@@ -393,7 +400,7 @@ const resources = {
   'Hydrology & Water Resources Engineering': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Hydrology & Water Resources Engineering/HWRE_ESE_DEC_2025.pdf' },
       ],
     lab: [
     ]
@@ -401,7 +408,7 @@ const resources = {
   'Plumbing (Water and Sanitation)': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Plumbing (Water and Sanitation)/PLM_ESE_DEC_2025.pdf' },
     ],
     lab: [
     ]
@@ -409,7 +416,15 @@ const resources = {
   'Professional Practice Law & Ethics': {
     syllabus: false,
     pyq: [
-
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/Professional Practice Law & Ethics/LAW_ESE_DEC_2025.pdf' },
+    ],
+    lab: [
+    ]
+  },
+  'MOPEC 1': {
+    syllabus: false,
+    pyq: [
+      { name: 'ESE Dec 2025', path: '/pdfs/Semester5/MOPEC 1/MOPEC1_ESE_DEC_2025.pdf' },
     ],
     lab: [
     ]
