@@ -21,7 +21,7 @@ const Contribute = () => {
     window.open('https://chat.whatsapp.com/LhmeXEsQB9o0hkMp1Pm6jp', '_blank') 
   }
 
-
+  
   const studentContributors = contributors.filter(contributor => contributor.type === 'student');
   const facultyContributors = contributors.filter(contributor => contributor.type === 'faculty');
 

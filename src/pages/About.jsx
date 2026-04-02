@@ -25,7 +25,7 @@ const About = () => {
           <div className="profile-info">
             <h1>About Me</h1>
             <p className="bio">
-              Hi, I’m Priyangkam Bhuyan — a civil engineering graduate from the batch of 2028 at Girijananda Chowdhury University.
+              Hi, I’m Priyangkam Bhuyan — a civil engineering graduate from the batch of 2024 at Girijananda Chowdhury University.
               I'm the creator of CivilPYQ, a platform designed to make quality study materials and past year question papers 
               easily accessible to civil engineering students. My goal is to simplify exam preparation and support fellow 
               students with reliable resources—all in one convenient place.

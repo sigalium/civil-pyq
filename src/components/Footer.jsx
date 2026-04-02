@@ -9,7 +9,7 @@ const Footer = () => {
           <h4>GCU Links</h4>
           <a href="https://gcuniversity.ac.in/school-of-engineering-and-technology/" target="_blank" rel="noopener noreferrer">Academics</a>         
           <a href="https://gcuniversity.ac.in/" target="_blank" rel="noopener noreferrer">GCU Website</a> 
-          <a href="https://gcu-dl.bsmlib.com/" target="_blank" rel="noopener noreferrer">Digital Library</a>  
+          <a href="https://gcu-dl.bsmlib.cloud/" target="_blank" rel="noopener noreferrer">Digital Library</a>  
           <a href="https://gcuniversity.ac.in/contact/" target="_blank" rel="noopener noreferrer">Contact GCU</a>
         </div>
         <div className="footer-links">

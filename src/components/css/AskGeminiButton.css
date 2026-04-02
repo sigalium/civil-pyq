@@ -1,0 +1,137 @@
+.ask-gemini-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, #1a73e8, #8ab4f8, #c5221f);
+  background-size: 200% 200%;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 2px;
+  cursor: pointer;
+  z-index: 2100;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+  animation: gradientShift 4s ease infinite, popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.ask-gemini-btn.open {
+  bottom: auto !important;
+  top: 10px !important;    
+  right: 16px !important;
+  animation: none;
+  transform: scale(0.9); 
+}
+
+@media (max-width: 600px) {
+  .ask-gemini-btn.open {
+    top: 60px !important;
+    right: 12px !important;
+    transform: scale(0.8);
+  }
+}
+
+.ask-gemini-btn .btn-content {
+  background: var(--secondary);
+  border-radius: 28px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s ease;
+}
+
+.ask-gemini-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(26, 115, 232, 0.5);
+}
+
+.ask-gemini-btn:hover .btn-content {
+  background: rgba(31, 41, 55, 0.9);
+}
+
+.gemini-icon {
+  color: #8ab4f8;
+}
+
+.btn-text {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.ask-gemini-btn.open {
+  background: var(--text-secondary);
+  animation: none;
+}
+.ask-gemini-btn.open .btn-content {
+  background: var(--primary);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.5) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .ask-gemini-btn {
+    bottom: 80px;
+    right: 16px;
+  }
+}
+
+/* --- HEADER STYLES --- */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1a1d24;
+}
+
+.close-session-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ef5350; /* A soft red to indicate 'disconnect/close' */
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-session-btn:hover {
+  background: rgba(239, 83, 80, 0.1);
+  border-color: rgba(239, 83, 80, 0.2);
+}
+
+/* --- MOBILE SPECIFIC OVERLAY TOP BUTTON --- */
+@media (max-width: 800px) {
+  .chat-interface {
+    /* Ensure the interface starts from the top of the viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* Extra padding for mobile status bars if needed */
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+}
