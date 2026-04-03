@@ -744,6 +744,11 @@
   }
 }
 
+.action-menu.force-show {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 .message-content-group:hover .action-menu.icon-only-bar {
   opacity: 1;
   background: transparent;

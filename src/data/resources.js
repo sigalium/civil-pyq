@@ -308,16 +308,19 @@ const resources = {
   'Surveying and Geomatics': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Surveying and Geomatics/SG_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/SG_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Surveying and Geomatics/Survey_S2_JUNE_2025.pdf' },
     ],
     lab: [
+      { name: 'SG Lab Manual', path: '/pdfs/Semester4/Surveying and Geomatics/Extras/SG_Lab_Manual.pdf' },
     ]
   },
   'Geotechnical Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Geotechnical Engineering/GTE_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/GTE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S2_JUNE_2025.pdf' },
@@ -326,6 +329,7 @@ const resources = {
   'Hydraulic Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Hydraulic Engineering/HE_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/HE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S2_JUNE_2025.pdf' },
@@ -348,6 +352,7 @@ const resources = {
     syllabus: false,
     pyq: [
       { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_S1_JUNE_2026.pdf' },
+      { name: 'Quiz June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_QZ_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Structural Analysis/SA_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Structural Analysis/Structural_S2_JUNE_2025.pdf' },
@@ -358,6 +363,7 @@ const resources = {
   'Construction Engineering & Management': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S2_JUNE_2025.pdf' },
@@ -429,7 +435,72 @@ const resources = {
     lab: [
     ]
   },
+
   // Semester 6 Resources
+  'Structural Design II': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Advanced Structural Analysis': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Reliability Analysis of Structures': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Soil Mechanics II': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Instrumentation & Sensor Technologies': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Intelligent Transportation Systems': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Sustainable and Green construction': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Open Channel flow': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+  'Environmental Impact Assessment': {
+    syllabus: false,
+    pyq: [
+    ],
+    lab: [
+    ]
+  },
+
 };
 
 export default resources;

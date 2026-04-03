@@ -134,7 +134,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
               )}
             </div>
             
-            <div className={`action-menu icon-only-bar ${msg.role}`}>
+            <div className={`action-menu icon-only-bar ${msg.role} ${activeMessageMenu === i ? 'force-show' : ''}`}>
               <button onClick={() => handleCopy(msg.text, i)} className="action-icon-btn" title="Copy text">
                 {copiedIndex === i ? <Check sx={{ fontSize: 14, color: '#43e6c2' }} /> : <ContentCopy sx={{ fontSize: 14 }} />}
               </button>
@@ -282,7 +282,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
     };   
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeMessageMenu]);
+  }, [isHeaderMenuOpen, activeMessageMenu]);
 
 
   const handlePlayVideo = () => {
@@ -606,7 +606,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
             controls={isVideoPlaying}
             playsInline
             preload="metadata"
-            poster="/Tutorial/Thumbnail.png"
+            poster="/Tutorial/Thumbnail.jpg"
             onPause={(e) => {
               if (!e.target.seeking) {
                 setIsVideoPlaying(false);

@@ -34,7 +34,7 @@ const About = () => {
               <a href="https://github.com/sigalium" className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-github"></i>
               </a>
-              <a href="#" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.linkedin.com/in/priyangkam-bhuyan-2b7a25386/" className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-linkedin"></i>
               </a>
               <a href="https://priyangkam.netlify.app" className="social-link" target="_blank" rel="noopener noreferrer">

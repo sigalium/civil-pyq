@@ -140,7 +140,7 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat }) => {
               )}
             </div>
             
-            <div className={`action-menu icon-only-bar ${msg.role}`}>
+            <div className={`action-menu icon-only-bar ${msg.role} ${activeMessageMenu === i ? 'force-show' : ''}`}>
               <button onClick={() => handleCopy(msg.text, i)} className="action-icon-btn" title="Copy text">
                 {copiedIndex === i ? <Check sx={{ fontSize: 14, color: '#43e6c2' }} /> : <ContentCopy sx={{ fontSize: 14 }} />}
               </button>
@@ -229,7 +229,7 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat }) => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isModeMenuOpen, isHeaderMenuOpen, showCustomPageMenu, activeMessageMenu]);
 
   const togglePage = (pageNum) => {
     setSelectedPages(prev => {
@@ -642,7 +642,7 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat }) => {
             controls={isVideoPlaying}
             playsInline
             preload="metadata"
-            poster="/Tutorial/Thumbnail.png"
+            poster="/Tutorial/Thumbnail.jpg"
             onPause={(e) => {
               if (!e.target.seeking) {
                 setIsVideoPlaying(false);
