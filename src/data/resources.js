@@ -315,6 +315,8 @@ const resources = {
     ],
     lab: [
       { name: 'SG Lab Manual', path: '/pdfs/Semester4/Surveying and Geomatics/Extras/SG_Lab_Manual.pdf' },
+      { name: 'SG Lab Manual 2', path: '/pdfs/Semester4/Surveying and Geomatics/Extras/SG_Lab_Manual_2.pdf' },
+      { name: 'SG Viva', path: '/pdfs/Semester4/Surveying and Geomatics/Extras/SG_Viva.pdf' },
     ]
   },
   'Geotechnical Engineering': {
@@ -325,10 +327,14 @@ const resources = {
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Geotechnical Engineering/Geotechnical_S2_JUNE_2025.pdf' },
     ],
+    lab: [
+      { name: 'GTE Lab Manual', path: '/pdfs/Semester4/Geotechnical Engineering/Extras/GTE_Lab_Manual.pdf' },
+    ]
   },
   'Hydraulic Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 2 June 2026', path: '/pdfs/Semester4/Hydraulic Engineering/HE_S2_JUNE_2026.pdf' },
       { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Hydraulic Engineering/HE_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/HE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Hydraulic Engineering/Hydraulic_S1_JUNE_2025.pdf' },
@@ -336,6 +342,8 @@ const resources = {
        ],
     lab: [
       { name: 'HE Lab Manual', path: '/pdfs/Semester4/Hydraulic Engineering/Extras/Hydraulic_Lab_Manual.pdf' },
+      { name: 'HE Viva 1', path: '/pdfs/Semester4/Hydraulic Engineering/Extras/HE_VIVA_1.pdf' },
+      { name: 'HE Viva 2', path: '/pdfs/Semester4/Hydraulic Engineering/Extras/HE_VIVA_2.pdf' },
     ]
   },
   'Transportation Engineering': {
@@ -346,11 +354,13 @@ const resources = {
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S2_JUNE_2025.pdf' },
       ],
     lab: [
+      { name: 'TE Lab Manual', path: '/pdfs/Semester4/Transportation Engineering/Extras/TE_Lab_Manual.pdf' },
     ]
   },
   'Structural Analysis': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 2 June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_S2_JUNE_2026.pdf' },
       { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_S1_JUNE_2026.pdf' },
       { name: 'Quiz June 2026', path: '/pdfs/Semester4/Structural Analysis/SA_QZ_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Structural Analysis/SA_ESE_JUNE_2025.pdf' },
@@ -363,6 +373,7 @@ const resources = {
   'Construction Engineering & Management': {
     syllabus: false,
     pyq: [
+      { name: 'Sessional 2 June 2026', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S2_JUNE_2026.pdf' },
       { name: 'Sessional 1 June 2026', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2026.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Construction Engineering & Management/CEM_S1_JUNE_2025.pdf' },
@@ -377,6 +388,13 @@ const resources = {
       { name: 'ESE June 2025', path: '/pdfs/Semester4/MNCAC 2/MNCAC2_ESE_JUNE_2025.pdf' },
     ],
     lab: [
+      { name: 'MNCAC 2 Booklet', path: '/pdfs/Semester4/MNCAC 2/Extras/Booklet.pdf' },
+      { name: 'Unit 1', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit1.pdf' },
+      { name: 'Unit 2', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit2.pdf' },
+      { name: 'Unit 3', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit3.pdf' },
+      { name: 'Unit 4', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit4.pdf' },
+      { name: 'Unit 5', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit5.pdf' },
+      { name: 'Unit 6', path: '/pdfs/Semester4/MNCAC 2/Extras/Unit6.pdf' },
     ]
   },
 
