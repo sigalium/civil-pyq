@@ -349,6 +349,8 @@ const resources = {
   'Transportation Engineering': {
     syllabus: false,
     pyq: [
+      { name: 'ESE June 2026', path: '/pdfs/Semester4/Transportation Engineering/TE_ESE_JUNE_2026.pdf' },
+      { name: 'Quiz June 2025', path: '/pdfs/Semester4/Transportation Engineering/TE_QUIZ_JUNE_2025.pdf' },
       { name: 'ESE June 2025', path: '/pdfs/Semester4/Transportation Engineering/TE_ESE_JUNE_2025.pdf' },
       { name: 'Sessional 1 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S1_JUNE_2025.pdf' },
       { name: 'Sessional 2 June 2025', path: '/pdfs/Semester4/Transportation Engineering/Transportation_S2_JUNE_2025.pdf' },
