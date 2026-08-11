@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: linear-gradient(135deg, #1a73e8, #8ab4f8, #c5221f);
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent), white 45%), var(--accent));
   background-size: 200% 200%;
   color: white;
   border: none;
@@ -43,15 +43,15 @@
 
 .ask-gemini-btn:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 10px 25px rgba(26, 115, 232, 0.5);
+  box-shadow: 0 10px 25px rgba(var(--accent-rgb), 0.5);
 }
 
 .ask-gemini-btn:hover .btn-content {
-  background: rgba(31, 41, 55, 0.9);
+  background: rgba(var(--primary-rgb), 0.9);
 }
 
 .gemini-icon {
-  color: #8ab4f8;
+  color: var(--accent);
 }
 
 .btn-text {
@@ -86,19 +86,31 @@
   }
 }
 
+.ask-gemini-btn.windowed {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+.ask-gemini-btn.windowed.open {
+  top: 10px !important;
+  bottom: auto !important;
+  right: 12px !important;
+}
+
 /* --- HEADER STYLES --- */
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1a1d24;
+  border-bottom: 1px solid rgba(var(--glass-rgb), 0.1);
+  background: var(--secondary);
 }
 
 .close-session-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--glass-rgb), 0.05);
+  border: 1px solid rgba(var(--glass-rgb), 0.1);
   color: #ef5350; /* A soft red to indicate 'disconnect/close' */
   padding: 4px 12px;
   border-radius: 6px;

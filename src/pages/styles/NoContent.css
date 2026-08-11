@@ -42,5 +42,5 @@
 
 .contribute-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+  box-shadow: 0 5px 15px rgba(var(--accent-rgb), 0.3);
 }

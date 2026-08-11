@@ -76,7 +76,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 5px 15px rgba(100, 255, 218, 0.1);
+  box-shadow: 0 5px 15px rgba(var(--accent-rgb), 0.1);
 }
 
 .notfound-home-btn:hover {

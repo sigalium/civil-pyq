@@ -1,8 +1,9 @@
-import { Close, ZoomIn, ZoomOut, Download, Fullscreen, FullscreenExit } from '@mui/icons-material';
+import { Close, ZoomIn, ZoomOut, Download, Fullscreen, FullscreenExit, Remove } from '@mui/icons-material';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useState, useEffect, useRef } from 'react';
 import AIChatWidget from './AIChatWidget';
 import AskGeminiButton from './AskGeminiButton';
+import { CACHE_NAME, isOfflineSupported } from '../utils/offlineStorage';
 import './css/PDFViewer.css';
 
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
@@ -10,9 +11,21 @@ pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const isMobile = window.matchMedia('(max-width: 800px)').matches;
 
-const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
+const PDFViewer = ({
+  pdfName,
+  pdfPath,
+  onClose,
+  onMinimize,
+  hidden = false,
+  windowed = false,
+  closeOnOutsideClick = true,
+  isFocused = true,
+  externalClosing = false,
+}) => {
   const [numPages, setNumPages] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageHeight, setPageHeight] = useState(null);
+  const [loadProgress, setLoadProgress] = useState(null);
   const [scale, setScale] = useState(isMobile ? 0.5 : 1.0);
   const [isClosing, setIsClosing] = useState(false);
   const [showPageIndicator, setShowPageIndicator] = useState(false);
@@ -21,18 +34,12 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   const modalRef = useRef(null);
   const contentRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
-  const hasPushedStateRef = useRef(false);
-  const prevHistoryStateRef = useRef(null);
 
-  const handleClose = (calledFromPopstate = false) => {
+  const closing = isClosing || externalClosing;
+
+  const handleClose = () => {
     setIsClosing(true);
-    if (hasPushedStateRef.current) {
-      if (!calledFromPopstate) {
-        try { window.history.replaceState(prevHistoryStateRef.current, '', window.location.href); } catch (e) {}
-      }
-      hasPushedStateRef.current = false;
-    }
-    setTimeout(() => { onClose(); }, 300);
+    if (!externalClosing) setTimeout(() => { onClose(); }, 340);
   };
 
   const toggleFullscreen = () => {
@@ -46,39 +53,11 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.history && window.history.pushState) {
-      prevHistoryStateRef.current = window.history.state;
-      try {
-        window.history.pushState({ __pdfViewer: true }, '');
-        hasPushedStateRef.current = true;
-      } catch (e) {}
-    }
-
-    const handlePopState = (event) => {
-      if (!hasPushedStateRef.current) return;
-      hasPushedStateRef.current = false;
-      if (isChatOpen && isMobile) {
-          setIsChatOpen(false);
-          try { window.history.pushState({ __pdfViewer: true }, ''); hasPushedStateRef.current = true; } catch (e) {}
-      } else {
-          handleClose(true);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      if (hasPushedStateRef.current) {
-        try { window.history.replaceState(prevHistoryStateRef.current, '', window.location.href); } catch (e) {}
-        hasPushedStateRef.current = false;
-      }
-    };
-  }, [isChatOpen]);
-
-  useEffect(() => {
+    if (hidden) return;
     if (isMobile) setScale(0.5);
     else setScale(1.0);
     const handleClickOutside = (event) => {
+      if (!closeOnOutsideClick) return;
       if (event.target.closest('.ask-gemini-btn')) return;
       
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -88,7 +67,7 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         if (isFullscreen) toggleFullscreen();
-        else handleClose();
+        else if (isFocused) handleClose();
       }
     };
 
@@ -100,50 +79,78 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
       document.removeEventListener('keydown', handleKeyDown);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, hidden, closeOnOutsideClick, isFocused]);
 
   useEffect(() => {
     const contentElement = contentRef.current;
     if (!contentElement) return;
+    let ticking = false;
+
     const handleScroll = () => {
-      setShowPageIndicator(true);
-      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = setTimeout(() => { setShowPageIndicator(false); }, 1500);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setShowPageIndicator(true);
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = setTimeout(() => { setShowPageIndicator(false); }, 1500);
+
+        if (numPages) {
+          const scrollTop = contentElement.scrollTop;
+          const scrollHeight = contentElement.scrollHeight;
+          const pageStep = scrollHeight / numPages;
+          const calculatedPage = Math.floor(scrollTop / pageStep) + 1;
+          setCurrentPage((prev) => {
+            const next = Math.min(Math.max(1, calculatedPage), numPages);
+            return next === prev ? prev : next;
+          });
+        }
+        ticking = false;
+      });
     };
 
-    contentElement.addEventListener('scroll', handleScroll);
+    contentElement.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       contentElement.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     };
-  }, []);
-
-  useEffect(() => {
-    const contentElement = contentRef.current;
-    if (!contentElement || !numPages) return;
-
-    const handleScrollTrackPage = () => {
-      const scrollTop = contentElement.scrollTop;
-      const scrollHeight = contentElement.scrollHeight;
-      const pageHeight = scrollHeight / numPages;
-      const calculatedPage = Math.floor(scrollTop / pageHeight) + 1;
-      setCurrentPage(Math.min(Math.max(1, calculatedPage), numPages));
-    };
-
-    contentElement.addEventListener('scroll', handleScrollTrackPage);
-    return () => contentElement.removeEventListener('scroll', handleScrollTrackPage);
   }, [numPages]);
 
   const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.2, 5.0));
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
-  const handleDownload = () => {
+
+  useEffect(() => {
+    setPageHeight(null);
+  }, [scale]);
+
+  const downloadFromUrl = (url, revokeAfter = false) => {
     const link = document.createElement('a');
-    link.href = pdfPath;
+    link.href = url;
     link.download = pdfName || 'document.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    if (revokeAfter) {
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (isOfflineSupported()) {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(pdfPath);
+        if (cached) {
+          const blob = await cached.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          downloadFromUrl(blobUrl, true);
+          return;
+        }
+      } catch {
+        return downloadFromUrl(pdfPath);
+      }
+    }
+    downloadFromUrl(pdfPath);
   };
 
   const aiButtonText = 
@@ -156,15 +163,22 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
 
   return (
     <>
-      <div className={`pdf-viewer-overlay ${isClosing ? 'closing' : ''} ${isFullscreen ? 'fullscreen-mode' : ''}`}>
+      <div
+        className={`pdf-viewer-overlay ${closing ? 'closing' : ''} ${isFullscreen ? 'fullscreen-mode' : ''} ${hidden ? 'pdf-window-hidden' : ''} ${windowed ? 'pdf-window-mode' : ''}`}
+      >
         <div 
-          className={`pdf-viewer-container ${isClosing ? 'closing' : ''} ${isChatOpen ? 'expanded-modal' : ''}`}
+          className={`pdf-viewer-container ${closing ? 'closing' : ''} ${isChatOpen ? 'expanded-modal' : ''}`}
           ref={modalRef}
           >
           <div className="pdf-viewer-header pdf-viewer-header-fixed">
             <h3>{pdfName}</h3>
             <div className="header-actions">
-              <button className="close-btn" onClick={() => handleClose(false)}>
+              {onMinimize && (
+                <button className="minimize-btn" onClick={onMinimize} aria-label="Minimize">
+                  <Remove />
+                </button>
+              )}
+              <button className="close-btn" onClick={handleClose}>
                 <Close />
               </button>
             </div>
@@ -179,18 +193,46 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
                   <Document
                     file={pdfPath}
                     onLoadSuccess={onDocumentLoadSuccess}
-                    loading={<div>Loading PDF...</div>}
+                    onLoadProgress={({ loaded, total }) => {
+                      setLoadProgress(total > 0 ? Math.round((loaded / total) * 100) : null);
+                    }}
+                    loading={
+                      <div className="pdf-loading-state">
+                        <div className="pdf-loading-spinner" />
+                        <span>{loadProgress !== null ? `Loading PDF… ${loadProgress}%` : 'Loading PDF…'}</span>
+                      </div>
+                    }
                   >
                     {numPages &&
-                      Array.from({ length: numPages }, (_, index) => (
-                        <Page
-                          key={`page_${index + 1}`}
-                          pageNumber={index + 1}
-                          scale={scale}
-                          renderTextLayer={false}
-                          renderAnnotationLayer={false}
-                        />
-                      ))}
+                      Array.from({ length: numPages }, (_, index) => {
+                        const pageNumber = index + 1;
+                        const inRange = pageNumber >= currentPage - 2 && pageNumber <= currentPage + 2;
+                        if (inRange) {
+                          return (
+                            <Page
+                              key={`page_${pageNumber}`}
+                              pageNumber={pageNumber}
+                              scale={scale}
+                              renderTextLayer={false}
+                              renderAnnotationLayer={false}
+                              loading={
+                                <div className="pdf-page-loading" style={{ height: pageHeight ? `${pageHeight}px` : '842px' }}>
+                                  <div className="pdf-loading-spinner small" />
+                                </div>
+                              }
+                              onLoadSuccess={(page) => {
+                                setPageHeight((prev) => prev ?? page.height);
+                              }}
+                            />
+                          );
+                        }
+                        return (
+                          <div
+                            key={`page_${pageNumber}`}
+                            style={{ height: pageHeight ? `${pageHeight}px` : '842px', marginBottom: '8px' }}
+                          />
+                        );
+                      })}
                   </Document>
                 </div>
               </div>
@@ -222,21 +264,22 @@ const PDFViewer = ({ pdfName, pdfPath, onClose }) => {
                   pdfName={pdfName} 
                   numPages={numPages}
                   onCloseChat={() => setIsChatOpen(false)}
+                  pdfContainerRef={contentRef}
                 />
               </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Floating Button */}
-      {!isClosing && (
-        <AskGeminiButton 
-          isOpen={isChatOpen} 
-          onClick={() => setIsChatOpen(!isChatOpen)} 
-          buttonText={aiButtonText}
-        />
-      )}
+        {!closing && !hidden && isFocused && (
+          <AskGeminiButton 
+            isOpen={isChatOpen} 
+            onClick={() => setIsChatOpen(!isChatOpen)} 
+            buttonText={aiButtonText}
+            windowed={windowed}
+          />
+        )}
+      </div>
     </>
   );
 };

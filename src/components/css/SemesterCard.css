@@ -28,5 +28,5 @@
   font-weight: 800;
   margin-top: 0.5rem;
   letter-spacing: 1px;
-  text-shadow: 0 2px 8px rgba(100, 255, 218, 0.1);
+  text-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.1);
 }

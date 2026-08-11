@@ -1,12 +1,154 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-:root {
+:root,
+[data-theme="nebula"] {
   --primary: #0a192f;
+  --primary-rgb: 10, 25, 47;
   --secondary: #172a45;
+  --secondary-rgb: 23, 42, 69;
   --accent: #64ffda;
+  --accent-rgb: 100, 255, 218;
   --text-primary: #e6f1ff;
   --text-secondary: #8892b0;
+  --text-secondary-rgb: 136, 146, 176;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'Montserrat', sans-serif;
   --transition: all 0.3s ease-in-out;
+}
+
+[data-theme="aurora"] {
+  --primary: #051815;
+  --primary-rgb: 5, 24, 21;
+  --secondary: #0d2f27;
+  --secondary-rgb: 13, 47, 39;
+  --accent: #2de8b0;
+  --accent-rgb: 45, 232, 176;
+  --text-primary: #e4fff5;
+  --text-secondary: #7fb8a8;
+  --text-secondary-rgb: 127, 184, 168;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Space Grotesk', sans-serif;
+}
+
+[data-theme="sunset"] {
+  --primary: #2b0f14;
+  --primary-rgb: 43, 15, 20;
+  --secondary: #3d1a1f;
+  --secondary-rgb: 61, 26, 31;
+  --accent: #ff7a59;
+  --accent-rgb: 255, 122, 89;
+  --text-primary: #ffe9e0;
+  --text-secondary: #c98d7c;
+  --text-secondary-rgb: 201, 141, 124;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Fraunces', serif;
+  --font-body: 'Fraunces', serif;
+}
+
+[data-theme="ocean"] {
+  --primary: #eaf6ff;
+  --primary-rgb: 234, 246, 255;
+  --secondary: #d3ecfc;
+  --secondary-rgb: 211, 236, 252;
+  --accent: #0284c7;
+  --accent-rgb: 2, 132, 199;
+  --text-primary: #0b2942;
+  --text-secondary: #4c7a9c;
+  --text-secondary-rgb: 76, 122, 156;
+  --glass-rgb: 11, 41, 66;
+  --font-heading: 'Nunito', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+}
+
+[data-theme="paper"] {
+  --primary: #f7f1e3;
+  --primary-rgb: 247, 241, 227;
+  --secondary: #efe6d0;
+  --secondary-rgb: 239, 230, 208;
+  --accent: #8a5a3b;
+  --accent-rgb: 138, 90, 59;
+  --text-primary: #2c2417;
+  --text-secondary: #7a6a52;
+  --text-secondary-rgb: 122, 106, 82;
+  --glass-rgb: 44, 36, 23;
+  --font-heading: 'Literata', serif;
+  --font-body: 'Literata', serif;
+}
+
+[data-theme="cyber"] {
+  --primary: #0d0221;
+  --primary-rgb: 13, 2, 33;
+  --secondary: #1a0b2e;
+  --secondary-rgb: 26, 11, 46;
+  --accent: #ff2fd4;
+  --accent-rgb: 255, 47, 212;
+  --text-primary: #f4e8ff;
+  --text-secondary: #b48ccf;
+  --text-secondary-rgb: 180, 140, 207;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Orbitron', sans-serif;
+}
+
+[data-theme="forest"] {
+  --primary: #0d1f14;
+  --primary-rgb: 13, 31, 20;
+  --secondary: #16301f;
+  --secondary-rgb: 22, 48, 31;
+  --accent: #7ed957;
+  --accent-rgb: 126, 217, 87;
+  --text-primary: #eaffe0;
+  --text-secondary: #8fb593;
+  --text-secondary-rgb: 143, 181, 147;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Quicksand', sans-serif;
+  --font-body: 'Quicksand', sans-serif;
+}
+
+[data-theme="monochrome"] {
+  --primary: #101010;
+  --primary-rgb: 16, 16, 16;
+  --secondary: #1e1e1e;
+  --secondary-rgb: 30, 30, 30;
+  --accent: #d9d9d9;
+  --accent-rgb: 217, 217, 217;
+  --text-primary: #f2f2f2;
+  --text-secondary: #8c8c8c;
+  --text-secondary-rgb: 140, 140, 140;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+[data-theme="blossom"] {
+  --primary: #fff0f5;
+  --primary-rgb: 255, 240, 245;
+  --secondary: #ffe0eb;
+  --secondary-rgb: 255, 224, 235;
+  --accent: #d6336c;
+  --accent-rgb: 214, 51, 108;
+  --text-primary: #4a1027;
+  --text-secondary: #a6607a;
+  --text-secondary-rgb: 166, 96, 122;
+  --glass-rgb: 74, 16, 39;
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+}
+
+[data-theme="eclipse"] {
+  --primary: #0a0a18;
+  --primary-rgb: 10, 10, 24;
+  --secondary: #15152b;
+  --secondary-rgb: 21, 21, 43;
+  --accent: #a78bfa;
+  --accent-rgb: 167, 139, 250;
+  --text-primary: #ede9fe;
+  --text-secondary: #9ca3c4;
+  --text-secondary-rgb: 156, 163, 196;
+  --glass-rgb: 255, 255, 255;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Space Grotesk', sans-serif;
 }
 
 * {
@@ -15,17 +157,52 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   background-color: var(--primary);
   color: var(--text-primary);
   min-height: 100vh;
+  width: 100%;
   overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--accent-rgb), 0.4) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--accent-rgb), 0.35);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--accent-rgb), 0.6);
+  background-clip: padding-box;
 }
 
 .fade-in {

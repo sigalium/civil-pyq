@@ -47,7 +47,7 @@
 }
 
 .footer-logo-link {
-  color: #fff;
+  color: var(--text-primary);
   font-weight: bold;
   text-decoration: none;
   transition: color 0.2s;
@@ -63,7 +63,7 @@
   max-width: 1200px;
   margin: 2rem auto 0;
   padding-top: 1rem;
-  border-top: 1px solid rgba(136, 146, 176, 0.2);
+  border-top: 1px solid rgba(var(--text-secondary-rgb), 0.2);
   text-align: center;
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -103,12 +103,12 @@
 
   .footer-links, 
   .footer-contact {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--glass-rgb), 0.05);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(var(--glass-rgb), 0.1);
     text-align: center;
     width: 100%;
   }
@@ -129,7 +129,7 @@
     display: block;
     padding: 0.6rem 0;
     margin: 0 auto;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(var(--glass-rgb), 0.1);
     transition: all 0.3s ease;
     max-width: fit-content;
   }
@@ -137,7 +137,7 @@
   .footer-bottom {
     margin-top: 2.5rem;
     padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(var(--glass-rgb), 0.2);
     text-align: center;
     width: 100%;
   }

@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import profileImage from '../assets/profile3.png'
 import './styles/About.css'
 
 const About = () => {
@@ -12,20 +11,16 @@ const About = () => {
       <div className="about-container">
         <section className="profile-section">
           <div className="profile-pic">
-            <img 
-              src={profileImage} 
-              alt="Profile" 
+            <img
+              src="/emoji_sunglasses.svg"
+              alt="Profile"
               className="profile-image"
-              onError={(e) => {
-                e.target.onerror = null
-                e.target.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='35' fill='%2364ffda'/%3E%3C/svg%3E"
-              }}
             />
           </div>
           <div className="profile-info">
             <h1>About Me</h1>
             <p className="bio">
-              Hi, I’m Priyangkam Bhuyan — a civil engineering graduate from the batch of 2024 at Girijananda Chowdhury University.
+              Hi, I’m Priyangkam Bhuyan — a civil engineering graduate from the batch of 2028 at Girijananda Chowdhury University.
               I'm the creator of CivilPYQ, a platform designed to make quality study materials and past year question papers 
               easily accessible to civil engineering students. My goal is to simplify exam preparation and support fellow 
               students with reliable resources—all in one convenient place.

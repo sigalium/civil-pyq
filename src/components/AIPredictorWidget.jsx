@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useId } from 'react';
 import { Send, Key, PlayCircleOutline, AutoAwesome, ExpandMore, ExpandLess, ContentCopy, Check, 
          Reply, Download, Edit, Close, Description, MoreVert, DeleteOutline, Logout, DeleteForever, KeyboardArrowDown } from '@mui/icons-material';
 import './css/AIPredictorWidget.css';
@@ -11,9 +11,13 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
+import { recordGeminiRequest, getGeminiUsageToday } from '../utils/geminiUsageTracker';
+import { createSecureId } from '../utils/secureId';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+const GEMINI_MODEL = 'gemini-3.5-flash';
 
 const cleanLatexForDownload = (rawText) => {
     let text = rawText;
@@ -69,22 +73,15 @@ const cleanLatexForDownload = (rawText) => {
     return text;
   };
 
-const createSecureId = (keyString) => {
-  let hash = 0;
-  for (let i = 0; i < keyString.length; i++) {
-    hash = ((hash << 5) - hash) + keyString.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16);
-};
-
 const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
+  const instanceId = useId();
   const [apiKey, setApiKey] = useState('');
   const [isKeySaved, setIsKeySaved] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [userInput, setUserInput] = useState('');
   const [isCrunchingPdfs, setIsCrunchingPdfs] = useState(true); 
+  const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const [extractedImages, setExtractedImages] = useState([]);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isSessionOnly, setIsSessionOnly] = useState(false);
@@ -98,16 +95,18 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState(null);
   const [showRemoveKeyModal, setShowRemoveKeyModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [usageToday, setUsageToday] = useState(0);
 
   const videoRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const chatMessagesRef = useRef(null);
 
   const renderedMessages = useMemo(() => {
     return messages.map((msg, i) => (
-      <div key={msg.id || i} id={`msg-${msg.id || i}`} className={`message-wrapper ${msg.role}`}>
+      <div key={msg.id || i} id={`msg-${instanceId}-${msg.id || i}`} className={`message-wrapper ${msg.role}`}>
         <div className="message-content-group">          
           <div className={`bubble-actions-row ${msg.role}`}>        
-            <div id={`bubble-${msg.id || i}`} className={`message-bubble ${msg.role}`}>
+            <div id={`bubble-${instanceId}-${msg.id || i}`} className={`message-bubble ${msg.role}`}>
               {msg.replyTo && (
                 <div 
                   className="in-bubble-reply-box" 
@@ -192,7 +191,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
         </div>
       </div>
     ));
-  }, [messages, copiedIndex, activeMessageMenu, deleteConfirmIndex]);
+  }, [messages, copiedIndex, activeMessageMenu, deleteConfirmIndex, instanceId]);
 
 
   // --- PDF ENGINE ---
@@ -203,6 +202,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       try {
         const allImages = [];
         let processedPdfs = 0;
+        setPdfProgress({ done: 0, total: pdfList.length });
 
         for (const pdf of pdfList) {
           const loadingTask = pdfjs.getDocument(pdf.path);
@@ -225,6 +225,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
             });
           }
           processedPdfs++;
+          setPdfProgress({ done: processedPdfs, total: pdfList.length });
         }
 
         setExtractedImages(allImages);
@@ -247,7 +248,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
     setMessages([{ id: initUserId, role: 'user', text: "Analyze these past papers and provide a master blueprint." }]);
     
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -257,7 +258,9 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       });
 
       const data = await response.json();
-      if (data.error) throw new Error(data.error.message);        
+      if (data.error) throw new Error(data.error.message);
+      recordGeminiRequest(apiKey);
+      setUsageToday(getGeminiUsageToday(apiKey));
 
       const initAiId = 'init-ai-' + Date.now();
       setMessages(prev => [...prev, { id: initAiId, role: 'ai', text: data.candidates[0].content.parts[0].text }]);
@@ -297,7 +300,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
   };
 
   const scrollToMessage = (msgId) => {
-    const element = document.getElementById(`msg-${msgId}`);
+    const element = document.getElementById(`msg-${instanceId}-${msgId}`);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       element.classList.add('highlight-pulse');
@@ -324,6 +327,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
     if (savedKey) {
       setApiKey(savedKey);
       setIsKeySaved(true);
+      setUsageToday(getGeminiUsageToday(savedKey));
       const secureId = createSecureId(savedKey);
       const savedMessages = localStorage.getItem(`predictor_${subject}_${secureId}`);
       if (savedMessages) {
@@ -363,7 +367,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       }
       setIsKeySaved(true);
       const secureId = createSecureId(currentKey);
-      const savedMessages = localStorage.getItem(`chat_${pdfName}_${secureId}`);
+      const savedMessages = localStorage.getItem(`predictor_${subject}_${secureId}`);
       
       if (savedMessages) {
         setMessages(JSON.parse(savedMessages));
@@ -412,7 +416,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
 
   const handleDownloadPDF = async (msgId) => {
     try {
-      const element = document.getElementById(`bubble-${msgId}`);
+      const element = document.getElementById(`bubble-${instanceId}-${msgId}`);
       if (!element) return;
       const canvas = await html2canvas(element, {
         scale: 1,
@@ -432,7 +436,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       });
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      const cleanName = pdfName ? pdfName.replace('.pdf', '') : subject;
+      const cleanName = subject || 'Predictor';
       pdf.save(`${cleanName}_AI_Solution.pdf`);
       
     } catch (error) {
@@ -443,7 +447,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
 
   const handleDownloadFullChat = async () => {
     try {
-      const element = document.querySelector('.chat-messages');
+      const element = chatMessagesRef.current;
       if (!element) return;
       const canvas = await html2canvas(element, {
         scale: 1.0,
@@ -474,9 +478,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
 
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       
-      const fileName = pdfName 
-        ? `${pdfName.replace('.pdf', '')}_Full_Chat.pdf` 
-        : `${subject}_Full_History.pdf`;
+      const fileName = `${subject || 'Predictor'}_Full_History.pdf`;
 
       pdf.save(fileName);
       setIsHeaderMenuOpen(false);
@@ -541,7 +543,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       
       chatHistory.push({ role: 'user', parts: [{ text: contextAddition + textToSend }] });
       
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -551,13 +553,16 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       });
 
       const data = await response.json();
-      if (data.error) throw new Error(data.error.message);  
-      
+      if (data.error) throw new Error(data.error.message);
+      recordGeminiRequest(apiKey);
+      setUsageToday(getGeminiUsageToday(apiKey));
+
+      let answer = data.candidates[0].content.parts[0].text;
       answer = answer.replace(/\n{3,}/g, '\n\n');
       answer = answer.trim();
       
       const newAiId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-      setMessages(prev => [...prev, { id: newAiId, role: 'ai', text: data.candidates[0].content.parts[0].text }]);
+      setMessages(prev => [...prev, { id: newAiId, role: 'ai', text: answer }]);
     } catch (error) {
       setMessages(prev => [...prev, { id: 'err-' + Date.now(), role: 'ai', text: `API Error: ${error.message}` }]);
     } finally {
@@ -565,6 +570,49 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
     }
 
   };
+
+  if (isKeySaved && isCrunchingPdfs) {
+    const percent = pdfProgress.total > 0 ? Math.round((pdfProgress.done / pdfProgress.total) * 100) : 0
+    const circumference = 2 * Math.PI * 52
+
+    return (
+      <div className="ai-setup-container fade-in">
+        <div className="setup-header">
+          <AutoAwesome className="setup-icon" />
+          <h3>Reading past papers…</h3>
+        </div>
+        <div className="setup-info-block">
+          <div className="predictor-loader">
+            <svg viewBox="0 0 120 120" className="predictor-loader-ring">
+              <circle className="predictor-loader-track" cx="60" cy="60" r="52" />
+              <circle
+                className="predictor-loader-progress"
+                cx="60"
+                cy="60"
+                r="52"
+                style={{
+                  strokeDasharray: circumference,
+                  strokeDashoffset: circumference - (circumference * percent) / 100,
+                }}
+              />
+            </svg>
+            <div className="predictor-loader-center">
+              <span className="predictor-loader-percent">{percent}%</span>
+              <span className="predictor-loader-label">
+                {pdfProgress.total > 0 ? `${pdfProgress.done}/${pdfProgress.total} papers` : 'starting'}
+              </span>
+            </div>
+          </div>
+          <p className="setup-desc-clean" style={{ textAlign: 'center' }}>
+            {pdfProgress.total > 0
+              ? `Reading papers for ${subject}…`
+              : `Preparing ${pdfList?.length || 0} papers for ${subject}...`}
+          </p>
+          <p className="setup-subtext" style={{ textAlign: 'center' }}>This can take a moment for longer papers — please keep this tab open.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isKeySaved) {
     return (
@@ -706,11 +754,11 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       
       <div className="chat-header">
         <div className="chat-title">
-          <AutoAwesome sx={{ fontSize: 18, color: '#8ab4f8' }} />
+          <AutoAwesome sx={{ fontSize: 18, color: 'var(--accent)' }} />
           <span>Gemini Assistant</span>
+          {isKeySaved && <span className="usage-today-badge">{usageToday} today</span>}
         </div>
         
-        {/* --- HEADER MENU --- */}
         <div className="header-menu-container" ref={headerMenuRef}>
           <button 
             type="button"
@@ -728,7 +776,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
                   </button>
                 )}
                 <button type="button" className="dropdown-item" onClick={handleDownloadFullChat}>
-                  <Download sx={{ fontSize: 16, color: '#8ab4f8' }} /> Download Full Chat (.pdf)
+                  <Download sx={{ fontSize: 16, color: 'var(--accent)' }} /> Download Full Chat (.pdf)
                 </button>
                 <button type="button" className="dropdown-item" onClick={() => setShowRemoveKeyModal(true)}>
                   <Logout sx={{ fontSize: 16 }} /> Remove API Key
@@ -739,7 +787,7 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       </div>
 
       <div className="chat-messages-wrapper">
-        <div className="chat-messages" onScroll={handleScroll}>
+        <div className="chat-messages" ref={chatMessagesRef} onScroll={handleScroll}>
           {renderedMessages}           {/* Messages were lagging due to frequent re-renders. DO NOT REMOVE */}
           {isLoading && (
             <div className="message-wrapper ai">
@@ -751,7 +799,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Scroll Button */}
         {showScrollButton && (
           <button 
             className="scroll-to-bottom-btn" 
@@ -764,7 +811,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
       </div>
       <div className="chat-input-area">
         
-        {/* --- REPLY BANNER --- */}
         {replyToMsg && (
           <div className="reply-banner fade-in">
             <div className="reply-banner-content">
@@ -777,7 +823,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
           </div>
         )}
         
-        {/* --- NEW: QUICK ACTION PILLS (Replaced Pages Grid) --- */}
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' }}>
           <button 
             type="button"
@@ -805,7 +850,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
           </button>
         </div>
 
-        {/* --- TEXT INPUT ROW --- */}
         <form className="text-input-row" onSubmit={(e) => handleSendMessage(e, null)}>
           <input 
             type="text" 

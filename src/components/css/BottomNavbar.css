@@ -10,7 +10,7 @@
   padding: 0.8rem 0;
   z-index: 999;
   box-shadow: 0 -4px 12px rgba(2, 12, 27, 0.5);
-  border-top: 1px solid rgba(100, 255, 218, 0.1);
+  border-top: 1px solid rgba(var(--accent-rgb), 0.1);
 }
 
 .bottom-nav-item {
@@ -29,7 +29,7 @@
 
 .bottom-nav-item.active {
   color: var(--accent);
-  background-color: rgba(100, 255, 218, 0.1);
+  background-color: rgba(var(--accent-rgb), 0.1);
   transform: translateY(-6px);
   box-shadow: 0 4px 12px rgba(2, 12, 27, 0.5);
 }
@@ -87,4 +87,85 @@
   .bottom-nav-label {
     font-size: 0.65rem;
   }
+}
+.bottom-navbar {
+  padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
+}
+
+.bottom-nav-item-button {
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.94);
+}
+
+.bottom-nav-item.active:active {
+  transform: translateY(-6px) scale(0.96);
+}
+
+.account-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+}
+
+.account-sheet {
+  width: 100%;
+  background-color: var(--primary);
+  border-radius: 20px 20px 0 0;
+  padding: 0.6rem 0 calc(1.25rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.account-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(var(--glass-rgb), 0.3);
+  margin: 0.5rem auto 0.75rem;
+}
+
+.account-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem 0.75rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(var(--glass-rgb), 0.1);
+  margin-bottom: 0.5rem;
+}
+
+.account-sheet-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+}
+
+.account-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.9rem 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.account-sheet-item:active {
+  background: rgba(var(--accent-rgb), 0.1);
 }
