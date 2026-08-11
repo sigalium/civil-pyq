@@ -1,27 +1,28 @@
-# CivilPYQ - Civil Engineering Past Year Question Papers
+# CivilPYQ
 
 ![image](https://github.com/user-attachments/assets/9cf230eb-79c7-4bcc-b89b-02813f476a55)
 
+CivilPYQ is a full-stack study platform for civil engineering students — a fast, mobile-first library of past year question papers, lab manuals, and syllabi, built around a custom multi-window PDF workspace and a Gemini-powered AI layer for solving, summarizing, and predicting exam questions directly from the source material.
 
-A modern, mobile-responsive web application for hosting Civil Engineering past year question papers, lab manuals, and study resources, now supercharged with Gemini AI for instant step-by-step solutions and smart PDF analysis.
+## Highlights
 
-## Features
-
-- 🎨 **Dark Theme** with smooth animations
-- 📱 **Fully Responsive** design for all devices
-- 🤖 **Gemini-Powered Solver** for instant, step-by-step PYQ solutions
-- 📚 **Organized Resources** by semester and subject
-- 🔍 **PDF Viewer** with zoom and download functionality
-- ✨ **Modern UI** with fluid transitions
-- 📁 **Multi-domain Support** for reliability
-- 🤝 **Contribution System** for community growth
+- 🪟 **Multi-Window PDF Workspace** – Open several question papers or manuals side by side in draggable, resizable windows with taskbar-style minimize/restore, instead of the usual single-tab PDF viewer.
+- 🤖 **AI Study Layer, Powered by Gemini** – Get step-by-step problem solutions, chat with the AI about the exact PDF you're reading, generate revision notes, and surface high-probability topics from historical question trends — all reading the actual document content, not just its title.
+- 🔍 **Fast, Zoomable PDF Rendering** – PDF.js-based viewer tuned for quick loads even on slow connections.
+- 📚 **Structured Resource Library** – Papers, lab manuals, and syllabi organized by semester and subject, always up to date.
+- 🤝 **Community Contribution Pipeline** – Students can submit resources directly from the site, protected against spam and abuse.
+- 📁 **CDN-Backed File Delivery** – Files are served through a GitHub + jsDelivr pipeline for fast, reliable global delivery.
+- 🎨 **Polished, Responsive UI** – Dark theme, fluid transitions, and a layout that holds up from phone to desktop.
 
 ## AI Features
 
-- 🚀 **Dual AI Engines** – Utilize 'Pro Mode' to tackle heavy structural calculations, or switch to 'Fast Mode' for lightning-quick conceptual lookups.
-- 📈 **Smart Question Predictor** – Analytical trends based on previous years to predict high-probability topics.
-- 💬 **Context-Aware PDF Chat** – Deep-dive into subjects with an AI that "reads" your study material alongside you.
-- 📄 **Automatic Summarization** – Generate concise revision notes and formula sheets directly from long-form PDFs.
+CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a student is looking at, not just answer generically:
+
+- 🚀 **Dual-Mode Solver** – A heavier "Pro" mode for multi-step structural/numerical problems, and a fast, lightweight mode for quick conceptual questions — switchable per query.
+- 📈 **Exam Question Predictor** – Analyzes patterns across previous years' papers for a subject to surface the topics most likely to reappear.
+- 💬 **Document-Aware Chat** – A persistent chat that reads the specific PDF in view, so answers are grounded in that exact paper or manual rather than general knowledge.
+- 📄 **Instant Summarization** – Turns long PDFs into concise revision notes and formula sheets on demand.
+- 🔑 **Zero-Cost, Bring-Your-Own-Key Model** – Each visitor uses their own free-tier Gemini API key (stored locally in their browser only), so the AI features run at no cost to the project and scale with usage instead of hitting a shared quota.
 
 ## Tech Stack
 
