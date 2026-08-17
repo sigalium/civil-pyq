@@ -12,12 +12,11 @@ import { AutoAwesome, Close } from '@mui/icons-material'
 import { hasSavedPredictorChat } from '../utils/secureId'
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
-const emptySemesters = [7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams();
   const navigate = useNavigate();
-  const { subjects, electives, resources, loading, error } = useResourcesData();
+  const { subjects, electives, resources, centralSyllabus, loading, error } = useResourcesData();
   const { openPdf } = usePDFWindows();
   const [showPredictModal, setShowPredictModal] = useState(false);
   const [showPredictorWidget, setShowPredictorWidget] = useState(false);
@@ -72,10 +71,6 @@ const Resources = () => {
     setShowPredictorWidget(true);
   };
 
-  if (semester && emptySemesters.includes(Number(semester))) {
-    return <NoContent semester={semester} />;
-  }
-
   if (loading) {
     return (
       <div className="resources fade-in">
@@ -111,7 +106,11 @@ const Resources = () => {
           </div>
         )}
 
-        {semester && !subject && (
+        {semester && !subject && !(subjects[semester]?.length > 0) && (
+          <NoContent semester={semester} syllabusPath={centralSyllabus[semester]} />
+        )}
+
+        {semester && !subject && subjects[semester]?.length > 0 && (
           <div className="subject-selection">
               <BackButton onClick={() => navigate('/resources')} text="Select Semester" />
               <h2 className="semester-title">Semester {semester}</h2>
