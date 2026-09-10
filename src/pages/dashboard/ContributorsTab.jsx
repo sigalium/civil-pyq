@@ -12,6 +12,7 @@ import { uploadFileToGithub, sanitizePathSegment, getFileExtension } from '../..
 import { DEFAULT_AVATARS, buildDefaultAvatarUrl, buildContributorPhotoUrl } from '../../utils/resourceSnippet'
 import { persistOrder } from '../../utils/resourceOrdering'
 import ConfirmModal from '../../components/ConfirmModal'
+import PositionInput from '../../components/PositionInput'
 import './Dashboard.css'
 
 async function uploadContributorPhoto(file, name) {
@@ -44,7 +45,7 @@ const AvatarPicker = ({ value, onChange }) => (
   </div>
 )
 
-const ContributorRow = ({ contributor, onChanged, draggable }) => {
+const ContributorRow = ({ contributor, onChanged, draggable, position, total, onMove }) => {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(contributor.name)
   const [batchYear, setBatchYear] = useState(contributor.batch_year || '')
@@ -138,6 +139,9 @@ const ContributorRow = ({ contributor, onChanged, draggable }) => {
         <span className="drag-handle drag-handle-disabled">
           <DragIndicatorIcon sx={{ fontSize: 18 }} />
         </span>
+      )}
+      {draggable && typeof position === 'number' && total > 1 && (
+        <PositionInput position={position} total={total} onMove={(newPosition) => onMove(contributor.id, newPosition)} />
       )}
       <img
         className="contributor-thumb"
@@ -303,6 +307,19 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
     setDirty(true)
   }
 
+  const reorderByPosition = (id, newPosition) => {
+    const currentIndex = order.findIndex((entry) => entry.id === id)
+    if (currentIndex === -1) return
+    const targetIndex = Math.min(Math.max(newPosition - 1, 0), order.length - 1)
+    if (targetIndex === currentIndex) return
+    const newFullOrder = [...order]
+    const [moved] = newFullOrder.splice(currentIndex, 1)
+    newFullOrder.splice(targetIndex, 0, moved)
+    setOrder(newFullOrder)
+    setDirty(true)
+    setPage(Math.floor(targetIndex / CONTRIBUTORS_PAGE_SIZE))
+  }
+
   const confirmOrder = async () => {
     setCommitting(true)
     await persistOrder('contributors', order)
@@ -322,7 +339,15 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
       {dirty && <ReorderConfirmBar onConfirm={confirmOrder} onCancel={cancelOrder} busy={committing} />}
       <Reorder.Group as="div" axis="y" values={pageItems} onReorder={handleReorder} className="draggable-list">
         {pageItems.map((c) => (
-          <ContributorRow key={c.id} contributor={c} onChanged={onChanged} draggable />
+          <ContributorRow
+            key={c.id}
+            contributor={c}
+            onChanged={onChanged}
+            draggable
+            position={order.findIndex((entry) => entry.id === c.id) + 1}
+            total={order.length}
+            onMove={reorderByPosition}
+          />
         ))}
       </Reorder.Group>
       {items.length === 0 && <p className="dashboard-empty">No {title.toLowerCase()} yet.</p>}

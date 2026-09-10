@@ -18,6 +18,7 @@ import { persistOrder } from '../../utils/resourceOrdering'
 import { formatBytes } from '../../utils/pdfCompression'
 import PDFCompressionModal from '../../components/PDFCompressionModal'
 import ConfirmModal from '../../components/ConfirmModal'
+import PositionInput from '../../components/PositionInput'
 import Select from '../../components/Select'
 import './Dashboard.css'
 
@@ -44,6 +45,18 @@ const SectionsManager = ({ sections, onChanged }) => {
   }
 
   const handleReorder = (newOrder) => {
+    setOrder(newOrder)
+    setDirty(true)
+  }
+
+  const reorderByPosition = (id, newPosition) => {
+    const currentIndex = order.findIndex((entry) => entry.id === id)
+    if (currentIndex === -1) return
+    const targetIndex = Math.min(Math.max(newPosition - 1, 0), order.length - 1)
+    if (targetIndex === currentIndex) return
+    const newOrder = [...order]
+    const [moved] = newOrder.splice(currentIndex, 1)
+    newOrder.splice(targetIndex, 0, moved)
     setOrder(newOrder)
     setDirty(true)
   }
@@ -104,6 +117,9 @@ const SectionsManager = ({ sections, onChanged }) => {
             onSaveRename={() => saveRename(section.id)}
             onCancelRename={() => setRenamingId(null)}
             onRequestDelete={() => setConfirmDeleteId(section.id)}
+            position={order.findIndex((entry) => entry.id === section.id) + 1}
+            total={order.length}
+            onMove={reorderByPosition}
           />
         ))}
       </Reorder.Group>
@@ -134,7 +150,7 @@ const SectionsManager = ({ sections, onChanged }) => {
   )
 }
 
-const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameChange, onSaveRename, onCancelRename, onRequestDelete }) => {
+const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameChange, onSaveRename, onCancelRename, onRequestDelete, position, total, onMove }) => {
   const dragControls = useDragControls()
 
   if (renaming) {
@@ -154,6 +170,9 @@ const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameCha
       <span className="drag-handle" onPointerDown={(e) => dragControls.start(e)} title="Drag to reorder">
         <DragIndicatorIcon sx={{ fontSize: 18 }} />
       </span>
+      {typeof position === 'number' && total > 1 && (
+        <PositionInput position={position} total={total} onMove={(newPosition) => onMove(section.id, newPosition)} />
+      )}
       <div className="resource-item-text">
         <span className="resource-item-name">{section.name}</span>
       </div>
@@ -174,7 +193,7 @@ const SectionSelect = ({ sections, value, onChange }) => (
   />
 )
 
-const CodeRow = ({ item, sections, onChanged, onOpen }) => {
+const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
   const [editing, setEditing] = useState(false)
@@ -299,6 +318,9 @@ const CodeRow = ({ item, sections, onChanged, onOpen }) => {
       <span className="drag-handle" onPointerDown={(e) => dragControls.start(e)} title="Drag to reorder">
         <DragIndicatorIcon sx={{ fontSize: 18 }} />
       </span>
+      {typeof position === 'number' && total > 1 && (
+        <PositionInput position={position} total={total} onMove={(newPosition) => onMove(item.id, newPosition)} />
+      )}
       <div className="resource-item-text">
         <span className="resource-item-name">{item.name}</span>
         {item.description && <span className="iscode-description-preview">{item.description}</span>}
@@ -440,6 +462,18 @@ const CodeGroup = ({ title, items, sections, onChanged, onOpen }) => {
     setDirty(true)
   }
 
+  const reorderByPosition = (id, newPosition) => {
+    const currentIndex = order.findIndex((entry) => entry.id === id)
+    if (currentIndex === -1) return
+    const targetIndex = Math.min(Math.max(newPosition - 1, 0), order.length - 1)
+    if (targetIndex === currentIndex) return
+    const newOrder = [...order]
+    const [moved] = newOrder.splice(currentIndex, 1)
+    newOrder.splice(targetIndex, 0, moved)
+    setOrder(newOrder)
+    setDirty(true)
+  }
+
   const confirmOrder = async () => {
     setCommitting(true)
     await persistOrder('resources', order)
@@ -468,7 +502,16 @@ const CodeGroup = ({ title, items, sections, onChanged, onOpen }) => {
       )}
       <Reorder.Group as="div" axis="y" values={order} onReorder={handleReorder} className="draggable-list">
         {order.map((item) => (
-          <CodeRow key={item.id} item={item} sections={sections} onChanged={onChanged} onOpen={onOpen} />
+          <CodeRow
+            key={item.id}
+            item={item}
+            sections={sections}
+            onChanged={onChanged}
+            onOpen={onOpen}
+            position={order.findIndex((entry) => entry.id === item.id) + 1}
+            total={order.length}
+            onMove={reorderByPosition}
+          />
         ))}
       </Reorder.Group>
       {order.length === 0 && <p className="dashboard-empty">No codes in this section yet.</p>}

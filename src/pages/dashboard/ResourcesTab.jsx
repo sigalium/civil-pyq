@@ -26,6 +26,7 @@ import BackButton from '../../components/BackButton'
 import { useNavigate, useParams } from 'react-router-dom'
 import CodesAndStandardsPanel from './CodesAndStandardsPanel'
 import ConfirmModal from '../../components/ConfirmModal'
+import PositionInput from '../../components/PositionInput'
 import './Dashboard.css'
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -46,7 +47,7 @@ async function uploadResourceFile({ file, semester, subject, type, label }) {
   })
 }
 
-const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, draggable }) => {
+const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, draggable, position, total, onMove }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
   const [editing, setEditing] = useState(false)
@@ -171,6 +172,9 @@ const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, dra
           <DragIndicatorIcon sx={{ fontSize: 18 }} />
         </span>
       )}
+      {draggable && typeof position === 'number' && total > 1 && (
+        <PositionInput position={position} total={total} onMove={(newPosition) => onMove(item.id, newPosition)} />
+      )}
       <div className="resource-item-text">
         <span className="resource-item-name">
           {item.name}
@@ -264,6 +268,19 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
     setDirty(true)
   }
 
+  const reorderByPosition = (id, newPosition) => {
+    const currentIndex = order.findIndex((entry) => entry.id === id)
+    if (currentIndex === -1) return
+    const targetIndex = Math.min(Math.max(newPosition - 1, 0), order.length - 1)
+    if (targetIndex === currentIndex) return
+    const newFullOrder = [...order]
+    const [moved] = newFullOrder.splice(currentIndex, 1)
+    newFullOrder.splice(targetIndex, 0, moved)
+    setOrder(newFullOrder)
+    setDirty(true)
+    setPage(Math.floor(targetIndex / RESOURCE_PAGE_SIZE))
+  }
+
   const confirmOrder = async () => {
     setCommitting(true)
     await persistOrder('resources', order)
@@ -291,6 +308,9 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
             onChanged={onChanged}
             onOpen={onOpen}
             draggable
+            position={order.findIndex((entry) => entry.id === item.id) + 1}
+            total={order.length}
+            onMove={reorderByPosition}
           />
         ))}
       </Reorder.Group>
