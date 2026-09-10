@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ThemeContext } from './useTheme';
 
 const STORAGE_KEY = 'civilpyq-theme';
 const DEFAULT_THEME = 'nebula';
 
-export const THEMES = [
+const THEMES = [
   {
     id: 'nebula',
     label: 'Nebula',
@@ -68,8 +69,6 @@ export const THEMES = [
 
 const THEME_IDS = THEMES.map((t) => t.id);
 
-const ThemeContext = createContext(null);
-
 function getInitialTheme() {
   if (typeof window === 'undefined') return DEFAULT_THEME;
   try {
@@ -102,10 +101,4 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
-  return ctx;
 }

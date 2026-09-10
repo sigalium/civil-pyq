@@ -1,20 +1,23 @@
 .back-btn {
   display: flex;
   align-items: center;
+  align-self: flex-start;
   gap: 0.5rem;
   background: none;
   border: none;
   color: var(--text-secondary);
   font-size: 1rem;
   cursor: pointer;
-  margin-top: 10px;
   margin-bottom: 1rem;
   transition: var(--transition);
-  padding-top: 40px;
 }
 
 .back-btn:hover {
   color: var(--accent);
+}
+
+.back-btn.back-btn-page-top {
+  margin-top: 50px;
 }
 
 .back-icon {

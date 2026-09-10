@@ -1,27 +1,62 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { ResourcesDataContext } from './useResourcesData'
 
-const ResourcesDataContext = createContext(null)
+const CACHE_KEY = 'civilpyq_resources_cache_v1'
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function writeCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data))
+  } catch {
+    return
+  }
+}
 
 export function ResourcesDataProvider({ children }) {
   const [subjectRows, setSubjectRows] = useState([])
   const [resourceRows, setResourceRows] = useState([])
   const [settingsRows, setSettingsRows] = useState([])
+  const [sectionRows, setSectionRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [usingCachedData, setUsingCachedData] = useState(false)
+  const [cachedAt, setCachedAt] = useState(null)
   const initializedRef = useRef(false)
 
   const refresh = useCallback(async () => {
     if (!initializedRef.current) setLoading(true)
     setError('')
 
-    const [subjectsRes, resourcesRes, settingsRes] = await Promise.all([
+    const [subjectsRes, resourcesRes, settingsRes, sectionsRes] = await Promise.all([
       supabase.from('subjects').select('*').order('semester').order('sort_order'),
       supabase.from('resources').select('*').order('sort_order'),
-      supabase.from('global_resources').select('*').like('key', 'syllabus_semester_%'),
+      supabase.from('global_resources').select('*'),
+      supabase.from('sections').select('*').order('sort_order'),
     ])
 
     if (subjectsRes.error || resourcesRes.error) {
+      const cached = readCache()
+      if (cached) {
+        setSubjectRows(cached.subjectRows || [])
+        setResourceRows(cached.resourceRows || [])
+        setSettingsRows(cached.settingsRows || [])
+        setSectionRows(cached.sectionRows || [])
+        setUsingCachedData(true)
+        setCachedAt(cached.savedAt || null)
+        setLoading(false)
+        initializedRef.current = true
+        return
+      }
       setError('Could not load resources right now.')
       setLoading(false)
       return
@@ -30,8 +65,18 @@ export function ResourcesDataProvider({ children }) {
     setSubjectRows(subjectsRes.data || [])
     setResourceRows(resourcesRes.data || [])
     setSettingsRows(settingsRes.data || [])
+    setSectionRows(sectionsRes.data || [])
+    setUsingCachedData(false)
     setLoading(false)
     initializedRef.current = true
+
+    writeCache({
+      subjectRows: subjectsRes.data || [],
+      resourceRows: resourcesRes.data || [],
+      settingsRows: settingsRes.data || [],
+      sectionRows: sectionsRes.data || [],
+      savedAt: new Date().toISOString(),
+    })
   }, [])
 
   useEffect(() => {
@@ -54,17 +99,50 @@ export function ResourcesDataProvider({ children }) {
     if (match && row.value) centralSyllabus[Number(match[1])] = row.value
   })
 
+  const academicCalendarPath = settingsRows.find((row) => row.key === 'academic_calendar_path')?.value || ''
+  const analyticsDemoModeRow = settingsRows.find((row) => row.key === 'analytics_demo_mode')
+  const analyticsDemoMode = analyticsDemoModeRow ? analyticsDemoModeRow.value === 'true' : true
+  const maintenanceModeRow = settingsRows.find((row) => row.key === 'maintenance_mode')
+  const maintenanceMode = maintenanceModeRow ? maintenanceModeRow.value === 'true' : false
+  const maintenanceUntil = settingsRows.find((row) => row.key === 'maintenance_until')?.value || ''
+  const maintenanceMessage = settingsRows.find((row) => row.key === 'maintenance_message')?.value || ''
+  const maintenanceAutoOffRow = settingsRows.find((row) => row.key === 'maintenance_auto_off')
+  const maintenanceAutoOff = maintenanceAutoOffRow ? maintenanceAutoOffRow.value === 'true' : false
+  const submissionIntakeRow = settingsRows.find((row) => row.key === 'submission_intake_enabled')
+  const submissionIntakeEnabled = submissionIntakeRow ? submissionIntakeRow.value === 'true' : true
+
+  const isCodesById = {}
+  resourceRows.forEach((row) => {
+    if (row.resource_type === 'iscode') isCodesById[row.id] = row
+  })
+
   const resources = {}
+  const isCodes = []
   resourceRows.filter((row) => !row.deleted_at).forEach((row) => {
+    if (row.resource_type === 'iscode') {
+      isCodes.push({ id: row.id, name: row.name, path: row.path, description: row.description || '', file_size_bytes: row.file_size_bytes, sort_order: row.sort_order, section_id: row.section_id || null })
+      return
+    }
     if (!resources[row.subject]) {
       resources[row.subject] = { syllabus: null, pyq: [], lab: [] }
     }
     if (row.resource_type === 'syllabus') {
       resources[row.subject].syllabus = { id: row.id, path: row.path }
-    } else {
-      resources[row.subject][row.resource_type].push({ id: row.id, name: row.name, path: row.path })
+    } else if (resources[row.subject][row.resource_type]) {
+      const linkedSource = row.linked_iscode_id ? isCodesById[row.linked_iscode_id] : null
+      const isBrokenLink = !!row.linked_iscode_id && (!linkedSource || linkedSource.deleted_at)
+      resources[row.subject][row.resource_type].push({
+        id: row.id,
+        name: linkedSource ? linkedSource.name : row.name,
+        path: linkedSource ? linkedSource.path : row.path,
+        description: linkedSource ? (linkedSource.description || '') : (row.description || ''),
+        file_size_bytes: linkedSource ? linkedSource.file_size_bytes : row.file_size_bytes,
+        linked_iscode_id: row.linked_iscode_id,
+        isBrokenLink,
+      })
     }
   })
+  isCodes.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
 
   Object.keys(subjectSemester).forEach((subjectName) => {
     if (!resources[subjectName]) {
@@ -76,17 +154,13 @@ export function ResourcesDataProvider({ children }) {
     resources[subjectName].isCentralSyllabus = !specificPath && !!centralSyllabus[sem]
   })
 
+  const sections = sectionRows.filter((row) => !row.deleted_at).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+
   return (
     <ResourcesDataContext.Provider
-      value={{ subjectRows, resourceRows, subjects, electives, resources, centralSyllabus, loading, error, refresh }}
+      value={{ subjectRows, resourceRows, subjects, electives, resources, centralSyllabus, academicCalendarPath, analyticsDemoMode, maintenanceMode, maintenanceUntil, maintenanceMessage, maintenanceAutoOff, submissionIntakeEnabled, isCodes, sections, sectionRows, loading, error, usingCachedData, cachedAt, refresh }}
     >
       {children}
     </ResourcesDataContext.Provider>
   )
-}
-
-export function useResourcesData() {
-  const ctx = useContext(ResourcesDataContext)
-  if (!ctx) throw new Error('useResourcesData must be used within a ResourcesDataProvider')
-  return ctx
 }

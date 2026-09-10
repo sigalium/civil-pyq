@@ -1,32 +1,36 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import SemesterCard from '../components/SemesterCard';
 import ResourceList from '../components/ResourceList';
 import AIPredictorWidget from '../components/AIPredictorWidget';
 import NoContent from './NoContent';
 import './styles/Resources.css';
-import { useResourcesData } from '../context/ResourcesDataContext';
-import { usePDFWindows } from '../context/PDFWindowContext';
-import { AutoAwesome, Close } from '@mui/icons-material'
+import { useResourcesData } from '../context/useResourcesData';
+import { usePDFWindows } from '../context/usePDFWindows';
+import { AutoAwesome, Close, DownloadForOffline } from '@mui/icons-material'
 import { hasSavedPredictorChat } from '../utils/secureId'
+import { downloadSubjectZip } from '../utils/bulkDownload'
 
 const semesters = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const Resources = () => {
   const { semester, subject } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { subjects, electives, resources, centralSyllabus, loading, error } = useResourcesData();
   const { openPdf } = usePDFWindows();
   const [showPredictModal, setShowPredictModal] = useState(false);
   const [showPredictorWidget, setShowPredictorWidget] = useState(false);
   const [predictionPdfs, setPredictionPdfs] = useState([]);
+  const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
   const handleSemesterClick = (sem) => { navigate(`/resources/${sem}`); };
   const handleSubjectClick = (subj) => { navigate(`/resources/${semester}/${subj}`); };
 
   const handlePdfClick = (item) => {
-    openPdf({ name: `${subject} - ${item.name || item}`, path: item.path || '' });
+    openPdf({ name: `${subject} - ${item.name || item}`, path: item.path || '', resourceId: item.id });
   };
 
   const handleViewSyllabus = () => {
@@ -35,8 +39,18 @@ const Resources = () => {
       alert('Syllabus has not been uploaded for this subject yet.');
       return;
     }
-    openPdf({ name: `${subject} - Syllabus`, path: syllabusPath });
+    const syllabusId = resources[subject]?.syllabus?.id;
+    openPdf({ name: `${subject} - Syllabus`, path: syllabusPath, resourceId: syllabusId });
   };
+
+  const handleBulkDownload = async () => {
+    const files = [...(resources[subject]?.pyq || []), ...(resources[subject]?.lab || [])]
+    if (files.length === 0) return
+    setBulkDownloading(true)
+    setBulkProgress({ done: 0, total: files.length })
+    await downloadSubjectZip(subject, files, (done, total) => setBulkProgress({ done, total }))
+    setBulkDownloading(false)
+  }
 
   const handleStartPrediction = (yearsAmount) => {
     const pyqs = resources[subject]?.pyq || [];
@@ -96,7 +110,7 @@ const Resources = () => {
       <div className="resources-container">
         
         {!semester && (
-          <div className="semester-selection">
+          <div className="semester-selection fade-in" key={location.pathname}>
             <h2 className="select-semester-heading">Select Semester</h2>
             <div className="semester-grid">
               {semesters.map((sem) => (
@@ -111,8 +125,8 @@ const Resources = () => {
         )}
 
         {semester && !subject && subjects[semester]?.length > 0 && (
-          <div className="subject-selection">
-              <BackButton onClick={() => navigate('/resources')} text="Select Semester" />
+          <div className="subject-selection fade-in" key={location.pathname}>
+              <BackButton onClick={() => navigate('/resources')} text="Select Semester" className="back-btn-page-top" />
               <h2 className="semester-title">Semester {semester}</h2>
               <h3 className="select-subject-heading">Select Subject</h3>
               <div className="subject-list">
@@ -134,8 +148,8 @@ const Resources = () => {
         )}
 
         {subject && (
-          <div className="resource-view">
-            <BackButton onClick={() => navigate(`/resources/${semester}`)} text={`Semester ${semester}`} />
+          <div className="resource-view fade-in" key={location.pathname}>
+            <BackButton onClick={() => navigate(`/resources/${semester}`)} text={`Semester ${semester}`} className="back-btn-page-top" />
             <h2 className="subject-title">{subject}</h2>
             {resources[subject]?.effectiveSyllabusPath && (
               <button className="syllabus-btn" onClick={handleViewSyllabus}>
@@ -171,7 +185,27 @@ const Resources = () => {
               />
               
               <ResourceList
-                title="Lab Manual & Other Resources"
+                title={
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <span>Lab Manual & Other Resources</span>
+                    {((resources[subject]?.pyq?.length || 0) + (resources[subject]?.lab?.length || 0)) > 0 && (
+                      <button
+                        onClick={handleBulkDownload}
+                        disabled={bulkDownloading}
+                        style={{
+                          background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb), 0.3)',
+                          padding: '6px 12px', borderRadius: '6px', cursor: bulkDownloading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                          fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s', fontFamily: 'inherit', opacity: bulkDownloading ? 0.7 : 1
+                        }}
+                        onMouseOver={(e) => { if (!bulkDownloading) { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'var(--primary)'; } }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.1)'; e.currentTarget.style.color = 'var(--accent)'; }}
+                      >
+                        <DownloadForOffline sx={{ fontSize: 16 }} />
+                        {bulkDownloading ? `Zipping ${bulkProgress.done}/${bulkProgress.total}…` : 'Download all'}
+                      </button>
+                    )}
+                  </div>
+                }
                 items={resources[subject]?.lab || []}
                 onItemClick={handlePdfClick}
                 subject={subject}

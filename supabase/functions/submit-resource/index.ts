@@ -64,11 +64,19 @@ Deno.serve(async (req) => {
       return json({ error: 'Verification failed.' }, 400)
     }
 
-    if (!local_id || !semester || !subject || !resource_type || !resource_label || !file_name) {
+    if (!local_id || !resource_type || !resource_label || !file_name) {
       return json({ error: 'Missing required fields.' }, 400)
     }
-    if (!['pyq', 'lab', 'syllabus'].includes(resource_type)) {
+    const VALID_TYPES = ['pyq', 'lab', 'syllabus', 'semester_syllabus', 'other']
+    const NEEDS_SUBJECT = ['pyq', 'lab', 'syllabus']
+    if (!VALID_TYPES.includes(resource_type)) {
       return json({ error: 'Invalid resource type.' }, 400)
+    }
+    if (NEEDS_SUBJECT.includes(resource_type) && (!semester || !subject)) {
+      return json({ error: 'Missing required fields.' }, 400)
+    }
+    if (resource_type === 'semester_syllabus' && !semester) {
+      return json({ error: 'Please select a semester.' }, 400)
     }
     if (is_gcu_student && !enrollment_no) {
       return json({ error: 'Enrollment number is required for GCU students.' }, 400)
@@ -113,8 +121,8 @@ Deno.serve(async (req) => {
       enrollment_no: is_gcu_student ? enrollment_no : null,
       institution: is_gcu_student ? null : (institution || null),
       uploader_semester: uploader_semester || null,
-      semester,
-      subject,
+      semester: semester || null,
+      subject: subject || null,
       resource_type,
       resource_label,
       file_path: storagePath,

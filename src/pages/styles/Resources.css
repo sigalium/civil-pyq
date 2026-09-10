@@ -10,6 +10,48 @@
   gap: 2rem;
 }
 
+.codes-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.codes-show-more-btn {
+  display: block;
+  margin: 0.9rem auto 0;
+  background-color: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0.5rem 1.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.codes-show-more-btn:hover {
+  background-color: rgba(var(--accent-rgb), 0.2);
+}
+
+@media (min-width: 641px) {
+  .iscodes-page .resource-item-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .iscodes-page .resource-item-name {
+    max-width: 100%;
+  }
+
+  .iscodes-page .resource-item-description {
+    flex: none;
+    font-size: 0.82rem;
+    opacity: 0.85;
+  }
+}
+
 .semester-selection h2 {
   margin-bottom: 2rem;
   color: var(--accent);
@@ -164,6 +206,12 @@
   gap: 2rem;
 }
 
+.iscodes-page .resources-container {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 @media (max-width: 768px) {
   .resources {
     padding: 1rem;
@@ -179,6 +227,9 @@
   }
   .resource-sections {
     grid-template-columns: 1fr;
+  }
+  .iscodes-page .resources-container {
+    max-width: 100%;
   }
 }
 
@@ -294,4 +345,54 @@
   transform: translateY(1px);
   box-shadow: 0 2px 5px rgba(0,0,0,0.4);
   transition: all 0.1s;
+}
+
+.iscodes-search {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 1.5rem auto;
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--glass-rgb), 0.2);
+  background: rgba(var(--glass-rgb), 0.05);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.iscodes-search:focus {
+  outline: none;
+  border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.resources-tab-switcher {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .resources-tab-switcher {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 auto 1.5rem auto;
+    max-width: 420px;
+  }
+
+  .resources-tab-switcher button {
+    flex: 1;
+    padding: 0.6rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--glass-rgb), 0.2);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .resources-tab-switcher button.active {
+    background: var(--accent);
+    color: var(--primary);
+    border-color: var(--accent);
+  }
 }

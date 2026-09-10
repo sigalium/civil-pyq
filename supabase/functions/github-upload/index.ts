@@ -128,10 +128,9 @@ Deno.serve(async (req) => {
     const jsDelivrUrl = `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${repoPath}`
 
     if (purge) {
-      try {
-        await fetch(`https://purge.jsdelivr.net/gh/${owner}/${repo}@${branch}/${encodePath(repoPath)}`)
-      } catch (_purgeError) {
-      }
+      fetch(`https://purge.jsdelivr.net/gh/${owner}/${repo}@${branch}/${encodePath(repoPath)}`, {
+        signal: AbortSignal.timeout(4000),
+      }).catch(() => {})
     }
 
     return json({ url: jsDelivrUrl })

@@ -1,18 +1,19 @@
 import { Link } from 'react-router-dom'
 import { OpenInNew, Domain } from '@mui/icons-material'
+import { SITE_LINKS } from '../data/appData'
 import './styles/Domains.css'
 
 const Domains = () => {
   const domains = [
     {
       name: 'CivilPYQ (Primary)',
-      url: 'https://civilpyq.netlify.app',
+      url: SITE_LINKS.primaryDomain,
 
       description: 'Main domain with all features'
     },
     {
       name: 'CivilPYQ Backup',
-      url: 'https://civilpyqgcu.netlify.app',
+      url: SITE_LINKS.backupDomain,
       description: 'Alternative domain if primary is down'
     },
     // {

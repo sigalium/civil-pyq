@@ -3,7 +3,7 @@ import { CloudDownload, CloudDone, HourglassEmpty } from '@mui/icons-material';
 import { saveOffline, removeOffline, isSavedOffline, isOfflineSupported } from '../utils/offlineStorage';
 import './css/ResourceList.css'
 
-const ResourceList = ({ title, items, onItemClick, subject }) => {
+const ResourceList = ({ title, items, onItemClick, subject, footer }) => {
   const [offlineMap, setOfflineMap] = useState({});
   const [pendingPath, setPendingPath] = useState(null);
 
@@ -51,7 +51,10 @@ const ResourceList = ({ title, items, onItemClick, subject }) => {
             const isPending = pendingPath === path;
             return (
               <li key={index} className="resource-item">
-                <span>{item.name || item}</span>
+                <div className="resource-item-text">
+                  <span className="resource-item-name">{item.name || item}</span>
+                  {item.description && <span className="resource-item-description">{item.description}</span>}
+                </div>
                 <div className="resource-item-actions">
                   {isOfflineSupported() && path && (
                     <button
@@ -79,6 +82,7 @@ const ResourceList = ({ title, items, onItemClick, subject }) => {
       ) : (
         <p className="no-resources">No resources available</p>
       )}
+      {footer}
     </div>
   )
 }

@@ -1,0 +1,2 @@
+[functions.backfill-file-sizes]
+verify_jwt = false

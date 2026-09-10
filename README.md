@@ -12,6 +12,7 @@ CivilPYQ is a full-stack study platform for civil engineering students — a fas
 - 📚 **Structured Resource Library** – Papers, lab manuals, and syllabi organized by semester and subject, always up to date.
 - 🤝 **Community Contribution Pipeline** – Students can submit resources directly from the site, protected against spam and abuse.
 - 📁 **CDN-Backed File Delivery** – Files are served through a GitHub + jsDelivr pipeline for fast, reliable global delivery.
+- 📴 **Installable & Offline-Ready** – Add CivilPYQ to your home screen like a native app, and keep previously opened papers available in an offline library even without a connection.
 - 🎨 **Polished, Responsive UI** – Dark theme, fluid transitions, and a layout that holds up from phone to desktop.
 
 ## AI Features
@@ -37,14 +38,16 @@ CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a
 
 ## Installation
 
-1. Clone the repository:
+1. Requires Node.js 18 or later.
+
+2. Clone the repository:
    ```bash
    git clone https://github.com/sigalium/civilpyq.git
    cd civilpyq
    npm install
    ```
 
-2. Set up environment variables for the frontend. Create a `.env.local` in the project root:
+3. Set up environment variables for the frontend. Create a `.env.local` in the project root:
    ```
    VITE_SUPABASE_URL=https://your-project.supabase.co
    VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -54,7 +57,7 @@ CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a
    ```
    `VITE_JSDELIVR_OWNER`, `VITE_JSDELIVR_REPO` and `VITE_JSDELIVR_BRANCH` must match the GitHub repo the dashboard publishes files into (see below).
 
-3. Run the dev server:
+4. Run the dev server:
    ```bash
    npm run dev
    ```
@@ -74,7 +77,8 @@ update admins set role = 'owner' where email = 'you@example.com';
 The `/dashboard` route is protected and only accessible to signed-in Google accounts present in the `admins` table. There are two role tiers:
 
 - **Owner** – full access to everything, including deleting resources/subjects/contributors permanently, managing other admins' permissions, and deleting audit log entries. Only one or more owners can grant/revoke `can_edit_members`.
-- **Admin** – granular permissions set per-admin: `can_review_submissions`, `can_edit_resources`, `can_delete_resources`, `can_view_trash`, `can_view_audit_log`, `can_view_members`, `can_manage_contributors`, `can_edit_members`.
+- **Admin** – granular permissions set per-admin: `can_review_submissions`, `can_edit_resources`, `can_delete_resources`, `can_view_trash`, `can_view_audit_log`, `can_view_members`, `can_edit_members`, `can_manage_contributors`, `can_view_analytics`, `can_manage_settings`.
+- **Developer** – a separate `is_developer` permission (not a role), toggled per-admin like the others. It only controls access to maintenance mode inside the Settings tab; an admin can have `can_manage_settings` without `is_developer` and still see the Settings tab, just without the maintenance-mode controls.
 
 Every meaningful change made through the dashboard (approving submissions, editing resources, reordering, managing contributors, changing member permissions) is recorded in the `audit_log` table and viewable under the Audit Log tab. Reordering/drag-and-drop changes are intentionally excluded from the log to avoid noise — only actual content changes are recorded.
 
@@ -82,12 +86,14 @@ Every meaningful change made through the dashboard (approving submissions, editi
 
 - **Submissions** – review and approve/reject student-submitted PDFs
 - **Resources** – manage subjects and resources per semester, plus the academic calendar and per-semester syllabus links
-- **Bulk Upload** – upload multiple resources at once
+- **Upload** – upload multiple resources at once
 - **Migration** – tools for moving/relinking existing files
 - **Contributors** – manage the student/faculty contributor list shown on the Contribute page
 - **Trash** – soft-deleted resources/subjects/contributors, restorable within 30 days before permanent purge
 - **Members** – manage admin accounts and their permissions (owner-only editing)
 - **Audit Log** – full activity history; owners can delete individual entries, delete a selection, or empty the log entirely
+- **Analytics** – most-viewed/most-downloaded files (filterable by type and date range), storage breakdown, and a view/download trend chart
+- **Settings** – site-wide toggles: analytics demo mode (owner-only), pausing new submissions, and maintenance mode (owner/developer-only)
 
 ## Automated Publishing Pipeline
 
@@ -129,8 +135,10 @@ Once this is set up, approving a submission, adding a resource, uploading a cont
 |---|---|
 | `submit-resource` | Handles student PDF submissions from the Contribute page, using the service role key so no public write access to the database is needed |
 | `github-upload` | Publishes an approved/edited file to the GitHub repo and purges the jsDelivr cache, as described above |
+| `github-delete` | Removes a file from the GitHub repo (restricted to the `pdfs/` and `Contributor/` paths) when a resource or contributor photo is permanently deleted |
 | `migrate-file` | Used by the dashboard's Migration tab to move or relink existing resource files |
 | `scan-file` | Scans uploaded files before they're accepted, used by Submissions, Resources, Bulk Upload, and Contributors tabs |
+| `backfill-file-sizes` | Fills in file sizes for older resources that don't have one recorded yet, by looking the file up on GitHub. Safe to run more than once |
 
 ## AI Features (Bring Your Own Key)
 

@@ -1,0 +1,84 @@
+.maintenance-card {
+  max-width: 420px;
+}
+
+.maintenance-alt-domain-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  margin-bottom: 1.5rem;
+}
+
+.maintenance-alt-domain-btn:hover {
+  background: rgba(var(--accent-rgb), 0.2);
+}
+
+.maintenance-offline-btn {
+  display: block;
+  text-align: center;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  background: rgba(var(--glass-rgb), 0.06);
+  color: var(--text-primary);
+  border: 1px solid rgba(var(--glass-rgb), 0.2);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+  margin-bottom: 1.5rem;
+}
+
+.maintenance-offline-btn:hover {
+  background: rgba(var(--glass-rgb), 0.12);
+}
+
+.maintenance-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  margin-bottom: 1.25rem;
+}
+
+.maintenance-divider::before,
+.maintenance-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(var(--glass-rgb), 0.15);
+}
+
+.maintenance-admin-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 500;
+  background: var(--secondary);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  color: var(--text-primary);
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.maintenance-admin-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb86c;
+  flex-shrink: 0;
+}

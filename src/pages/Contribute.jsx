@@ -1,18 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import './styles/Contribute.css'
-import { useContributorsData } from '../context/ContributorsDataContext'
-import { useResourcesData } from '../context/ResourcesDataContext'
+import { useContributorsData } from '../context/useContributorsData'
+import { useResourcesData } from '../context/useResourcesData'
 import { supabase } from '../lib/supabaseClient'
 import { getLocalId } from '../utils/localId'
 import TurnstileWidget from '../components/TurnstileWidget'
 import Select from '../components/Select'
 import { buildContributorPhotoUrl } from '../utils/resourceSnippet'
+import { SITE_LINKS } from '../data/appData'
 
 const RESOURCE_TYPES = [
   { value: 'pyq', label: 'Previous Year Question' },
   { value: 'lab', label: 'Lab Manual / Notes' },
-  { value: 'syllabus', label: 'Syllabus' },
+  { value: 'syllabus', label: 'Subject Syllabus' },
+  { value: 'semester_syllabus', label: 'Semester Syllabus' },
+  { value: 'other', label: 'Other (IS Codes, NBC, IRC, etc.)' },
 ]
 
 const GCU_OPTIONS = [
@@ -27,7 +30,7 @@ const STATUS_LABELS = {
 }
 
 const Contribute = () => {
-  const { subjects, loading: resourcesLoading } = useResourcesData()
+  const { subjects, loading: resourcesLoading, submissionIntakeEnabled } = useResourcesData()
   const { contributorRows } = useContributorsData()
   const SEMESTERS = Object.keys(subjects)
     .filter((key) => subjects[key])
@@ -92,11 +95,18 @@ const Contribute = () => {
   }, [submitSuccess])
 
   const openWhatsApp = () => {
-    window.open('https://chat.whatsapp.com/LhmeXEsQB9o0hkMp1Pm6jp', '_blank')
+    window.open(SITE_LINKS.whatsappGroup, '_blank')
   }
 
   const availableSubjects = semester && subjects[semester] ? subjects[semester] : []
   const subjectOptions = availableSubjects.map((subj) => ({ value: subj, label: subj }))
+  const needsSubject = resourceType === 'pyq' || resourceType === 'lab' || resourceType === 'syllabus'
+  const needsSemester = resourceType !== 'other'
+  const labelPlaceholder = resourceType === 'other'
+    ? 'e.g. NBC 2016, IS 456:2000'
+    : resourceType === 'semester_syllabus'
+      ? 'e.g. Semester 3 Syllabus'
+      : 'e.g. ESE Dec 2025'
 
   const handleFileChange = (event) => {
     const selected = event.target.files?.[0]
@@ -132,8 +142,16 @@ const Contribute = () => {
     event.preventDefault()
     setSubmitError('')
 
-    if (!semester || !subject || !resourceLabel.trim() || !file) {
-      setSubmitError('Please fill in semester, subject, a label, and attach a PDF.')
+    if (!resourceLabel.trim() || !file) {
+      setSubmitError('Please add a label and attach a PDF.')
+      return
+    }
+    if (needsSemester && !semester) {
+      setSubmitError('Please select a semester.')
+      return
+    }
+    if (needsSubject && !subject) {
+      setSubmitError('Please select a subject.')
       return
     }
     if (file.type !== 'application/pdf') {
@@ -167,8 +185,8 @@ const Contribute = () => {
           enrollment_no: isGcuStudent ? enrollmentNo.trim() : null,
           institution: !isGcuStudent ? institution.trim() || null : null,
           uploader_semester: Number(uploaderSemester),
-          semester: Number(semester),
-          subject,
+          semester: semester ? Number(semester) : null,
+          subject: needsSubject ? subject : null,
           resource_type: resourceType,
           resource_label: resourceLabel.trim(),
           file_name: file.name,
@@ -216,7 +234,11 @@ const Contribute = () => {
             <p className="perks">Bonus: A special spot for you on our contributors page! 💖🌟</p>
           </div>
 
-          {submitSuccess ? (
+          {!submissionIntakeEnabled ? (
+            <div className="upload-success">
+              <p>We're not accepting new submissions right now. Check back soon.</p>
+            </div>
+          ) : submitSuccess ? (
             <div className="upload-success">
               <CheckCircleIcon sx={{ fontSize: 52, color: 'var(--accent)' }} />
               <h2>Thanks!</h2>
@@ -300,37 +322,39 @@ const Contribute = () => {
                 <h3 className="upload-form-section-title">What you're uploading</h3>
                 <div className="upload-form-grid">
                   <label className="upload-field">
-                    <span>Resource's semester</span>
+                    <span>Resource type</span>
+                    <Select value={resourceType} onChange={(v) => { setResourceType(v); setSubject('') }} options={RESOURCE_TYPES} />
+                  </label>
+
+                  <label className="upload-field">
+                    <span>Resource's semester{!needsSemester ? ' (not needed)' : ''}</span>
                     <Select
                       value={semester}
                       onChange={(v) => { setSemester(v); setSubject('') }}
                       options={SEMESTER_OPTIONS}
-                      placeholder={resourcesLoading ? 'Loading...' : 'Select semester'}
-                      disabled={resourcesLoading}
+                      placeholder={resourcesLoading ? 'Loading...' : needsSemester ? 'Select semester' : 'Not needed for this type'}
+                      disabled={resourcesLoading || !needsSemester}
                     />
                   </label>
 
-                  <label className="upload-field">
-                    <span>Subject</span>
-                    <Select
-                      value={subject}
-                      onChange={setSubject}
-                      options={subjectOptions}
-                      placeholder="Select subject"
-                      disabled={!semester}
-                    />
-                  </label>
-
-                  <label className="upload-field">
-                    <span>Resource type</span>
-                    <Select value={resourceType} onChange={setResourceType} options={RESOURCE_TYPES} />
-                  </label>
+                  {needsSubject && (
+                    <label className="upload-field">
+                      <span>Subject</span>
+                      <Select
+                        value={subject}
+                        onChange={setSubject}
+                        options={subjectOptions}
+                        placeholder="Select subject"
+                        disabled={!semester}
+                      />
+                    </label>
+                  )}
 
                   <label className="upload-field upload-field-wide">
                     <span>Label</span>
                     <input
                       type="text"
-                      placeholder="e.g. ESE Dec 2025"
+                      placeholder={labelPlaceholder}
                       value={resourceLabel}
                       onChange={(e) => setResourceLabel(e.target.value)}
                       required

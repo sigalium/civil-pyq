@@ -4,7 +4,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LoginIcon from '@mui/icons-material/Login'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
+import { adminRoleLabel } from '../utils/adminRoles'
 import SignOutConfirmModal from './SignOutConfirmModal'
 
 const AccountMenuContent = ({ itemClassName, onNavigate }) => {
@@ -28,7 +29,7 @@ const AccountMenuContent = ({ itemClassName, onNavigate }) => {
         <div className="account-menu-email">
           <div className="account-menu-username">{profile?.username || session?.user?.email}</div>
           <div>{session?.user?.email}</div>
-          <span className="account-menu-role-chip">{profile?.role}</span>
+          <span className="account-menu-role-chip">{adminRoleLabel(profile)}</span>
         </div>
         <Link to="/dashboard" className={itemClassName} onClick={onNavigate}>
           <DashboardIcon sx={{ fontSize: 18 }} /> Dashboard

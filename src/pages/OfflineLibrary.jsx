@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Delete, PictureAsPdf, DeleteSweep, CloudOff } from '@mui/icons-material';
 import BackButton from '../components/BackButton';
-import { usePDFWindows } from '../context/PDFWindowContext';
+import ConfirmModal from '../components/ConfirmModal';
+import { usePDFWindows } from '../context/usePDFWindows';
 import {
   listOfflineItems,
   removeOffline,
@@ -25,6 +26,7 @@ const OfflineLibrary = () => {
   const [items, setItems] = useState([]);
   const [estimate, setEstimate] = useState(null);
   const [removingPath, setRemovingPath] = useState(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   const refresh = useCallback(async () => {
     setItems(listOfflineItems());
@@ -46,7 +48,7 @@ const OfflineLibrary = () => {
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm('Remove all files saved for offline use?')) return;
+    setConfirmClearAll(false);
     await clearAllOffline();
     await refresh();
   };
@@ -58,7 +60,7 @@ const OfflineLibrary = () => {
   return (
     <div className="offline-library-page fade-in">
       <div className="offline-library-container">
-        <BackButton onClick={() => navigate('/settings')} text="Settings" />
+        <BackButton onClick={() => navigate('/settings')} text="Settings" className="back-btn-page-top" />
         <h2 className="offline-library-title">Offline Library</h2>
         <p className="offline-library-hint">
           Files saved here open with no internet connection, right from this device.
@@ -113,12 +115,21 @@ const OfflineLibrary = () => {
               ))}
             </div>
 
-            <button className="offline-clear-all" onClick={handleClearAll}>
+            <button className="offline-clear-all" onClick={() => setConfirmClearAll(true)}>
               <DeleteSweep sx={{ fontSize: 18 }} /> Clear all offline files
             </button>
           </>
         )}
       </div>
+      {confirmClearAll && (
+        <ConfirmModal
+          title="Clear all offline files?"
+          message="Every PDF saved for offline use will be removed from this device."
+          confirmLabel="Clear all"
+          onConfirm={handleClearAll}
+          onCancel={() => setConfirmClearAll(false)}
+        />
+      )}
     </div>
   );
 };

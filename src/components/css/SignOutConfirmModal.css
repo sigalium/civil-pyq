@@ -62,3 +62,14 @@
   border-color: rgba(239, 83, 80, 0.6);
   background: rgba(239, 83, 80, 0.08);
 }
+
+.confirm-modal-btn.confirm-safe {
+  border-color: rgba(46, 204, 113, 0.4);
+  color: #2ecc71;
+}
+
+.confirm-modal-btn.confirm-safe:hover {
+  color: #4ee08a;
+  border-color: rgba(46, 204, 113, 0.6);
+  background: rgba(46, 204, 113, 0.08);
+}

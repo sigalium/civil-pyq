@@ -4,28 +4,20 @@ import MenuIcon from '@mui/icons-material/Menu'
 import CloseIcon from '@mui/icons-material/Close'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import AccountMenuContent from './AccountMenuContent';
-import { supabase } from '../lib/supabaseClient'
-import { usePDFWindows } from '../context/PDFWindowContext'
+import { usePDFWindows } from '../context/usePDFWindows'
+import { useResourcesData } from '../context/useResourcesData'
 import './css/Navbar.css'
 
 
 const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
   const { openPdf } = usePDFWindows()
+  const { academicCalendarPath } = useResourcesData()
   const [scrolled, setScrolled] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
-  const [calendarPath, setCalendarPath] = useState('')
-
-  useEffect(() => {
-    supabase
-      .from('global_resources')
-      .select('value')
-      .eq('key', 'academic_calendar_path')
-      .maybeSingle()
-      .then(({ data }) => setCalendarPath(data?.value || ''))
-  }, [])
   const location = useLocation()
   const navLinksRef = useRef(null)
   const menuToggleRef = useRef(null)
@@ -122,13 +114,24 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
                   <button
                     className="calendar-dropdown-item"
                     onClick={() => {
-                      openPdf({ name: 'Academic Calendar', path: calendarPath });
+                      openPdf({ name: 'Academic Calendar', path: academicCalendarPath });
                       setIsDropdownOpen(false);
                       setIsMenuOpen(false);
                     }}
                   >
                     <CalendarMonthIcon sx={{ fontSize: 18 }} /> Academic Calendar
                   </button>
+                  <Link
+                    to="/resources/codes-and-standards"
+                    state={{ from: location.pathname }}
+                    className="calendar-dropdown-item"
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <MenuBookIcon sx={{ fontSize: 18 }} /> Codes & Standards
+                  </Link>
                 </div>
               </div>
 

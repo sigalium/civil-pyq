@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import CloseIcon from '@mui/icons-material/Close'
 import PDFViewer from './PDFViewer'
-import { usePDFWindows } from '../context/PDFWindowContext'
+import { usePDFWindows } from '../context/usePDFWindows'
 import './css/PDFWindowManager.css'
 
 const GRID_AREAS = {
@@ -82,6 +82,7 @@ const PDFWindowManager = () => {
       <PDFViewer
         pdfName={win.name}
         pdfPath={win.path}
+        resourceId={win.resourceId}
         onClose={() => closePdf(win.id)}
         closeOnOutsideClick={false}
         isFocused
@@ -144,6 +145,7 @@ const PDFWindowManager = () => {
             <PDFViewer
               pdfName={win.name}
               pdfPath={win.path}
+              resourceId={win.resourceId}
               onClose={() => closePdf(win.id)}
               onMinimize={() => minimizePdf(win.id)}
               windowed

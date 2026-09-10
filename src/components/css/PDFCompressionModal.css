@@ -1,0 +1,251 @@
+.pdf-compress-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2300;
+  padding: 1.5rem;
+}
+
+.pdf-compress-modal {
+  background-color: var(--secondary);
+  border-radius: 14px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 1080px;
+  height: min(90vh, 880px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pdf-compress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.pdf-compress-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.pdf-compress-body {
+  display: flex;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.pdf-compress-preview {
+  flex: 1 1 65%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pdf-compress-preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.pdf-compress-view-toggle {
+  display: flex;
+  gap: 0.35rem;
+  background: rgba(var(--glass-rgb), 0.05);
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.pdf-compress-view-toggle button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pdf-compress-view-toggle button.active {
+  background: var(--accent);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.pdf-compress-view-toggle button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pdf-compress-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.pdf-compress-zoom .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.pdf-compress-scroll-area {
+  flex: 1;
+  min-height: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--glass-rgb), 0.15);
+  background: rgba(0, 0, 0, 0.15);
+  overflow: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) rgba(var(--accent-rgb), 0.08);
+}
+
+.pdf-compress-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pdf-compress-scroll-area::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 8px;
+}
+
+.pdf-compress-scroll-area canvas {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-radius: 2px;
+}
+
+.pdf-compress-preview-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.pdf-compress-controls {
+  flex: 1 1 35%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.pdf-compress-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pdf-compress-preset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--glass-rgb), 0.18);
+  background: rgba(var(--glass-rgb), 0.04);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.pdf-compress-preset span {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.pdf-compress-preset:hover:not(:disabled) {
+  border-color: rgba(var(--accent-rgb), 0.35);
+  color: var(--text-primary);
+}
+
+.pdf-compress-preset.active {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--text-primary);
+}
+
+.pdf-compress-sizes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(var(--glass-rgb), 0.04);
+}
+
+.pdf-compress-size-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.pdf-compress-size-row span:last-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.pdf-compress-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.pdf-compress-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.pdf-compress-actions .action-btn {
+  flex: 1;
+}
+
+@media (max-width: 760px) {
+  .pdf-compress-modal {
+    padding: 1rem;
+    height: 94vh;
+  }
+  .pdf-compress-body {
+    flex-direction: column;
+  }
+  .pdf-compress-preview {
+    flex: 1 1 auto;
+  }
+  .pdf-compress-controls {
+    flex: 0 0 auto;
+    overflow-y: visible;
+  }
+}

@@ -22,7 +22,7 @@ self.addEventListener('fetch', (event) => {
 
       try {
         return await fetch(event.request);
-      } catch (err) {
+      } catch {
         return new Response('This file is not available offline.', {
           status: 503,
           headers: { 'Content-Type': 'text/plain' },

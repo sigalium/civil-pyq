@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ResourcesDataProvider } from './context/ResourcesDataContext'
@@ -12,14 +13,16 @@ registerServiceWorker()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ThemeProvider>
-      <AuthProvider>
-        <ResourcesDataProvider>
-          <ContributorsDataProvider>
-            <App />
-          </ContributorsDataProvider>
-        </ResourcesDataProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ResourcesDataProvider>
+            <ContributorsDataProvider>
+              <App />
+            </ContributorsDataProvider>
+          </ResourcesDataProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </React.StrictMode>
 )

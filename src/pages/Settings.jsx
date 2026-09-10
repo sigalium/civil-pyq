@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, CloudDone, ChevronRight, PhoneIphone } from '@mui/icons-material';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../context/useTheme';
 import { listOfflineItems } from '../utils/offlineStorage';
 import BackButton from '../components/BackButton';
 import './styles/Settings.css';
@@ -15,7 +15,7 @@ const Settings = () => {
   return (
     <div className="settings-page fade-in">
       <div className="settings-container">
-        <BackButton onClick={() => navigate('/')} text="Home" />
+        <BackButton onClick={() => navigate('/')} text="Home" className="back-btn-page-top" />
         <h2 className="settings-title">Settings</h2>
 
         <section className="settings-section">

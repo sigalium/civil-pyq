@@ -1,0 +1,36 @@
+.offline-data-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 500;
+  background: var(--secondary);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  color: var(--text-primary);
+  padding: 0.7rem 1.1rem;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 300px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.offline-data-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb86c;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+@media (max-width: 480px) {
+  .offline-data-badge {
+    left: 16px;
+    right: 16px;
+    max-width: none;
+    bottom: 84px;
+  }
+}

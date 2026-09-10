@@ -226,15 +226,6 @@
   color: var(--accent);
 }
 
-.usage-today-badge {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: rgba(var(--glass-rgb), 0.12);
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-
 .chat-messages {
   flex: 1;
   overflow-y: auto;

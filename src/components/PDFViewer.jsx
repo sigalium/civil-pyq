@@ -1,9 +1,10 @@
-import { Close, ZoomIn, ZoomOut, Download, Fullscreen, FullscreenExit, Remove } from '@mui/icons-material';
+import { Close, ZoomIn, ZoomOut, Download, Remove, IosShare } from '@mui/icons-material';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useState, useEffect, useRef } from 'react';
 import AIChatWidget from './AIChatWidget';
 import AskGeminiButton from './AskGeminiButton';
-import { CACHE_NAME, isOfflineSupported } from '../utils/offlineStorage';
+import { logResourceEvent } from '../utils/analytics';
 import './css/PDFViewer.css';
 
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
@@ -14,6 +15,7 @@ const isMobile = window.matchMedia('(max-width: 800px)').matches;
 const PDFViewer = ({
   pdfName,
   pdfPath,
+  resourceId,
   onClose,
   onMinimize,
   hidden = false,
@@ -54,8 +56,6 @@ const PDFViewer = ({
 
   useEffect(() => {
     if (hidden) return;
-    if (isMobile) setScale(0.5);
-    else setScale(1.0);
     const handleClickOutside = (event) => {
       if (!closeOnOutsideClick) return;
       if (event.target.closest('.ask-gemini-btn')) return;
@@ -123,34 +123,20 @@ const PDFViewer = ({
     setPageHeight(null);
   }, [scale]);
 
-  const downloadFromUrl = (url, revokeAfter = false) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = pdfName || 'document.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    if (revokeAfter) {
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+  const handleDownload = () => {
+    if (resourceId) logResourceEvent(resourceId, 'download');
+    window.open(pdfPath, '_blank', 'noopener,noreferrer');
   };
 
-  const handleDownload = async () => {
-    if (isOfflineSupported()) {
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(pdfPath);
-        if (cached) {
-          const blob = await cached.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          downloadFromUrl(blobUrl, true);
-          return;
-        }
-      } catch {
-        return downloadFromUrl(pdfPath);
-      }
+  const [shareCopied, setShareCopied] = useState(false);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    } catch {
+      // clipboard unavailable, silently ignore
     }
-    downloadFromUrl(pdfPath);
   };
 
   const aiButtonText = 
@@ -178,6 +164,9 @@ const PDFViewer = ({
                   <Remove />
                 </button>
               )}
+              <button className="fullscreen-header-btn" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              </button>
               <button className="close-btn" onClick={handleClose}>
                 <Close />
               </button>
@@ -240,7 +229,11 @@ const PDFViewer = ({
               <div className={`pdf-page-indicator ${showPageIndicator ? 'visible' : ''}`}>
                 Page {currentPage} of {numPages || '--'}
               </div>
-              
+
+              <div className={`pdf-page-indicator ${shareCopied ? 'visible' : ''}`}>
+                Link copied
+              </div>
+
               <div className="pdf-viewer-controls pdf-viewer-controls-fixed">
                 <button className="control-btn" onClick={handleZoomOut}><ZoomOut /></button>
                 <span className="zoom-counter">{(scale * 100).toFixed(0)}%</span>
@@ -248,11 +241,9 @@ const PDFViewer = ({
                 <button className="control-btn download-btn" onClick={handleDownload}>
                   <Download /><span>Download</span>
                 </button>
-                {!isMobile && (
-                  <button className="control-btn fullscreen-bottom-btn" onClick={toggleFullscreen}>
-                    {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
-                  </button>
-                )}
+                <button className="control-btn share-btn" onClick={handleShare} aria-label="Copy link">
+                  <IosShare />
+                </button>
               </div>
             </div>
 

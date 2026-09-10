@@ -41,7 +41,7 @@ export async function moveResourceToTop({ id, semester, subject, resource_type, 
   await persistOrder('resources', items)
 }
 
-export async function insertResourceOnTop({ semester, subject, resource_type, name, path }) {
+export async function insertResourceOnTop({ semester, subject, resource_type, name, path, file_size_bytes }) {
   const { data: existing } = await supabase
     .from('resources')
     .select('id, sort_order')
@@ -53,7 +53,7 @@ export async function insertResourceOnTop({ semester, subject, resource_type, na
 
   const { data: inserted, error } = await supabase
     .from('resources')
-    .insert({ semester, subject, resource_type, name, path, sort_order: 0 })
+    .insert({ semester, subject, resource_type, name, path, file_size_bytes, sort_order: 0 })
     .select('id')
     .single()
 

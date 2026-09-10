@@ -6,15 +6,13 @@ import AddIcon from '@mui/icons-material/Add'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
-import { useContributorsData } from '../../context/ContributorsDataContext'
+import { useContributorsData } from '../../context/useContributorsData'
 import { supabase } from '../../lib/supabaseClient'
 import { uploadFileToGithub, sanitizePathSegment, getFileExtension } from '../../utils/githubUpload'
 import { DEFAULT_AVATARS, buildDefaultAvatarUrl, buildContributorPhotoUrl } from '../../utils/resourceSnippet'
 import { persistOrder } from '../../utils/resourceOrdering'
-import Select from '../../components/Select'
+import ConfirmModal from '../../components/ConfirmModal'
 import './Dashboard.css'
-
-const DEFAULT_AVATAR_OPTIONS = DEFAULT_AVATARS.map((a) => ({ value: buildDefaultAvatarUrl(a.file), label: a.label }))
 
 async function uploadContributorPhoto(file, name) {
   const safeName = sanitizePathSegment(name) || 'contributor'
@@ -26,7 +24,27 @@ async function uploadContributorPhoto(file, name) {
   })
 }
 
-const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => {
+const AvatarPicker = ({ value, onChange }) => (
+  <div className="avatar-picker-grid">
+    {DEFAULT_AVATARS.map((a) => {
+      const url = buildDefaultAvatarUrl(a.file)
+      return (
+        <button
+          type="button"
+          key={a.file}
+          className={`avatar-picker-option ${value === url ? 'selected' : ''}`}
+          onClick={() => onChange(url)}
+          title={a.label}
+          aria-label={a.label}
+        >
+          <img src={url} alt={a.label} />
+        </button>
+      )
+    })}
+  </div>
+)
+
+const ContributorRow = ({ contributor, onChanged, draggable }) => {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(contributor.name)
   const [batchYear, setBatchYear] = useState(contributor.batch_year || '')
@@ -36,6 +54,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => 
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [confirmTrash, setConfirmTrash] = useState(false)
   const dragControls = useDragControls()
 
   const handlePhotoUpload = async (e) => {
@@ -68,7 +87,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => 
   }
 
   const remove = async () => {
-    if (!window.confirm(`Move "${contributor.name}" to trash?`)) return
+    setConfirmTrash(false)
     await supabase.from('contributors').update({ deleted_at: new Date().toISOString() }).eq('id', contributor.id)
     onChanged()
   }
@@ -83,27 +102,24 @@ const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => 
           <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Department" />
         )}
         <div className="photo-upload-field">
-          {profilePic && <img className="photo-upload-preview" src={profilePic} alt="" />}
+          {profilePic && <img className="photo-upload-preview" src={buildContributorPhotoUrl(profilePic)} alt="" />}
           <label className="photo-upload-btn">
             {uploading ? 'Uploading…' : 'Upload photo'}
             <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} hidden />
           </label>
-          <div className="avatar-select-wrap">
-            <Select
-              value={profilePic}
-              onChange={setProfilePic}
-              options={DEFAULT_AVATAR_OPTIONS}
-              placeholder="Or pick a default avatar"
-            />
-          </div>
           {uploadError && <span className="dashboard-error">{uploadError}</span>}
         </div>
-        {contributor.role_type === 'student' && (
-          <label className="elective-checkbox">
-            <input type="checkbox" checked={isTop} onChange={(e) => setIsTop(e.target.checked)} />
-            Top contributor
-          </label>
-        )}
+        <div className="avatar-picker-row">
+          <AvatarPicker value={profilePic} onChange={setProfilePic} />
+          {contributor.role_type === 'student' && (
+            <label className="toggle-switch-field">
+              <span>Top contributor</span>
+              <span className={`toggle-switch ${isTop ? 'on' : ''}`} onClick={() => setIsTop((v) => !v)}>
+                <span className="toggle-switch-knob" />
+              </span>
+            </label>
+          )}
+        </div>
         <div className="resource-item-actions">
           <button className="action-btn approve-btn" disabled={saving} onClick={save}>Save</button>
           <button className="action-btn reject-btn" onClick={() => setEditing(false)}>Cancel</button>
@@ -133,13 +149,22 @@ const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => 
           {contributor.name} {contributor.is_top_contributor && '👑'}
         </span>
         <span className="resource-item-path">
-          {contributor.role_type === 'student' ? `Batch of ${contributor.batch_year || '—'}` : (contributor.department || '—')}
+          {contributor.role_type === 'student' ? `Batch of ${contributor.batch_year || 'unknown'}` : (contributor.department || 'No department listed')}
         </span>
       </div>
       <div className="resource-item-actions">
         <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit"><EditIcon sx={{ fontSize: 18 }} /></button>
-        <button className="icon-btn danger" onClick={remove} aria-label="Trash"><DeleteIcon sx={{ fontSize: 18 }} /></button>
+        <button className="icon-btn danger" onClick={() => setConfirmTrash(true)} aria-label="Trash"><DeleteIcon sx={{ fontSize: 18 }} /></button>
       </div>
+      {confirmTrash && (
+        <ConfirmModal
+          title="Move to trash?"
+          message={`"${contributor.name}" will move to Trash and can be restored within 30 days.`}
+          confirmLabel="Move to trash"
+          onConfirm={remove}
+          onCancel={() => setConfirmTrash(false)}
+        />
+      )}
     </>
   )
 
@@ -153,7 +178,6 @@ const ContributorRow = ({ contributor, onChanged, draggable, onDragCommit }) => 
       value={contributor}
       dragListener={false}
       dragControls={dragControls}
-      onDragEnd={onDragCommit}
       className="resource-item-row"
       whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}
     >
@@ -224,21 +248,14 @@ const AddContributorForm = ({ roleType, sortOrder, onAdded }) => {
         <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="Department" />
       )}
       <div className="photo-upload-field">
-        {profilePic && <img className="photo-upload-preview" src={profilePic} alt="" />}
+        {profilePic && <img className="photo-upload-preview" src={buildContributorPhotoUrl(profilePic)} alt="" />}
         <label className="photo-upload-btn">
           {uploading ? 'Uploading…' : 'Upload photo'}
           <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} hidden />
         </label>
-        <div className="avatar-select-wrap">
-          <Select
-            value={profilePic}
-            onChange={setProfilePic}
-            options={DEFAULT_AVATAR_OPTIONS}
-            placeholder="Or pick a default avatar"
-          />
-        </div>
         {uploadError && <span className="dashboard-error">{uploadError}</span>}
       </div>
+      <AvatarPicker value={profilePic} onChange={setProfilePic} />
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
         <button className="action-btn reject-btn" onClick={() => setOpen(false)}>Cancel</button>
@@ -302,13 +319,13 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
   return (
     <div className="resource-group">
       <h4>{title}</h4>
+      {dirty && <ReorderConfirmBar onConfirm={confirmOrder} onCancel={cancelOrder} busy={committing} />}
       <Reorder.Group as="div" axis="y" values={pageItems} onReorder={handleReorder} className="draggable-list">
         {pageItems.map((c) => (
-          <ContributorRow key={c.id} contributor={c} onChanged={onChanged} draggable onDragCommit={() => setDirty(true)} />
+          <ContributorRow key={c.id} contributor={c} onChanged={onChanged} draggable />
         ))}
       </Reorder.Group>
       {items.length === 0 && <p className="dashboard-empty">No {title.toLowerCase()} yet.</p>}
-      {dirty && <ReorderConfirmBar onConfirm={confirmOrder} onCancel={cancelOrder} busy={committing} />}
       {totalPages > 1 && (
         <div className="pagination-bar">
           <button className="action-btn reject-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>

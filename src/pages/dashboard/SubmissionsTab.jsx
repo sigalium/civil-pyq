@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import CompressIcon from '@mui/icons-material/Compress'
 import Select from '../../components/Select'
-import { useResourcesData } from '../../context/ResourcesDataContext'
+import PDFCompressionModal from '../../components/PDFCompressionModal'
+import { useResourcesData } from '../../context/useResourcesData'
 import { supabase } from '../../lib/supabaseClient'
-import { useAuth } from '../../context/AuthContext'
-import { usePDFWindows } from '../../context/PDFWindowContext'
+import { useAuth } from '../../context/useAuth'
+import { usePDFWindows } from '../../context/usePDFWindows'
 import { buildStagingRepoPath } from '../../utils/resourceSnippet'
 import { uploadFileToGithub } from '../../utils/githubUpload'
 import { insertResourceOnTop } from '../../utils/resourceOrdering'
 import { scanFileForMalware, checkScanStatus } from '../../utils/malwareScan'
 import './Dashboard.css'
 
-const RESOURCE_TYPES = ['pyq', 'lab', 'syllabus']
+const RESOURCE_TYPES = ['pyq', 'lab', 'syllabus', 'semester_syllabus', 'other']
+const RESOURCE_TYPE_LABELS = { pyq: 'PYQ', lab: 'Lab', syllabus: 'Syllabus', semester_syllabus: 'Semester Syllabus', other: 'Other' }
 const STATUSES = ['pending', 'approved', 'rejected']
-const RESOURCE_TYPE_OPTIONS = RESOURCE_TYPES.map((t) => ({ value: t, label: t }))
+const RESOURCE_TYPE_OPTIONS = RESOURCE_TYPES.map((t) => ({ value: t, label: RESOURCE_TYPE_LABELS[t] }))
 const STATUS_OPTIONS = STATUSES.map((s) => ({ value: s, label: s }))
 
 function startOfWeekIso() {
@@ -25,7 +28,7 @@ function startOfWeekIso() {
   return monday.toISOString()
 }
 
-const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove, onReject, busy }) => {
+const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onDownload, onApprove, onReject, onCompress, busy, canCompress, compressing }) => {
   const [editing, setEditing] = useState(false)
   const [semester, setSemester] = useState(submission.semester)
   const [subject, setSubject] = useState(submission.subject)
@@ -35,6 +38,9 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
   const [scan, setScan] = useState(null)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState('')
+  const [manualUploadConfirmed, setManualUploadConfirmed] = useState(false)
+
+  const isOther = submission.resource_type === 'other'
 
   const runScan = async () => {
     setScanning(true)
@@ -107,7 +113,7 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
       <div className="submission-info">
         <h3>{submission.resource_label}</h3>
         <p>
-          Semester {submission.semester} · {submission.subject} · {submission.resource_type}
+          {[submission.semester ? `Semester ${submission.semester}` : null, submission.subject, RESOURCE_TYPE_LABELS[submission.resource_type] || submission.resource_type].filter(Boolean).join(' · ')}
         </p>
         <p className="submission-meta">
           {submission.student_name || 'Anonymous'} · {new Date(submission.created_at).toLocaleString()}
@@ -119,19 +125,34 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
         </button>
         {submission.status === 'pending' && (
           <>
+            <button className="action-btn preview-btn" onClick={() => onDownload(submission)}>
+              Download
+            </button>
             <button className="action-btn preview-btn" onClick={runScan} disabled={scanning}>
               {scanning ? 'Scanning…' : 'Scan for malware'}
             </button>
             <button className="action-btn preview-btn" onClick={() => setEditing(true)}>
               Edit
             </button>
-            <button
-              className="action-btn approve-btn"
-              onClick={() => onApprove(submission)}
-              disabled={busy}
-            >
-              {busy ? 'Publishing…' : 'Approve'}
-            </button>
+            {canCompress && (
+              <button
+                className="action-btn preview-btn compress-btn"
+                onClick={() => onCompress(submission)}
+                disabled={busy || compressing}
+              >
+                <CompressIcon sx={{ fontSize: 16 }} />
+                <span>{compressing ? 'Compressing…' : 'Compress'}</span>
+              </button>
+            )}
+            {!isOther && (
+              <button
+                className="action-btn approve-btn"
+                onClick={() => onApprove(submission, false)}
+                disabled={busy}
+              >
+                {busy ? 'Publishing…' : 'Approve'}
+              </button>
+            )}
             <button
               className="action-btn reject-btn"
               onClick={() => onReject(submission)}
@@ -142,6 +163,37 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
           </>
         )}
       </div>
+      {isOther && submission.status === 'pending' && (
+        <div className="submission-other-panel">
+          <p className="submission-other-note">
+            This was submitted as "Other" and doesn't map to a subject, so it can't be published automatically.
+            Download the file and add it to the right place yourself (Codes &amp; Standards, a semester syllabus, etc.),
+            then confirm below once that's done.
+          </p>
+          <label className="toggle-switch-field submission-manual-toggle">
+            <span>I've already uploaded this file manually</span>
+            <span
+              className={`toggle-switch ${manualUploadConfirmed ? 'on' : ''}`}
+              onClick={() => setManualUploadConfirmed((v) => !v)}
+            >
+              <span className="toggle-switch-knob" />
+            </span>
+          </label>
+          <p className="submission-other-warning">
+            Only turn this on once the manual upload is complete. Approving here will mark the submission approved
+            and delete the submitted copy, without publishing it anywhere on its own.
+          </p>
+          {manualUploadConfirmed && (
+            <button
+              className="action-btn approve-btn"
+              onClick={() => onApprove(submission, true)}
+              disabled={busy}
+            >
+              {busy ? 'Approving…' : 'Approve submission'}
+            </button>
+          )}
+        </div>
+      )}
       {scanError && <p className="dashboard-error">{scanError}</p>}
       {scan?.status === 'completed' && (
         <p className={scan.malicious ? 'dashboard-error' : 'dashboard-success'}>
@@ -149,11 +201,11 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
             ? `Flagged malicious by ${scan.stats?.malicious || 0} scan engine(s). Do not approve.`
             : scan.suspicious
               ? `Clean, but ${scan.stats?.suspicious || 0} engine(s) marked it suspicious. Worth a second look.`
-              : 'Clean — no scan engine flagged this file.'}
+              : 'Clean. No scan engine flagged this file.'}
         </p>
       )}
       {scan?.status === 'pending' && (
-        <p className="dashboard-error">Scan is still running on VirusTotal — try again in a minute.</p>
+        <p className="dashboard-error">Scan is still running on VirusTotal. Try again in a minute.</p>
       )}
     </div>
   )
@@ -162,7 +214,8 @@ const SubmissionCard = ({ submission, subjects, onChanged, onPreview, onApprove,
 const PAGE_SIZE = 20
 
 const SubmissionsTab = () => {
-  const { session } = useAuth()
+  const { session, profile } = useAuth()
+  const canCompress = !!profile
   const { subjectRows, subjects, refresh: refreshResources } = useResourcesData()
   const { openPdf } = usePDFWindows()
   const [submissions, setSubmissions] = useState([])
@@ -177,6 +230,8 @@ const SubmissionsTab = () => {
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
   const [busyId, setBusyId] = useState(null)
+  const [compressingId, setCompressingId] = useState(null)
+  const [compressTarget, setCompressTarget] = useState(null)
   const initializedRef = useRef(false)
 
   const semesters = [...new Set(subjectRows.map((row) => row.semester))].sort((a, b) => a - b)
@@ -243,10 +298,85 @@ const SubmissionsTab = () => {
     openPdf({ name: submission.resource_label, path: data.signedUrl })
   }
 
-  const handleApprove = async (submission) => {
+  const handleDownload = async (submission) => {
+    setActionError('')
+    const { data, error } = await supabase.storage
+      .from('pending-uploads')
+      .createSignedUrl(submission.file_path, 600, { download: true })
+
+    if (error || !data) {
+      setActionError('Could not prepare a download link for this file.')
+      return
+    }
+    const link = document.createElement('a')
+    link.href = data.signedUrl
+    link.download = `${submission.resource_label}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleCompress = async (submission) => {
+    setActionError('')
+    setCompressingId(submission.id)
+    const { data, error } = await supabase.storage.from('pending-uploads').download(submission.file_path)
+    if (error || !data) {
+      setActionError('Could not read the uploaded file for compression.')
+      setCompressingId(null)
+      return
+    }
+    const file = new File([data], submission.file_path.split('/').pop() || 'document.pdf', { type: 'application/pdf' })
+    setCompressTarget({ submission, file })
+  }
+
+  const handleApplyCompression = async (compressedFile) => {
+    if (!compressTarget) return
+    const { submission } = compressTarget
+    const { error } = await supabase.storage
+      .from('pending-uploads')
+      .upload(submission.file_path, compressedFile, { upsert: true, contentType: 'application/pdf' })
+    setCompressTarget(null)
+    setCompressingId(null)
+    if (error) {
+      setActionError('Could not save the compressed file: ' + error.message)
+      return
+    }
+    setActionMessage('Compressed file saved. Preview or approve to see the smaller version.')
+  }
+
+  const handleApprove = async (submission, manualUploadConfirmed) => {
     setActionError('')
     setActionMessage('')
     setBusyId(submission.id)
+
+    if (submission.resource_type === 'other') {
+      if (!manualUploadConfirmed) {
+        setActionError('Confirm the manual upload toggle before approving an "Other" submission.')
+        setBusyId(null)
+        return
+      }
+      const { error: updateError } = await supabase
+        .from('submissions')
+        .update({
+          status: 'approved',
+          reviewed_by: session?.user?.email || null,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq('id', submission.id)
+
+      if (updateError) {
+        setActionError('Could not mark this submission approved.')
+        setBusyId(null)
+        return
+      }
+
+      await supabase.storage.from('pending-uploads').remove([submission.file_path])
+      setActionMessage(`Marked approved: ${submission.resource_label}. Remember it's on you to have placed the file correctly.`)
+      setBusyId(null)
+      fetchSubmissions()
+      fetchStats()
+      return
+    }
 
     const { data: fileBlob, error: downloadError } = await supabase.storage
       .from('pending-uploads')
@@ -260,11 +390,19 @@ const SubmissionsTab = () => {
 
     let publishedUrl
     try {
-      publishedUrl = await uploadFileToGithub({
-        file: fileBlob,
-        repoPath: buildStagingRepoPath(submission),
-        commitMessage: `Add ${submission.resource_label} (Sem ${submission.semester} - ${submission.subject})`,
-      })
+      if (submission.resource_type === 'semester_syllabus') {
+        publishedUrl = await uploadFileToGithub({
+          file: fileBlob,
+          repoPath: `pdfs/Semester${submission.semester}/Syllabus.pdf`,
+          commitMessage: `Add Semester ${submission.semester} syllabus`,
+        })
+      } else {
+        publishedUrl = await uploadFileToGithub({
+          file: fileBlob,
+          repoPath: buildStagingRepoPath(submission),
+          commitMessage: `Add ${submission.resource_label} (Sem ${submission.semester} - ${submission.subject})`,
+        })
+      }
     } catch (err) {
       setActionError('Could not publish the file to the CDN: ' + err.message)
       setBusyId(null)
@@ -289,7 +427,7 @@ const SubmissionsTab = () => {
     if (submission.resource_type === 'syllabus') {
       await supabase
         .from('resources')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('subject', submission.subject)
         .eq('semester', submission.semester)
         .eq('resource_type', 'syllabus')
@@ -304,6 +442,12 @@ const SubmissionsTab = () => {
           resource_type: submission.resource_type,
           name: 'Syllabus',
           path: publishedUrl,
+          file_size_bytes: fileBlob.size,
+        })
+      } else if (submission.resource_type === 'semester_syllabus') {
+        await supabase.from('global_resources').upsert({
+          key: `syllabus_semester_${submission.semester}`,
+          value: publishedUrl,
         })
       } else {
         await insertResourceOnTop({
@@ -312,6 +456,7 @@ const SubmissionsTab = () => {
           resource_type: submission.resource_type,
           name: submission.resource_label,
           path: publishedUrl,
+          file_size_bytes: fileBlob.size,
         })
       }
     } catch (err) {
@@ -409,9 +554,13 @@ const SubmissionsTab = () => {
                 subjects={subjects}
                 onChanged={fetchSubmissions}
                 onPreview={handlePreview}
+                onDownload={handleDownload}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onCompress={handleCompress}
                 busy={busyId === submission.id}
+                canCompress={canCompress}
+                compressing={compressingId === submission.id}
               />
             ))}
           </div>
@@ -425,6 +574,14 @@ const SubmissionsTab = () => {
             </button>
           </div>
         </>
+      )}
+
+      {compressTarget && (
+        <PDFCompressionModal
+          file={compressTarget.file}
+          onApply={handleApplyCompression}
+          onClose={() => { setCompressTarget(null); setCompressingId(null) }}
+        />
       )}
     </div>
   )

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '../../context/useAuth'
 import { supabase } from '../../lib/supabaseClient'
+import { adminRoleLabel, adminRoleChipClass, memberSortWeight } from '../../utils/adminRoles'
+import ConfirmModal from '../../components/ConfirmModal'
 import './Dashboard.css'
 
 const PERMISSION_FIELDS = [
@@ -15,31 +17,33 @@ const PERMISSION_FIELDS = [
   { key: 'can_view_members', label: 'View members' },
   { key: 'can_edit_members', label: 'Edit members' },
   { key: 'can_manage_contributors', label: 'Contributors' },
+  { key: 'can_view_analytics', label: 'Analytics' },
+  { key: 'can_manage_settings', label: 'Settings' },
+  { key: 'is_developer', label: 'Developer' },
 ]
 
 function emptyPermissions() {
   return PERMISSION_FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: false }), {})
 }
 
-function adminRoleLabel(member) {
-  return member.is_faculty ? 'faculty admin' : 'admin'
-}
-
-function adminRoleChipClass(member) {
-  return member.is_faculty ? 'role-chip role-admin-faculty' : 'role-chip role-admin'
-}
+const ToggleRow = ({ label, checked, onChange, className = '' }) => (
+  <label className={`toggle-switch-field member-toggle-row ${className}`}>
+    <span>{label}</span>
+    <span className={`toggle-switch ${checked ? 'on' : ''}`} onClick={() => onChange(!checked)}>
+      <span className="toggle-switch-knob" />
+    </span>
+  </label>
+)
 
 const PermissionCheckboxes = ({ values, onChange }) => (
   <div className="member-permissions-edit">
     {PERMISSION_FIELDS.map((f) => (
-      <label key={f.key} className="elective-checkbox">
-        <input
-          type="checkbox"
-          checked={!!values[f.key]}
-          onChange={(e) => onChange({ ...values, [f.key]: e.target.checked })}
-        />
-        {f.label}
-      </label>
+      <ToggleRow
+        key={f.key}
+        label={f.label}
+        checked={!!values[f.key]}
+        onChange={(next) => onChange({ ...values, [f.key]: next })}
+      />
     ))}
   </div>
 )
@@ -53,6 +57,7 @@ const AdminRow = ({ member, onChanged }) => {
   )
   const [saving, setSaving] = useState(false)
   const [actionError, setActionError] = useState('')
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   const save = async () => {
     setSaving(true)
@@ -78,7 +83,7 @@ const AdminRow = ({ member, onChanged }) => {
   }
 
   const remove = async () => {
-    if (!window.confirm(`Remove ${member.email} as an admin?`)) return
+    setConfirmRemove(false)
     setActionError('')
     const { data, error } = await supabase.from('admins').delete().eq('email', member.email).select()
 
@@ -98,10 +103,7 @@ const AdminRow = ({ member, onChanged }) => {
       <div className="member-card">
         <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className="member-username-input" />
         <div className="member-email">{member.email}</div>
-        <label className="elective-checkbox">
-          <input type="checkbox" checked={isFaculty} onChange={(e) => setIsFaculty(e.target.checked)} />
-          Faculty admin
-        </label>
+        <ToggleRow label="Faculty admin" checked={isFaculty} onChange={setIsFaculty} className="member-faculty-toggle" />
         <PermissionCheckboxes values={permissions} onChange={setPermissions} />
         {actionError && <p className="dashboard-error">{actionError}</p>}
         <div className="resource-item-actions">
@@ -119,11 +121,20 @@ const AdminRow = ({ member, onChanged }) => {
         <span className={adminRoleChipClass(member)}>{adminRoleLabel(member)}</span>
         <div className="subject-panel-actions" style={{ marginLeft: 'auto' }}>
           <button className="icon-btn" onClick={() => setEditing(true)} aria-label="Edit"><EditIcon sx={{ fontSize: 16 }} /></button>
-          <button className="icon-btn danger" onClick={remove} aria-label="Remove"><DeleteIcon sx={{ fontSize: 16 }} /></button>
+          <button className="icon-btn danger" onClick={() => setConfirmRemove(true)} aria-label="Remove"><DeleteIcon sx={{ fontSize: 16 }} /></button>
         </div>
       </div>
       <div className="member-email">{member.email}</div>
       {actionError && <p className="dashboard-error">{actionError}</p>}
+      {confirmRemove && (
+        <ConfirmModal
+          title="Remove admin?"
+          message={`${member.email} will lose access to the dashboard immediately.`}
+          confirmLabel="Remove"
+          onConfirm={remove}
+          onCancel={() => setConfirmRemove(false)}
+        />
+      )}
       <div className="member-permissions">
         {PERMISSION_FIELDS.filter((f) => member[f.key]).map((f) => (
           <span className="permission-chip" key={f.key}>{f.label}</span>
@@ -195,6 +206,12 @@ const AddAdminForm = ({ onAdded }) => {
   )
 }
 
+function memberRank(member) {
+  if (member.role === 'owner') return 0
+  if (member.is_faculty) return 1
+  return 2
+}
+
 const MembersTab = () => {
   const { profile } = useAuth()
   const isOwner = profile?.role === 'owner'
@@ -209,12 +226,13 @@ const MembersTab = () => {
     supabase
       .from('admins')
       .select('*')
-      .order('role')
+      .order('created_at', { ascending: true })
       .then(({ data, error: fetchError }) => {
         if (fetchError) {
           setError('Could not load members.')
         } else {
-          setMembers(data || [])
+          const sorted = [...(data || [])].sort((a, b) => memberRank(a) - memberRank(b))
+          setMembers(sorted)
         }
         setLoading(false)
         initializedRef.current = true
@@ -228,31 +246,15 @@ const MembersTab = () => {
   if (loading) return <p className="dashboard-empty">Loading...</p>
   if (error) return <p className="dashboard-error">{error}</p>
 
-  const owners = members.filter((m) => m.role === 'owner')
-  const admins = members.filter((m) => m.role === 'admin')
+  const sortedMembers = [...members].sort((a, b) => memberSortWeight(a) - memberSortWeight(b))
 
   return (
     <div className="dashboard-panel">
       <div className="resource-group">
-        <h4>Owners</h4>
+        <h4>Members</h4>
         <div className="members-list">
-          {owners.map((member) => (
-            <div className="member-card" key={member.email}>
-              <div className="member-card-header">
-                <span className="member-name">{member.username || member.email}</span>
-                <span className="role-chip role-owner">owner</span>
-              </div>
-              <div className="member-email">{member.email}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="resource-group">
-        <h4>Admins</h4>
-        <div className="members-list">
-          {admins.map((member) =>
-            canEditMembers ? (
+          {sortedMembers.map((member) =>
+            member.role === 'admin' && canEditMembers ? (
               <AdminRow key={member.email} member={member} onChanged={fetchMembers} />
             ) : (
               <div className="member-card" key={member.email}>

@@ -1,7 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-const ContributorsDataContext = createContext(null)
+import { ContributorsDataContext } from './useContributorsData'
 
 export function ContributorsDataProvider({ children }) {
   const [contributorRows, setContributorRows] = useState([])
@@ -38,10 +37,4 @@ export function ContributorsDataProvider({ children }) {
       {children}
     </ContributorsDataContext.Provider>
   )
-}
-
-export function useContributorsData() {
-  const ctx = useContext(ContributorsDataContext)
-  if (!ctx) throw new Error('useContributorsData must be used within a ContributorsDataProvider')
-  return ctx
 }

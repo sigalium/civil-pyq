@@ -26,3 +26,7 @@ dist-ssr
 *.sw?
 
 supabase/.temp
+CivilPYQ.md
+
+current_state.md
+supabase/migrations/

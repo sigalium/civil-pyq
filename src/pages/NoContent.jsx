@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import BackButton from '../components/BackButton'
-import { usePDFWindows } from '../context/PDFWindowContext'
+import { usePDFWindows } from '../context/usePDFWindows'
 import './styles/NoContent.css'
 
 const NoContent = ({ semester, syllabusPath }) => {
@@ -12,7 +12,7 @@ const NoContent = ({ semester, syllabusPath }) => {
 
   return (
     <div className="no-content fade-in">
-      <BackButton onClick={() => window.history.back()} text="Back" />
+      <BackButton onClick={() => window.history.back()} text="Back" className="back-btn-page-top" />
       <div className="no-content-container">
         <h2>Semester {semester}</h2>
         {syllabusPath && (

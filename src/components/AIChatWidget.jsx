@@ -10,7 +10,6 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
-import { recordGeminiRequest, getGeminiUsageToday } from '../utils/geminiUsageTracker';
 import { createSecureId } from '../utils/secureId';
 
   const cleanLatexForDownload = (rawText) => {
@@ -101,7 +100,6 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat, pdfContaine
   const [customPageEnd, setCustomPageEnd] = useState('');
   const customPageMenuRef = useRef(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const [usageToday, setUsageToday] = useState(0);
 
 
   
@@ -299,7 +297,6 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat, pdfContaine
     if (savedKey) {
       setApiKey(savedKey);
       setIsKeySaved(true);
-      setUsageToday(getGeminiUsageToday(savedKey));
       const secureId = createSecureId(savedKey);
       const savedMessages = localStorage.getItem(`chat_${pdfName}_${secureId}`);
       
@@ -602,8 +599,6 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat, pdfContaine
 
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
-        recordGeminiRequest(apiKey);
-        setUsageToday(getGeminiUsageToday(apiKey));
         let answer = data.candidates[0].content.parts[0].text;
         answer = answer.replace(/\n{3,}/g, '\n\n');
         answer = answer.trim();
@@ -781,7 +776,6 @@ const AIChatWidget = ({ currentPage, pdfName, numPages, onCloseChat, pdfContaine
         <div className="chat-title">
           <AutoAwesome sx={{ fontSize: 18, color: 'var(--accent)' }} />
           <span>Gemini Assistant</span>
-          {isKeySaved && <span className="usage-today-badge">{usageToday} today</span>}
         </div>
         
         <div className="header-menu-container" ref={headerMenuRef}>

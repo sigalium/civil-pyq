@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { CREATOR_LINKS } from '../data/appData'
 import './styles/About.css'
 
 const About = () => {
@@ -20,25 +21,25 @@ const About = () => {
           <div className="profile-info">
             <h1>About Me</h1>
             <p className="bio">
-              Hi, I’m Priyangkam Bhuyan — a civil engineering graduate from the batch of 2028 at Girijananda Chowdhury University.
+              Hi, I'm Priyangkam Bhuyan, a civil engineering undergraduate from the batch of 2028 at Girijananda Chowdhury University.
               I'm the creator of CivilPYQ, a platform designed to make quality study materials and past year question papers 
               easily accessible to civil engineering students. My goal is to simplify exam preparation and support fellow 
-              students with reliable resources—all in one convenient place.
+              students with reliable resources, all in one convenient place.
             </p>
             <div className="social-links">
-              <a href="https://github.com/sigalium" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a href={CREATOR_LINKS.github} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-github"></i>
               </a>
-              <a href="https://www.linkedin.com/in/priyangkam-bhuyan-2b7a25386/" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a href={CREATOR_LINKS.linkedin} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-linkedin"></i>
               </a>
-              <a href="https://priyangkam.netlify.app" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a href={CREATOR_LINKS.website} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fas fa-globe"></i>
               </a>
-              <a href="https://www.instagram.com/priyangkamb/" className="social-link" target="_blank" rel="noopener noreferrer">
+              <a href={CREATOR_LINKS.instagram} className="social-link" target="_blank" rel="noopener noreferrer">
                 <i className="fab fa-instagram"></i>
               </a>
-              <a href="mailto:priyangkam.bhuyan@email.com" className="social-link">
+              <a href={`mailto:${CREATOR_LINKS.email}`} className="social-link">
                 <i className="fas fa-envelope"></i>
               </a>
             </div>

@@ -11,7 +11,6 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
-import { recordGeminiRequest, getGeminiUsageToday } from '../utils/geminiUsageTracker';
 import { createSecureId } from '../utils/secureId';
 
 
@@ -95,7 +94,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState(null);
   const [showRemoveKeyModal, setShowRemoveKeyModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const [usageToday, setUsageToday] = useState(0);
 
   const videoRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -259,8 +257,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
 
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      recordGeminiRequest(apiKey);
-      setUsageToday(getGeminiUsageToday(apiKey));
 
       const initAiId = 'init-ai-' + Date.now();
       setMessages(prev => [...prev, { id: initAiId, role: 'ai', text: data.candidates[0].content.parts[0].text }]);
@@ -327,7 +323,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
     if (savedKey) {
       setApiKey(savedKey);
       setIsKeySaved(true);
-      setUsageToday(getGeminiUsageToday(savedKey));
       const secureId = createSecureId(savedKey);
       const savedMessages = localStorage.getItem(`predictor_${subject}_${secureId}`);
       if (savedMessages) {
@@ -554,8 +549,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
 
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      recordGeminiRequest(apiKey);
-      setUsageToday(getGeminiUsageToday(apiKey));
 
       let answer = data.candidates[0].content.parts[0].text;
       answer = answer.replace(/\n{3,}/g, '\n\n');
@@ -756,7 +749,6 @@ const AIPredictorWidget = ({ subject, pdfList, onClose }) => {
         <div className="chat-title">
           <AutoAwesome sx={{ fontSize: 18, color: 'var(--accent)' }} />
           <span>Gemini Assistant</span>
-          {isKeySaved && <span className="usage-today-badge">{usageToday} today</span>}
         </div>
         
         <div className="header-menu-container" ref={headerMenuRef}>

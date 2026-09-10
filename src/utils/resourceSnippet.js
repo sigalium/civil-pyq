@@ -60,3 +60,11 @@ export function extractRepoPathFromUrl(url) {
   const index = url.indexOf(marker)
   return index === -1 ? null : url.slice(index + marker.length)
 }
+
+export function buildCodeRepoPath({ name, fileName, sectionName }) {
+  const extension = getExtension(fileName)
+  const safeName = name.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'Code'
+  const safeSection = sectionName ? sectionName.trim().replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') : ''
+  const folder = safeSection ? `pdfs/CodesAndStandards/${safeSection}` : 'pdfs/CodesAndStandards'
+  return `${folder}/${safeName}-${Date.now()}.${extension}`
+}

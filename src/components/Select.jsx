@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import './css/Select.css'
 
-const Select = ({ value, onChange, options, placeholder = 'Select...', disabled = false }) => {
+const Select = ({ value, onChange, options, placeholder = 'Select...', disabled = false, icon = null, className = '' }) => {
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(0)
   const wrapperRef = useRef(null)
@@ -27,6 +27,7 @@ const Select = ({ value, onChange, options, placeholder = 'Select...', disabled 
   }
 
   const pick = (option) => {
+    if (option.disabled) return
     onChange(option.value)
     setOpen(false)
   }
@@ -59,14 +60,15 @@ const Select = ({ value, onChange, options, placeholder = 'Select...', disabled 
   }
 
   return (
-    <div className={`custom-select ${disabled ? 'disabled' : ''}`} ref={wrapperRef} onKeyDown={handleKeyDown}>
+    <div className={`custom-select ${disabled ? 'disabled' : ''} ${className}`} ref={wrapperRef} onKeyDown={handleKeyDown}>
       <button
         type="button"
         className="custom-select-trigger"
         onClick={() => (open ? setOpen(false) : openMenu())}
         disabled={disabled}
       >
-        <span className={selected ? '' : 'custom-select-placeholder'}>
+        {icon && <span className="custom-select-icon">{icon}</span>}
+        <span className={`custom-select-label ${selected ? '' : 'custom-select-placeholder'}`}>
           {selected ? selected.label : placeholder}
         </span>
         <KeyboardArrowDownIcon sx={{ fontSize: 18, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -79,7 +81,8 @@ const Select = ({ value, onChange, options, placeholder = 'Select...', disabled 
               key={option.value}
               role="option"
               aria-selected={String(option.value) === String(value)}
-              className={`custom-select-option ${index === highlighted ? 'highlighted' : ''} ${String(option.value) === String(value) ? 'selected' : ''}`}
+              aria-disabled={option.disabled || undefined}
+              className={`custom-select-option ${index === highlighted ? 'highlighted' : ''} ${String(option.value) === String(value) ? 'selected' : ''} ${option.disabled ? 'disabled' : ''}`}
               onMouseEnter={() => setHighlighted(index)}
               onMouseDown={(e) => handleOptionMouseDown(e, option)}
             >
