@@ -11,6 +11,7 @@ import { useResourcesData } from '../../context/useResourcesData'
 import { useAuth } from '../../context/useAuth'
 import { buildStagingRepoPath } from '../../utils/resourceSnippet'
 import { uploadFileToGithub } from '../../utils/githubUpload'
+import { recordReplacedFile } from '../../utils/replacedFiles'
 import { insertResourceOnTop } from '../../utils/resourceOrdering'
 import { supabase } from '../../lib/supabaseClient'
 import './Dashboard.css'
@@ -159,6 +160,20 @@ const UploadTab = () => {
         })
 
         if (entry.type === 'syllabus') {
+          const { data: existingSyllabus } = await supabase
+            .from('resources')
+            .select('path, file_size_bytes')
+            .eq('subject', entry.subject)
+            .eq('semester', entry.semester)
+            .eq('resource_type', 'syllabus')
+          for (const oldRow of existingSyllabus || []) {
+            await recordReplacedFile({
+              oldUrl: oldRow.path,
+              resourceName: `Syllabus - Sem ${entry.semester} - ${entry.subject}`,
+              resourceType: 'syllabus',
+              fileSizeBytes: oldRow.file_size_bytes,
+            })
+          }
           await supabase
             .from('resources')
             .delete()
