@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabaseClient'
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-upload`
-const MAX_FILE_BYTES = 25 * 1024 * 1024
+export const MAX_FILE_BYTES = 19_000_000
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -24,7 +24,7 @@ export function getFileExtension(fileName) {
 export async function uploadFileToGithub({ file, repoPath, commitMessage }) {
   if (!file) throw new Error('No file selected.')
   if (file.size > MAX_FILE_BYTES) {
-    throw new Error('File is larger than 25MB. Please upload a smaller file.')
+    throw new Error('File is larger than 19MB. Files above that size are not reliably served by our CDN. Please compress the PDF and try again.')
   }
 
   const { data: sessionData } = await supabase.auth.getSession()

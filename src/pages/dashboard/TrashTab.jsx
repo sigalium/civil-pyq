@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import RestoreIcon from '@mui/icons-material/Restore'
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
@@ -65,7 +65,9 @@ const TrashRow = ({ label, meta, deletedAt, onPreview, onRestore, onHardDelete, 
             <OpenInNewIcon sx={{ fontSize: 18 }} />
           </button>
         )}
-        <button className="icon-btn" onClick={onRestore} disabled={busy} aria-label="Restore"><RestoreIcon sx={{ fontSize: 18 }} /></button>
+        {onRestore && (
+          <button className="icon-btn" onClick={onRestore} disabled={busy} aria-label="Restore"><RestoreIcon sx={{ fontSize: 18 }} /></button>
+        )}
         {isOwner && (
           <button className="icon-btn danger" onClick={onHardDelete} disabled={busy} aria-label="Delete forever">
             <DeleteForeverIcon sx={{ fontSize: 18 }} />
@@ -90,11 +92,26 @@ const TrashTab = () => {
   const [resourceSort, setResourceSort] = useState('deleting-soonest')
   const [codeSort, setCodeSort] = useState('deleting-soonest')
   const [contributorSort, setContributorSort] = useState('deleting-soonest')
+  const [replacedSort, setReplacedSort] = useState('deleting-soonest')
+  const [replacedFiles, setReplacedFiles] = useState([])
+
+  const refreshReplaced = async () => {
+    const { data } = await supabase
+      .from('replaced_files')
+      .select('*')
+      .order('deleted_at', { ascending: true })
+    setReplacedFiles(data || [])
+  }
+
+  useEffect(() => {
+    refreshReplaced()
+  }, [])
 
   const trashedSubjects = sortTrashRows(subjectRows.filter((r) => r.deleted_at), subjectSort, (r) => r.name)
   const trashedResources = sortTrashRows(resourceRows.filter((r) => r.deleted_at && r.resource_type !== 'iscode'), resourceSort, (r) => r.name)
   const trashedCodes = sortTrashRows(resourceRows.filter((r) => r.deleted_at && r.resource_type === 'iscode'), codeSort, (r) => r.name)
   const trashedContributors = sortTrashRows(contributorRows.filter((r) => r.deleted_at), contributorSort, (r) => r.name)
+  const trashedReplaced = sortTrashRows(replacedFiles, replacedSort, (r) => r.resource_name)
 
   const codeSectionLabel = (row) => sections.find((s) => s.id === row.section_id)?.name || 'Code'
 
@@ -210,7 +227,25 @@ const TrashTab = () => {
     refreshContributors()
   }
 
-  const isEmpty = trashedSubjects.length === 0 && trashedResources.length === 0 && trashedCodes.length === 0 && trashedContributors.length === 0
+  const hardDeleteReplaced = async (row) => {
+    setPending(null)
+    setError('')
+    setBusyId(row.id)
+    const repoPath = extractRepoPathFromUrl(row.jsdelivr_url) || row.github_path
+    if (repoPath) {
+      try {
+        await deleteFileFromGithub({ repoPath, commitMessage: `Delete replaced file ${row.resource_name}` })
+      } catch (githubError) {
+        setError(`Removed from the list, but the file on GitHub could not be deleted: ${githubError.message}`)
+      }
+    }
+    const { error: deleteError } = await supabase.from('replaced_files').delete().eq('id', row.id)
+    if (deleteError) setError(`Could not permanently delete this entry: ${deleteError.message}`)
+    setBusyId(null)
+    refreshReplaced()
+  }
+
+  const isEmpty = trashedSubjects.length === 0 && trashedResources.length === 0 && trashedCodes.length === 0 && trashedContributors.length === 0 && trashedReplaced.length === 0
 
   return (
     <div className="dashboard-panel">
@@ -302,6 +337,30 @@ const TrashTab = () => {
               deletedAt={row.deleted_at}
               onRestore={() => setPending({ action: () => restoreContributor(row.id), title: 'Restore contributor?', message: `"${row.name}" will be restored to the ${row.role_type === 'faculty' ? 'Faculty' : 'Student'} Contributors list.`, confirmLabel: 'Restore', danger: false })}
               onHardDelete={() => setPending({ action: () => hardDeleteContributor(row.id), title: 'Delete permanently?', message: `"${row.name}" will be permanently deleted. This cannot be undone.`, confirmLabel: 'Delete forever' })}
+              isOwner={isOwner}
+              busy={busyId === row.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {trashedReplaced.length > 0 && (
+        <div className="resource-group">
+          <div className="trash-section-header">
+            <h4>Replaced</h4>
+            <Select value={replacedSort} onChange={setReplacedSort} options={SORT_OPTIONS} icon={<FilterAltIcon sx={{ fontSize: 16 }} />} />
+          </div>
+          <p className="snippet-hint">
+            Old versions of files that were swapped out for a new upload. Restored automatically only by staying here; there is no "restore to live" for these, since a newer file already took their place.
+          </p>
+          {trashedReplaced.map((row) => (
+            <TrashRow
+              key={row.id}
+              label={row.resource_name}
+              meta={row.resource_type || 'Replaced file'}
+              deletedAt={row.deleted_at}
+              onPreview={row.jsdelivr_url ? () => openPdf({ name: row.resource_name, path: row.jsdelivr_url }) : null}
+              onHardDelete={() => setPending({ action: () => hardDeleteReplaced(row), title: 'Delete permanently?', message: `The old version of "${row.resource_name}" will be permanently deleted from GitHub. This cannot be undone.`, confirmLabel: 'Delete forever' })}
               isOwner={isOwner}
               busy={busyId === row.id}
             />

@@ -5,7 +5,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const MAX_CONTENT_BASE64_LENGTH = 34_000_000
+const MAX_CONTENT_BASE64_LENGTH = 25_400_000
 const POLL_ATTEMPTS = 6
 const POLL_DELAY_MS = 4000
 

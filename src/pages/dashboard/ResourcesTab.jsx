@@ -18,6 +18,7 @@ import { useAuth } from '../../context/useAuth'
 import { supabase } from '../../lib/supabaseClient'
 import { buildStagingRepoPath } from '../../utils/resourceSnippet'
 import { uploadFileToGithub } from '../../utils/githubUpload'
+import { recordReplacedFile } from '../../utils/replacedFiles'
 import { persistOrder, insertResourceOnTop } from '../../utils/resourceOrdering'
 import { formatBytes } from '../../utils/pdfCompression'
 import PDFCompressionModal from '../../components/PDFCompressionModal'
@@ -97,6 +98,9 @@ const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, dra
 
   const save = async () => {
     setSaving(true)
+    if (item.path && path !== item.path) {
+      await recordReplacedFile({ oldUrl: item.path, resourceName: name, resourceType: type, fileSizeBytes: item.file_size_bytes })
+    }
     await supabase.from('resources').update({ name, path, file_size_bytes: fileSize, updated_at: new Date().toISOString() }).eq('id', item.id)
     setSaving(false)
     setEditing(false)

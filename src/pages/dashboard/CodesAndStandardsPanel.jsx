@@ -12,6 +12,7 @@ import { useResourcesData } from '../../context/useResourcesData'
 import { useAuth } from '../../context/useAuth'
 import { supabase } from '../../lib/supabaseClient'
 import { uploadFileToGithub } from '../../utils/githubUpload'
+import { recordReplacedFile } from '../../utils/replacedFiles'
 import { buildCodeRepoPath } from '../../utils/resourceSnippet'
 import { insertCodeOnTop } from '../../utils/isCodesOrdering'
 import { persistOrder } from '../../utils/resourceOrdering'
@@ -247,6 +248,9 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove })
   const save = async () => {
     setSaving(true)
     setUploadError('')
+    if (item.path && path !== item.path) {
+      await recordReplacedFile({ oldUrl: item.path, resourceName: name, resourceType: 'iscode', fileSizeBytes: item.file_size_bytes })
+    }
     const { error } = await supabase.from('resources').update({ name, description: description.trim() || null, path, file_size_bytes: fileSize, section_id: sectionId, updated_at: new Date().toISOString() }).eq('id', item.id)
     setSaving(false)
     if (error) {

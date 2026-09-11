@@ -1,0 +1,24 @@
+name: Purge Expired Trash
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call purge-expired edge function
+        run: |
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/purge-expired" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          echo "purge-expired responded with HTTP $response"
+          cat response.json
+          if [ "$response" -ge 400 ]; then
+            echo "Purge failed with status $response"
+            exit 1
+          fi

@@ -8,6 +8,7 @@ import { getLocalId } from '../utils/localId'
 import TurnstileWidget from '../components/TurnstileWidget'
 import Select from '../components/Select'
 import { buildContributorPhotoUrl } from '../utils/resourceSnippet'
+import { MAX_FILE_BYTES } from '../utils/githubUpload'
 import { SITE_LINKS } from '../data/appData'
 
 const RESOURCE_TYPES = [
@@ -110,7 +111,12 @@ const Contribute = () => {
 
   const handleFileChange = (event) => {
     const selected = event.target.files?.[0]
-    if (selected) setFile(selected)
+    if (!selected) return
+    if (selected.size > MAX_FILE_BYTES) {
+      setSubmitError('This file is larger than 19MB. Files above that size cannot be hosted on our CDN. Please compress the PDF and try again.')
+      return
+    }
+    setFile(selected)
   }
 
   const handleDrop = (event) => {
@@ -118,6 +124,10 @@ const Contribute = () => {
     setIsDragging(false)
     const dropped = event.dataTransfer.files?.[0]
     if (dropped && dropped.type === 'application/pdf') {
+      if (dropped.size > MAX_FILE_BYTES) {
+        setSubmitError('This file is larger than 19MB. Files above that size cannot be hosted on our CDN. Please compress the PDF and try again.')
+        return
+      }
       setFile(dropped)
     } else if (dropped) {
       setSubmitError('Only PDF files are accepted.')

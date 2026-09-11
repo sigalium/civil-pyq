@@ -6,7 +6,7 @@ const CORS_HEADERS = {
 }
 
 const ALLOWED_PREFIXES = ['pdfs/', 'Contributor/']
-const MAX_CONTENT_BASE64_LENGTH = 34_000_000
+const MAX_CONTENT_BASE64_LENGTH = 25_400_000
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       return json({ error: 'This destination path is not allowed.' }, 400)
     }
     if (contentBase64.length > MAX_CONTENT_BASE64_LENGTH) {
-      return json({ error: 'File is too large to publish.' }, 400)
+      return json({ error: 'File is larger than 19MB and cannot be published.' }, 400)
     }
 
     const owner = Deno.env.get('GITHUB_OWNER')
