@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Wrench } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
 import { SITE_LINKS } from '../data/appData'
 import '../components/css/ProtectedRoute.css'
@@ -20,6 +21,9 @@ const MaintenancePage = ({ message }) => {
   return (
     <div className="gate-screen maintenance-screen">
       <div className="gate-card maintenance-card">
+        <div className="maintenance-icon-badge">
+          <Wrench size={26} strokeWidth={2} />
+        </div>
         <h2>We'll be right back</h2>
         <p>
           {message?.text || "CivilPYQ is down for maintenance right now."}

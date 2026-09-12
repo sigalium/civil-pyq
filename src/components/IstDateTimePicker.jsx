@@ -37,7 +37,7 @@ function isBeforeToday(year, month, day, now) {
   return day < now.day
 }
 
-const IstDateTimePicker = ({ value, onChange, children }) => {
+const IstDateTimePicker = ({ value, onChange, disabled = false, children }) => {
   const now = useMemo(() => isoToIstParts(new Date().toISOString()), [])
   const parts = useMemo(() => isoToIstParts(value) || now, [value, now])
   const [viewYear, setViewYear] = useState(parts.year)
@@ -124,14 +124,14 @@ const IstDateTimePicker = ({ value, onChange, children }) => {
   const amDisabled = isTodaySelected && now.hour24 >= 12
 
   return (
-    <div className="ist-datetime-picker">
-      <div className="ist-calendar">
+    <>
+      <div className={`ist-calendar ${disabled ? 'is-disabled' : ''}`} aria-disabled={disabled}>
         <div className="ist-calendar-header">
-          <button type="button" className="ist-calendar-nav" onClick={goToPrevMonth} aria-label="Previous month">
+          <button type="button" className="ist-calendar-nav" onClick={goToPrevMonth} disabled={disabled} aria-label="Previous month">
             <ChevronLeftIcon sx={{ fontSize: 20 }} />
           </button>
           <span className="ist-calendar-title">{MONTH_NAMES[activeMonth - 1]} {activeYear}</span>
-          <button type="button" className="ist-calendar-nav" onClick={goToNextMonth} aria-label="Next month">
+          <button type="button" className="ist-calendar-nav" onClick={goToNextMonth} disabled={disabled} aria-label="Next month">
             <ChevronRightIcon sx={{ fontSize: 20 }} />
           </button>
         </div>
@@ -145,7 +145,7 @@ const IstDateTimePicker = ({ value, onChange, children }) => {
               key={i}
               className={`ist-calendar-cell ${cell.inMonth ? '' : 'outside'} ${isPastCell(cell) ? 'past' : ''} ${isHighlighted(cell) ? 'selected' : ''} ${isToday(cell) ? 'today' : ''}`}
               onClick={() => cell.inMonth && !isPastCell(cell) && selectDay(cell.day)}
-              disabled={!cell.inMonth || isPastCell(cell)}
+              disabled={disabled || !cell.inMonth || isPastCell(cell)}
             >
               {cell.day}
             </button>
@@ -153,13 +153,14 @@ const IstDateTimePicker = ({ value, onChange, children }) => {
         </div>
       </div>
 
-      <div className="ist-side-panel">
+      <div className={`ist-side-panel ${disabled ? 'is-disabled' : ''}`} aria-disabled={disabled}>
         <div className="ist-time-row">
           <Select
             className="ist-time-select"
             value={hour12}
             options={hourOptions}
             onChange={(val) => setHour12(Number(val))}
+            disabled={disabled}
           />
           <span className="ist-time-colon">:</span>
           <Select
@@ -167,16 +168,17 @@ const IstDateTimePicker = ({ value, onChange, children }) => {
             value={parts.minute}
             options={minuteOptions}
             onChange={(val) => setMinute(Number(val))}
+            disabled={disabled}
           />
           <div className="ist-ampm-toggle">
-            <button type="button" className={ampm === 'AM' ? 'active' : ''} disabled={amDisabled} onClick={() => toggleAmPm('AM')}>AM</button>
-            <button type="button" className={ampm === 'PM' ? 'active' : ''} onClick={() => toggleAmPm('PM')}>PM</button>
+            <button type="button" className={ampm === 'AM' ? 'active' : ''} disabled={disabled || amDisabled} onClick={() => toggleAmPm('AM')}>AM</button>
+            <button type="button" className={ampm === 'PM' ? 'active' : ''} disabled={disabled} onClick={() => toggleAmPm('PM')}>PM</button>
           </div>
         </div>
         <span className="ist-datetime-hint">All times are IST (India), regardless of your device's timezone.</span>
         {children}
       </div>
-    </div>
+    </>
   )
 }
 

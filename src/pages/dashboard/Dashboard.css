@@ -1635,16 +1635,6 @@
   flex-shrink: 0;
 }
 
-.dashboard .backfill-panel {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(var(--glass-rgb), 0.1);
-}
-
-.dashboard .backfill-panel h4 {
-  margin-bottom: 0.4rem;
-}
-
 @media (max-width: 768px) {
   .dashboard .trash-item-meta {
     white-space: normal;
@@ -1740,16 +1730,201 @@
   margin-top: 0.6rem;
 }
 
+.dashboard .maintenance-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard .maintenance-panel-header h4 {
+  margin: 0;
+}
+
+.dashboard .maintenance-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dashboard .maintenance-datetime-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 320px) minmax(0, 1fr);
+  grid-template-areas:
+    "cal time status"
+    "cal msg msg"
+    "cal actions actions";
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+
+.dashboard .maintenance-datetime-grid .ist-calendar {
+  grid-area: cal;
+}
+
+.dashboard .maintenance-datetime-grid .ist-side-panel {
+  grid-area: time;
+  align-self: stretch;
+}
+
+.dashboard .maintenance-datetime-grid .maintenance-status-box {
+  grid-area: status;
+  align-self: stretch;
+}
+
+.dashboard .maintenance-datetime-grid .maintenance-message-field {
+  grid-area: msg;
+}
+
+.dashboard .maintenance-datetime-grid .settings-save-row {
+  grid-area: actions;
+}
+
+@media (max-width: 900px) {
+  .dashboard .maintenance-datetime-grid {
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    grid-template-areas:
+      "cal time"
+      "cal status"
+      "cal msg"
+      "cal actions";
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard .maintenance-datetime-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "cal"
+      "time"
+      "status"
+      "msg"
+      "actions";
+  }
+}
+
+.dashboard .maintenance-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(var(--glass-rgb), 0.08);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dashboard .maintenance-status-pill.is-active {
+  background: rgba(74, 222, 128, 0.14);
+  color: #4ade80;
+}
+
+.dashboard .maintenance-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.dashboard .segmented-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: rgba(var(--glass-rgb), 0.06);
+  border: 1px solid rgba(var(--glass-rgb), 0.15);
+  border-radius: 10px;
+  padding: 4px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.dashboard .segmented-toggle-highlight {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 7px;
+  background: var(--accent);
+  transition: transform 0.2s ease;
+}
+
+.dashboard .segmented-toggle-highlight.position-1 {
+  transform: translateX(100%);
+}
+
+.dashboard .segmented-toggle-option {
+  position: relative;
+  z-index: 1;
+  background: none;
+  border: none;
+  padding: 0.55rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 7px;
+  transition: color 0.2s ease;
+  font-family: inherit;
+}
+
+.dashboard .segmented-toggle-option.active {
+  color: var(--primary);
+}
+
+.dashboard .segmented-toggle-option:disabled {
+  cursor: default;
+}
+
+.dashboard .segmented-toggle.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.dashboard .maintenance-status-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(var(--glass-rgb), 0.05);
+  border: 1px solid rgba(var(--glass-rgb), 0.15);
+  border-radius: 10px;
+  padding: 0.85rem;
+}
+
+.dashboard .maintenance-status-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dashboard .maintenance-status-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.dashboard .maintenance-status-hint-muted {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.dashboard .maintenance-timer-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
 .dashboard .settings-field-block {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1rem;
-  max-width: 720px;
-}
-
-.dashboard .ist-message-label {
-  margin-top: 0.3rem;
+  width: 100%;
 }
 
 .dashboard .settings-field-label {
@@ -1779,8 +1954,8 @@
 .dashboard .settings-save-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.85rem;
-  margin-top: 1.1rem;
 }
 
 .dashboard .settings-saved-note {
@@ -1792,6 +1967,24 @@
 
 .dashboard .settings-save-row .settings-saved-note {
   margin-top: 0;
+}
+
+@media (max-width: 520px) {
+  .dashboard .maintenance-panel-header {
+    flex-wrap: wrap;
+  }
+
+  .dashboard .segmented-toggle {
+    max-width: none;
+  }
+
+  .dashboard .settings-save-row {
+    align-items: stretch;
+  }
+
+  .dashboard .settings-save-row .action-btn {
+    flex: 1 1 auto;
+  }
 }
 
 .dashboard .analytics-demo-badge {

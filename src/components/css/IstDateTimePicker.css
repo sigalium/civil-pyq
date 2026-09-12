@@ -1,17 +1,15 @@
-.ist-datetime-picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 1.25rem;
-}
-
 .ist-calendar {
   background: rgba(var(--glass-rgb), 0.05);
   border: 1px solid rgba(var(--glass-rgb), 0.15);
   border-radius: 10px;
-  padding: 0.85rem;
-  flex: 1 1 280px;
-  max-width: 340px;
+  padding: 0.75rem;
+  width: 100%;
+  transition: opacity 0.2s ease;
+}
+
+.ist-calendar.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .ist-calendar-header {
@@ -106,10 +104,25 @@
 }
 
 .ist-side-panel {
-  flex: 1 1 240px;
+  width: 100%;
+  max-width: 320px;
+  justify-self: start;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(var(--glass-rgb), 0.05);
+  border: 1px solid rgba(var(--glass-rgb), 0.15);
+  border-radius: 10px;
+  padding: 0.85rem;
+  text-align: center;
+  transition: opacity 0.2s ease;
+}
+
+.ist-side-panel.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .ist-time-row {
@@ -182,4 +195,16 @@
 .ist-datetime-hint {
   color: var(--text-secondary);
   font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.ist-calendar-nav:disabled,
+.ist-calendar-cell:disabled {
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .ist-side-panel {
+    max-width: none;
+  }
 }

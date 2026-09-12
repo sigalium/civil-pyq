@@ -11,7 +11,9 @@ CivilPYQ is a full-stack study platform for civil engineering students — a fas
 - 🔍 **Fast, Zoomable PDF Rendering** – PDF.js-based viewer tuned for quick loads even on slow connections.
 - 📚 **Structured Resource Library** – Papers, lab manuals, and syllabi organized by semester and subject, always up to date.
 - 🤝 **Community Contribution Pipeline** – Students can submit resources directly from the site, protected against spam and abuse.
-- 📁 **CDN-Backed File Delivery** – Files are served through a GitHub + jsDelivr pipeline for fast, reliable global delivery.
+- 📁 **CDN-Backed File Delivery** – Files are served through a GitHub + jsDelivr pipeline for fast, reliable global delivery, capped at 19MB per file to stay safely under jsDelivr's hard 20MB CDN limit.
+- 🧹 **Self-Cleaning Trash** – Deleted and replaced files are automatically purged, including from GitHub, 30 days after deletion — no manual cleanup needed.
+- 🛠️ **Live Maintenance Mode** – Schedule a maintenance window or start an indefinite one; the site computes whether it's currently active in real time, with no background job required to turn it back off.
 - 📴 **Installable & Offline-Ready** – Add CivilPYQ to your home screen like a native app, and keep previously opened papers available in an offline library even without a connection.
 - 🎨 **Polished, Responsive UI** – Dark theme, fluid transitions, and a layout that holds up from phone to desktop.
 
@@ -29,11 +31,13 @@ CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a
 
 - **Frontend**: React, Vite
 - **Backend**: Supabase (Postgres, Auth, Storage, Edge Functions)
+- **Automation**: GitHub Actions (scheduled edge function calls)
 - **Styling**: CSS Modules
 - **Icons**: Material UI Icons
 - **PDF Viewer**: react-pdf (PDF.js)
 - **Animation**: CSS Transitions
 - **File Delivery**: GitHub + jsDelivr CDN
+- **Bot Protection**: Cloudflare Turnstile
 - **Hosting**: Netlify [Visit CivilPYQ](https://civilpyq.netlify.app)
 
 ## Installation
@@ -54,6 +58,7 @@ CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a
    VITE_JSDELIVR_OWNER=your-github-username
    VITE_JSDELIVR_REPO=civil-pyq-pdf
    VITE_JSDELIVR_BRANCH=main
+   VITE_TURNSTILE_SITE_KEY=your-turnstile-site-key
    ```
    `VITE_JSDELIVR_OWNER`, `VITE_JSDELIVR_REPO` and `VITE_JSDELIVR_BRANCH` must match the GitHub repo the dashboard publishes files into (see below).
 
@@ -62,25 +67,37 @@ CivilPYQ's AI tools run on Gemini and are built to actually understand the PDF a
    npm run dev
    ```
 
-## Database Setup
+## How It Works
 
-The full schema — tables, Row Level Security policies, triggers, and audit logging — lives in a single file: `supabase/schema.sql`. Run it once against your Supabase project's SQL editor to set everything up; it's written to be safe to re-run (uses `if not exists`, `create or replace`, and exception-safe policy creation), so re-running it after a schema update won't wipe existing data.
+CivilPYQ splits into two simple pieces: **Supabase** holds the structured data (subjects, resource listings, submissions, admin accounts), while the actual PDF files live in a separate, public **GitHub** repository — dedicated solely to storing the PDFs, distinct from this frontend repo — and are served worldwide through the **jsDelivr CDN**. Nothing large ever passes through Supabase — it only ever stores a link.
 
-After running the schema, set your own account as the initial owner by updating the seed insert at the bottom of `schema.sql` with your email before running it, or by manually updating the `admins` table afterward:
+```mermaid
+flowchart LR
+    User[Student / Visitor] -->|browses resources| Site[CivilPYQ Website]
+    Site -->|data: subjects, resources, submissions| Supabase[(Supabase)]
+    Site -->|PDF files| CDN[GitHub + jsDelivr CDN]
+    Site -->|AI Solver / Chat, own free API key| Gemini[Gemini API]
 
-```sql
-update admins set role = 'owner' where email = 'you@example.com';
+    Admin[Admin Dashboard] -->|manage content| Supabase
+    Admin -->|publish/replace/delete files| CDN
 ```
+
+A few things worth knowing:
+
+- **Files aren't stored in Supabase.** When an admin publishes a PDF, it's committed straight to a GitHub repo and served through jsDelivr — this keeps file delivery fast and keeps the database itself small and free-tier friendly.
+- **The AI tools never touch the backend at all.** Each visitor's browser talks directly to Google's Gemini API using a free API key they provide themselves, so the AI features cost the project nothing to run.
+- **Student submissions go through a review step.** A submitted PDF is stored privately in Supabase until an admin approves it, at which point it's pushed to the GitHub PDF repo and published the same way any other resource is.
 
 ### Dashboard & Admin Roles
 
-The `/dashboard` route is protected and only accessible to signed-in Google accounts present in the `admins` table. There are two role tiers:
+The `/dashboard` route is only accessible to signed-in Google accounts that have been added as an admin. Access is layered:
 
-- **Owner** – full access to everything, including deleting resources/subjects/contributors permanently, managing other admins' permissions, and deleting audit log entries. Only one or more owners can grant/revoke `can_edit_members`.
-- **Admin** – granular permissions set per-admin: `can_review_submissions`, `can_edit_resources`, `can_delete_resources`, `can_view_trash`, `can_view_audit_log`, `can_view_members`, `can_edit_members`, `can_manage_contributors`, `can_view_analytics`, `can_manage_settings`.
-- **Developer** – a separate `is_developer` permission (not a role), toggled per-admin like the others. It only controls access to maintenance mode inside the Settings tab; an admin can have `can_manage_settings` without `is_developer` and still see the Settings tab, just without the maintenance-mode controls.
+- **Owner** – full access to everything, including permanently deleting content, managing other admins, and site settings. Shown as "Main Admin" in the Members list.
+- **Admin** – access is a set of individual switches turned on per-person as needed: reviewing submissions, editing or deleting resources, viewing trash, viewing the log, managing members, managing contributors, viewing analytics, and managing settings. An admin can have as many or as few of these as the owner decides.
+- **Faculty admin** – a label, not a separate permission set. Any admin can be marked as faculty, which just shows a distinct badge and sorts them above regular admins in the Members list — their actual access still comes entirely from the individual switches above.
+- **Developer** – one more individual switch, specifically for who can access maintenance mode controls inside Settings.
 
-Every meaningful change made through the dashboard (approving submissions, editing resources, reordering, managing contributors, changing member permissions) is recorded in the `audit_log` table and viewable under the Audit Log tab. Reordering/drag-and-drop changes are intentionally excluded from the log to avoid noise — only actual content changes are recorded.
+Every meaningful change made through the dashboard is recorded in an activity log, viewable under the Log tab.
 
 ### Dashboard Tabs
 
@@ -89,11 +106,22 @@ Every meaningful change made through the dashboard (approving submissions, editi
 - **Upload** – upload multiple resources at once
 - **Migration** – tools for moving/relinking existing files
 - **Contributors** – manage the student/faculty contributor list shown on the Contribute page
-- **Trash** – soft-deleted resources/subjects/contributors, restorable within 30 days before permanent purge
+- **Trash** – deleted and replaced files, automatically and permanently cleaned up 30 days after deletion
 - **Members** – manage admin accounts and their permissions (owner-only editing)
-- **Audit Log** – full activity history; owners can delete individual entries, delete a selection, or empty the log entirely
-- **Analytics** – most-viewed/most-downloaded files (filterable by type and date range), storage breakdown, and a view/download trend chart
-- **Settings** – site-wide toggles: analytics demo mode (owner-only), pausing new submissions, and maintenance mode (owner/developer-only)
+- **Log** – full activity history
+- **Analytics** – most-viewed/most-downloaded files, storage breakdown, and view/download trends
+- **Settings** – site-wide toggles: analytics demo mode, pausing new submissions, and maintenance mode
+
+## Maintenance Mode
+
+Maintenance mode is designed so nothing ever has to "remember" to turn it back off. Starting a window means picking one of two kinds:
+
+- **Scheduled** – requires an end time. Once that time passes, the site is live again automatically — instantly, for every visitor, computed fresh on every page load rather than flipped by a background job.
+- **Indefinite** – no end time. Stays active until an admin explicitly ends it.
+
+While a scheduled window is active, its end time and the visitor-facing message can be edited freely — extending or shortening it just works, since it's a live value being read, not a snapshot. Once a window has ended (or hasn't been started), starting a new one always requires a fresh choice — there's no way for an old end time to silently linger and unexpectedly reactivate later.
+
+Under the hood this is a single Postgres function, `maintenance_status()`, that both the live site and the admin dashboard call — so there is exactly one source of truth, and the toggle in Settings can never show a stale "on" after a window has actually ended.
 
 ## Automated Publishing Pipeline
 
@@ -102,10 +130,12 @@ Everything uploadable from the dashboard (submission approvals, resource PDFs, c
 How it works:
 
 - The dashboard uploads a file through the `github-upload` Supabase Edge Function.
-- The function checks that the caller is a signed-in admin with edit rights.
+- The function checks that the caller is a signed-in admin with edit rights, and that the file is under 19MB — jsDelivr hard-rejects anything over 20MB regardless of what GitHub itself would accept, so 19MB is enforced everywhere (client-side, both relevant edge functions, and the public submissions storage bucket) to leave headroom.
 - It commits the file to the configured GitHub repo using the GitHub Contents API.
 - It then calls jsDelivr's purge endpoint so the CDN link is live within seconds instead of waiting on cache TTL.
 - The resulting `https://cdn.jsdelivr.net/...` URL is what gets stored in Supabase.
+
+When an existing file gets replaced rather than newly added, the old version isn't just abandoned on GitHub — it's recorded in the Trash tab's Replaced section and automatically deleted 30 days later, the same as anything else in Trash.
 
 ### One-time setup
 
@@ -117,17 +147,33 @@ How it works:
    supabase secrets set GITHUB_OWNER=your-github-username
    supabase secrets set GITHUB_REPO=civil-pyq-pdf
    supabase secrets set GITHUB_BRANCH=main
+   supabase secrets set TURNSTILE_SECRET_KEY=your-turnstile-secret-key
+   supabase secrets set CRON_SECRET=a-long-random-string-you-generate
    ```
    `GITHUB_OWNER`, `GITHUB_REPO` and `GITHUB_BRANCH` must exactly match the `VITE_JSDELIVR_*` values used by the frontend, otherwise the URLs stored in the database won't resolve.
 
-3. Deploy the function:
+3. Deploy the functions:
    ```bash
    supabase functions deploy github-upload
+   supabase functions deploy github-delete
+   supabase functions deploy submit-resource
+   supabase functions deploy purge-expired
    ```
 
 4. Make sure every admin who should be able to publish files has one of `can_review_submissions`, `can_edit_resources`, or `can_manage_contributors` set to `true` in the `admins` table (or `role = 'owner'`).
 
+5. On the GitHub repo that hosts this codebase (not the PDF/asset repo), add two Actions secrets under Settings → Secrets and variables → Actions: `SUPABASE_URL` (your project URL) and `CRON_SECRET` (the exact same value you set in step 2). This is what lets the daily scheduled workflow authenticate to `purge-expired` — see below.
+
 Once this is set up, approving a submission, adding a resource, uploading a contributor photo, or replacing the academic calendar in the dashboard all publish directly to GitHub and the CDN — there is no separate manual step.
+
+## Scheduled Cleanup
+
+A GitHub Actions workflow (`.github/workflows/purge-expired.yml`) runs once a day and calls the `purge-expired` edge function, which:
+
+- Permanently deletes resources, subjects, and contributors that have been sitting in Trash for 30+ days — including deleting the matching file from GitHub for anything that had one.
+- Permanently deletes entries in the Replaced section of Trash that have aged past 30 days, same GitHub cleanup included.
+
+This function authenticates via a shared `CRON_SECRET` header rather than a user login, since a scheduled job has no one signed in — see the one-time setup above for how that's configured. It can also be triggered manually from the Actions tab (`workflow_dispatch`) to test it without waiting for the schedule.
 
 ## Edge Functions
 
@@ -139,9 +185,23 @@ Once this is set up, approving a submission, adding a resource, uploading a cont
 | `migrate-file` | Used by the dashboard's Migration tab to move or relink existing resource files |
 | `scan-file` | Scans uploaded files before they're accepted, used by Submissions, Resources, Bulk Upload, and Contributors tabs |
 | `backfill-file-sizes` | Fills in file sizes for older resources that don't have one recorded yet, by looking the file up on GitHub. Safe to run more than once |
+| `purge-expired` | Runs daily via GitHub Actions; permanently deletes expired Trash and Replaced-file entries, GitHub files included, as described above |
 
 ## AI Features (Bring Your Own Key)
 
 The AI Chat and Exam Predictor widgets run entirely client-side against the Gemini API using an API key the visitor provides themselves (free at [aistudio.google.com](https://aistudio.google.com/apikey)) — this keeps the site free to run for the project owner, since every visitor uses their own free-tier Gemini quota rather than a shared key. The key is stored in the browser's `localStorage`/`sessionStorage` only and never touches Supabase.
 
 Both widgets show a running count of requests made that day per saved key, and the Exam Predictor will offer to reopen a previous chat for a subject if one was already saved in that browser.
+
+## Where Your Secrets Go
+
+Quick reference for setting things up — where each value belongs:
+
+| Value | Goes in | Notes |
+|---|---|---|
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Netlify env vars | Safe to be public, this is what the site uses to talk to Supabase |
+| `VITE_JSDELIVR_OWNER/REPO/BRANCH`, `VITE_TURNSTILE_SITE_KEY` | Netlify env vars | Also public-safe |
+| `GITHUB_TOKEN`, `GITHUB_OWNER/REPO/BRANCH` | Supabase Edge Function secrets | Grants write access to your PDF repo — never expose this to the frontend |
+| `TURNSTILE_SECRET_KEY` | Supabase Edge Function secrets | Server-side only |
+| `CRON_SECRET` | Both Supabase Edge Function secrets **and** GitHub Actions secrets on this repo | Has to match in both places — it's how the daily cleanup job proves it's allowed to run |
+

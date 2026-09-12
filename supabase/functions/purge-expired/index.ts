@@ -108,7 +108,6 @@ Deno.serve(async (req) => {
     contributorsDeleted: 0,
     replacedFilesDeleted: 0,
     githubDeleteErrors: [],
-    maintenanceAutoOffApplied: false,
   }
 
   const { data: expiredResources } = await supabase
@@ -152,21 +151,6 @@ Deno.serve(async (req) => {
     .not('deleted_at', 'is', null)
     .lt('deleted_at', cutoffIso)
   summary.contributorsDeleted = contributorsDeleted || 0
-
-  const { data: settingsRows } = await supabase
-    .from('global_resources')
-    .select('key, value')
-    .in('key', ['maintenance_mode', 'maintenance_until', 'maintenance_auto_off'])
-
-  const settingValue = (key) => settingsRows?.find((r) => r.key === key)?.value
-  const maintenanceMode = settingValue('maintenance_mode') === 'true'
-  const maintenanceAutoOff = settingValue('maintenance_auto_off') === 'true'
-  const maintenanceUntil = settingValue('maintenance_until')
-
-  if (maintenanceMode && maintenanceAutoOff && maintenanceUntil && new Date(maintenanceUntil).getTime() <= Date.now()) {
-    await supabase.from('global_resources').upsert({ key: 'maintenance_mode', value: 'false' })
-    summary.maintenanceAutoOffApplied = true
-  }
 
   return json({ ok: true, cutoff: cutoffIso, summary })
 })

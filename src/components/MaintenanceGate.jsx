@@ -1,27 +1,17 @@
-import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { useResourcesData } from '../context/useResourcesData'
-import { supabase } from '../lib/supabaseClient'
 import MaintenancePage from '../pages/MaintenancePage'
 import MaintenanceAdminBadge from './MaintenanceAdminBadge'
 
 const MaintenanceGate = ({ children }) => {
   const { status } = useAuth()
-  const { maintenanceMode, maintenanceUntil, maintenanceMessage, maintenanceAutoOff, refresh } = useResourcesData()
+  const { maintenanceActive, maintenanceUntil, maintenanceMessage } = useResourcesData()
   const location = useLocation()
   const isDashboardRoute = location.pathname.startsWith('/dashboard')
   const isOfflineLibraryRoute = location.pathname.startsWith('/offline-library')
-  const attemptedRef = useRef(false)
 
-  useEffect(() => {
-    if (status !== 'admin' || !maintenanceMode || !maintenanceAutoOff || !maintenanceUntil || attemptedRef.current) return
-    if (new Date(maintenanceUntil).getTime() > Date.now()) return
-    attemptedRef.current = true
-    supabase.from('global_resources').upsert({ key: 'maintenance_mode', value: 'false' }).then(() => refresh())
-  }, [status, maintenanceMode, maintenanceAutoOff, maintenanceUntil, refresh])
-
-  if (!maintenanceMode || isDashboardRoute || isOfflineLibraryRoute) {
+  if (!maintenanceActive || isDashboardRoute || isOfflineLibraryRoute) {
     return children
   }
 

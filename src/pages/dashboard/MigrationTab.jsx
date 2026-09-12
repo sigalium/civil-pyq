@@ -2,19 +2,15 @@ import { useState } from 'react'
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 import Select from '../../components/Select'
 import { useResourcesData } from '../../context/useResourcesData'
-import { useAuth } from '../../context/useAuth'
 import { moveResourceToTop } from '../../utils/resourceOrdering'
 import { buildStagingRepoPath, extractRepoPathFromUrl } from '../../utils/resourceSnippet'
 import { migrateFileInGithub } from '../../utils/migrateFile'
-import { backfillFileSizes } from '../../utils/backfillFileSizes'
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8]
 const TYPE_LABELS = { pyq: 'PYQ', lab: 'Lab', syllabus: 'Syllabus' }
 
 const MigrationTab = () => {
   const { subjectRows, resources, refresh } = useResourcesData()
-  const { profile } = useAuth()
-  const isOwner = profile?.role === 'owner'
   const [sourceSemester, setSourceSemester] = useState('')
   const [sourceSubject, setSourceSubject] = useState('')
   const [selectedIds, setSelectedIds] = useState([])
@@ -23,9 +19,6 @@ const MigrationTab = () => {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [backfillBusy, setBackfillBusy] = useState(false)
-  const [backfillResult, setBackfillResult] = useState(null)
-  const [backfillError, setBackfillError] = useState('')
 
   const subjectOptionsFor = (semester) =>
     subjectRows
@@ -115,20 +108,6 @@ const MigrationTab = () => {
     }
   }
 
-  const runBackfill = async () => {
-    setBackfillError('')
-    setBackfillResult(null)
-    setBackfillBusy(true)
-    try {
-      const result = await backfillFileSizes()
-      setBackfillResult(result)
-      refresh()
-    } catch (err) {
-      setBackfillError(err.message)
-    }
-    setBackfillBusy(false)
-  }
-
   return (
     <div className="dashboard-panel">
       <p className="snippet-hint">
@@ -206,27 +185,6 @@ const MigrationTab = () => {
       <button className="action-btn approve-btn" onClick={migrate} disabled={busy}>
         {busy ? 'Migrating…' : `Migrate ${selectedIds.length || ''} selected`.trim()}
       </button>
-
-      {isOwner && (
-        <div className="backfill-panel">
-          <h4>File size backfill</h4>
-          <p className="snippet-hint">
-            Fills in file sizes for older uploads that don't have one recorded yet. Safe to run again anytime.
-          </p>
-          <button className="action-btn preview-btn" onClick={runBackfill} disabled={backfillBusy}>
-            {backfillBusy ? 'Running…' : 'Backfill file sizes'}
-          </button>
-          {backfillError && <p className="dashboard-error">{backfillError}</p>}
-          {backfillResult && (
-            <p className="dashboard-success">
-              Checked {backfillResult.total}, updated {backfillResult.updated}
-              {backfillResult.skipped ? `, skipped ${backfillResult.skipped} (non-GitHub path)` : ''}
-              {backfillResult.failed ? `, ${backfillResult.failed} failed` : ''}.
-              {backfillResult.sampleError ? ` Error: ${backfillResult.sampleError}` : ''}
-            </p>
-          )}
-        </div>
-      )}
     </div>
   )
 }

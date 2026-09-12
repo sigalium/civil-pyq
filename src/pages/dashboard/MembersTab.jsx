@@ -75,7 +75,7 @@ const AdminRow = ({ member, onChanged }) => {
       return
     }
     if (!data || data.length === 0) {
-      setActionError("This didn't save — you may not have permission to edit members. Ask an owner to check your access.")
+      setActionError("This didn't save. You may not have permission to edit members. Ask an owner to check your access.")
       return
     }
     setEditing(false)
@@ -92,7 +92,7 @@ const AdminRow = ({ member, onChanged }) => {
       return
     }
     if (!data || data.length === 0) {
-      setActionError("This didn't delete — you may not have permission to remove members. Ask an owner to check your access.")
+      setActionError("This didn't delete. You may not have permission to remove members. Ask an owner to check your access.")
       return
     }
     onChanged()
@@ -200,7 +200,19 @@ const AddAdminForm = ({ onAdded }) => {
       {error && <p className="dashboard-error">{error}</p>}
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
-        <button className="action-btn reject-btn" onClick={() => setOpen(false)}>Cancel</button>
+        <button
+          className="action-btn reject-btn"
+          onClick={() => {
+            setOpen(false)
+            setEmail('')
+            setUsername('')
+            setIsFaculty(false)
+            setPermissions(emptyPermissions())
+            setError('')
+          }}
+        >
+          Cancel
+        </button>
       </div>
     </div>
   )

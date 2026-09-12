@@ -31,11 +31,24 @@ export function ResourcesDataProvider({ children }) {
   const [error, setError] = useState('')
   const [usingCachedData, setUsingCachedData] = useState(false)
   const [cachedAt, setCachedAt] = useState(null)
+  const [maintenanceStatus, setMaintenanceStatus] = useState(null)
   const initializedRef = useRef(false)
+
+  const fetchMaintenanceStatus = useCallback(async () => {
+    const { data } = await supabase.rpc('maintenance_status')
+    if (data && data[0]) setMaintenanceStatus(data[0])
+  }, [])
+
+  useEffect(() => {
+    fetchMaintenanceStatus()
+    const interval = setInterval(fetchMaintenanceStatus, 45000)
+    return () => clearInterval(interval)
+  }, [fetchMaintenanceStatus])
 
   const refresh = useCallback(async () => {
     if (!initializedRef.current) setLoading(true)
     setError('')
+    fetchMaintenanceStatus()
 
     const [subjectsRes, resourcesRes, settingsRes, sectionsRes] = await Promise.all([
       supabase.from('subjects').select('*').order('semester').order('sort_order'),
@@ -77,7 +90,7 @@ export function ResourcesDataProvider({ children }) {
       sectionRows: sectionsRes.data || [],
       savedAt: new Date().toISOString(),
     })
-  }, [])
+  }, [fetchMaintenanceStatus])
 
   useEffect(() => {
     refresh()
@@ -102,12 +115,12 @@ export function ResourcesDataProvider({ children }) {
   const academicCalendarPath = settingsRows.find((row) => row.key === 'academic_calendar_path')?.value || ''
   const analyticsDemoModeRow = settingsRows.find((row) => row.key === 'analytics_demo_mode')
   const analyticsDemoMode = analyticsDemoModeRow ? analyticsDemoModeRow.value === 'true' : true
-  const maintenanceModeRow = settingsRows.find((row) => row.key === 'maintenance_mode')
-  const maintenanceMode = maintenanceModeRow ? maintenanceModeRow.value === 'true' : false
-  const maintenanceUntil = settingsRows.find((row) => row.key === 'maintenance_until')?.value || ''
-  const maintenanceMessage = settingsRows.find((row) => row.key === 'maintenance_message')?.value || ''
-  const maintenanceAutoOffRow = settingsRows.find((row) => row.key === 'maintenance_auto_off')
-  const maintenanceAutoOff = maintenanceAutoOffRow ? maintenanceAutoOffRow.value === 'true' : false
+  const maintenanceActive = maintenanceStatus?.active || false
+  const maintenanceMode = maintenanceStatus?.mode || false
+  const maintenanceUntil = maintenanceStatus?.until || ''
+  const maintenanceType = maintenanceStatus?.type || 'indefinite'
+  const maintenanceMessage = maintenanceStatus?.message || ''
+  const maintenanceStartedAt = maintenanceStatus?.started_at || ''
   const submissionIntakeRow = settingsRows.find((row) => row.key === 'submission_intake_enabled')
   const submissionIntakeEnabled = submissionIntakeRow ? submissionIntakeRow.value === 'true' : true
 
@@ -158,7 +171,7 @@ export function ResourcesDataProvider({ children }) {
 
   return (
     <ResourcesDataContext.Provider
-      value={{ subjectRows, resourceRows, subjects, electives, resources, centralSyllabus, academicCalendarPath, analyticsDemoMode, maintenanceMode, maintenanceUntil, maintenanceMessage, maintenanceAutoOff, submissionIntakeEnabled, isCodes, sections, sectionRows, loading, error, usingCachedData, cachedAt, refresh }}
+      value={{ subjectRows, resourceRows, subjects, electives, resources, centralSyllabus, academicCalendarPath, analyticsDemoMode, maintenanceActive, maintenanceMode, maintenanceUntil, maintenanceType, maintenanceMessage, maintenanceStartedAt, submissionIntakeEnabled, isCodes, sections, sectionRows, loading, error, usingCachedData, cachedAt, refresh }}
     >
       {children}
     </ResourcesDataContext.Provider>

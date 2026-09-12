@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '../components/BackButton';
 import SemesterCard from '../components/SemesterCard';
@@ -25,6 +25,19 @@ const Resources = () => {
   const [predictionPdfs, setPredictionPdfs] = useState([]);
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showDownloadMenu) return undefined;
+    const handleOutsideClick = (event) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
+        setShowDownloadMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showDownloadMenu]);
 
   const handleSemesterClick = (sem) => { navigate(`/resources/${sem}`); };
   const handleSubjectClick = (subj) => { navigate(`/resources/${semester}/${subj}`); };
@@ -43,9 +56,12 @@ const Resources = () => {
     openPdf({ name: `${subject} - Syllabus`, path: syllabusPath, resourceId: syllabusId });
   };
 
-  const handleBulkDownload = async () => {
-    const files = [...(resources[subject]?.pyq || []), ...(resources[subject]?.lab || [])]
+  const handleBulkDownload = async (type) => {
+    const pyqFiles = resources[subject]?.pyq || []
+    const labFiles = resources[subject]?.lab || []
+    const files = type === 'pyq' ? pyqFiles : type === 'lab' ? labFiles : [...pyqFiles, ...labFiles]
     if (files.length === 0) return
+    setShowDownloadMenu(false)
     setBulkDownloading(true)
     setBulkProgress({ done: 0, total: files.length })
     await downloadSubjectZip(subject, files, (done, total) => setBulkProgress({ done, total }))
@@ -189,20 +205,60 @@ const Resources = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                     <span>Lab Manual & Other Resources</span>
                     {((resources[subject]?.pyq?.length || 0) + (resources[subject]?.lab?.length || 0)) > 0 && (
-                      <button
-                        onClick={handleBulkDownload}
-                        disabled={bulkDownloading}
-                        style={{
-                          background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb), 0.3)',
-                          padding: '6px 12px', borderRadius: '6px', cursor: bulkDownloading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                          fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s', fontFamily: 'inherit', opacity: bulkDownloading ? 0.7 : 1
-                        }}
-                        onMouseOver={(e) => { if (!bulkDownloading) { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'var(--primary)'; } }}
-                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.1)'; e.currentTarget.style.color = 'var(--accent)'; }}
-                      >
-                        <DownloadForOffline sx={{ fontSize: 16 }} />
-                        {bulkDownloading ? `Zipping ${bulkProgress.done}/${bulkProgress.total}…` : 'Download all'}
-                      </button>
+                      <div style={{ position: 'relative' }} ref={downloadMenuRef}>
+                        <button
+                          onClick={() => setShowDownloadMenu((open) => !open)}
+                          disabled={bulkDownloading}
+                          style={{
+                            background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent)', border: '1px solid rgba(var(--accent-rgb), 0.3)',
+                            padding: '6px 12px', borderRadius: '6px', cursor: bulkDownloading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                            fontWeight: '600', fontSize: '0.85rem', transition: 'all 0.2s', fontFamily: 'inherit', opacity: bulkDownloading ? 0.7 : 1
+                          }}
+                          onMouseOver={(e) => { if (!bulkDownloading) { e.currentTarget.style.background = 'var(--accent)'; e.currentTarget.style.color = 'var(--primary)'; } }}
+                          onMouseOut={(e) => { if (!bulkDownloading) { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.1)'; e.currentTarget.style.color = 'var(--accent)'; } }}
+                        >
+                          <DownloadForOffline sx={{ fontSize: 16 }} />
+                          {bulkDownloading ? `Zipping ${bulkProgress.done}/${bulkProgress.total}…` : 'Download'}
+                        </button>
+                        {showDownloadMenu && !bulkDownloading && (
+                          <div
+                            style={{
+                              position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 20, minWidth: '190px',
+                              background: 'var(--primary)', border: '1px solid rgba(var(--accent-rgb), 0.25)', borderRadius: '8px',
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.35)', overflow: 'hidden'
+                            }}
+                          >
+                            {resources[subject]?.pyq?.length > 0 && (
+                              <button
+                                onClick={() => handleBulkDownload('pyq')}
+                                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.12)' }}
+                                onMouseOut={(e) => { e.currentTarget.style.background = 'none' }}
+                              >
+                                PYQ only
+                              </button>
+                            )}
+                            {resources[subject]?.lab?.length > 0 && (
+                              <button
+                                onClick={() => handleBulkDownload('lab')}
+                                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                                onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.12)' }}
+                                onMouseOut={(e) => { e.currentTarget.style.background = 'none' }}
+                              >
+                                Lab Manual & Other Resources only
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleBulkDownload('all')}
+                              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', borderTop: '1px solid rgba(var(--accent-rgb), 0.15)', color: 'var(--accent)', fontWeight: '600', fontSize: '0.85rem', fontFamily: 'inherit', cursor: 'pointer' }}
+                              onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(var(--accent-rgb), 0.12)' }}
+                              onMouseOut={(e) => { e.currentTarget.style.background = 'none' }}
+                            >
+                              Everything
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 }
