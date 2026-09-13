@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Wrench } from 'lucide-react'
+import { Wrench, ExternalLink } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
 import { SITE_LINKS } from '../data/appData'
 import '../components/css/ProtectedRoute.css'
@@ -36,6 +36,7 @@ const MaintenancePage = ({ message }) => {
           rel="noopener noreferrer"
         >
           Use the backup site
+          <ExternalLink size={15} strokeWidth={2.25} />
         </a>
         <Link className="maintenance-offline-btn" to="/offline-library">
           Open offline library

@@ -128,6 +128,20 @@ create index resource_events_resource_id_idx on resource_events(resource_id);
 create index resource_events_created_at_idx on resource_events(created_at);
 create index resource_events_type_idx on resource_events(event_type);
 
+create table replaced_files (
+  id uuid primary key default gen_random_uuid(),
+  resource_name text not null,
+  resource_type text,
+  github_path text not null,
+  jsdelivr_url text,
+  file_size_bytes bigint,
+  replaced_by text,
+  deleted_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index replaced_files_deleted_at_idx on replaced_files(deleted_at);
+
 create or replace function public.is_owner()
 returns boolean
 language sql
@@ -177,6 +191,27 @@ begin
   delete from subjects where deleted_at is not null and deleted_at < now() - interval '30 days';
   delete from contributors where deleted_at is not null and deleted_at < now() - interval '30 days';
 end;
+$function$;
+
+create or replace function public.maintenance_status()
+returns table (active boolean, mode boolean, until timestamptz, type text, message text, started_at timestamptz)
+language sql
+stable
+as $function$
+  select
+    (coalesce(max(value) filter (where key = 'maintenance_mode'), 'false') = 'true')
+      and (
+        coalesce(max(value) filter (where key = 'maintenance_type'), 'indefinite') <> 'scheduled'
+        or nullif(max(value) filter (where key = 'maintenance_until'), '') is null
+        or nullif(max(value) filter (where key = 'maintenance_until'), '')::timestamptz > now()
+      ) as active,
+    (coalesce(max(value) filter (where key = 'maintenance_mode'), 'false') = 'true') as mode,
+    nullif(max(value) filter (where key = 'maintenance_until'), '')::timestamptz as until,
+    coalesce(max(value) filter (where key = 'maintenance_type'), 'indefinite') as type,
+    max(value) filter (where key = 'maintenance_message') as message,
+    nullif(max(value) filter (where key = 'maintenance_started_at'), '')::timestamptz as started_at
+  from global_resources
+  where key in ('maintenance_mode', 'maintenance_until', 'maintenance_type', 'maintenance_message', 'maintenance_started_at');
 $function$;
 
 create or replace function public.log_audit_event()
@@ -430,6 +465,9 @@ $function$;
 revoke execute on function public.purge_expired_trash() from public, authenticated, anon;
 grant execute on function public.purge_expired_trash() to service_role;
 
+revoke execute on function public.maintenance_status() from public;
+grant execute on function public.maintenance_status() to anon, authenticated;
+
 revoke execute on function public.can_view_members_list() from public, anon;
 revoke execute on function public.can_edit_members_list() from public, anon;
 revoke execute on function public.is_owner() from public, anon;
@@ -479,6 +517,9 @@ create trigger trg_sections_audit after insert or update or delete on sections
 create trigger trg_submissions_audit after insert or update on submissions
   for each row execute function log_audit_event();
 
+create trigger trg_replaced_files_audit after insert or update or delete on replaced_files
+  for each row execute function log_audit_event();
+
 alter table admins enable row level security;
 alter table audit_log enable row level security;
 alter table contributors enable row level security;
@@ -488,6 +529,7 @@ alter table sections enable row level security;
 alter table resources enable row level security;
 alter table submissions enable row level security;
 alter table resource_events enable row level security;
+alter table replaced_files enable row level security;
 
 create policy "self admin check" on admins for select to public using (auth.email() = email);
 create policy "members list visible to permitted staff" on admins for select to authenticated using (can_view_members_list());
@@ -522,24 +564,24 @@ create policy "public can read site settings" on global_resources for select to 
 create policy "editors can upsert site settings" on global_resources for insert to authenticated with check (
   exists (select 1 from admins a where a.email = auth.email() and (
     a.role = 'owner'
-    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off'))
+    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at'))
     or (a.can_manage_settings and key = 'submission_intake_enabled')
-    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off', 'submission_intake_enabled'))
+    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at', 'submission_intake_enabled'))
   ))
 );
 create policy "editors can update site settings" on global_resources for update to authenticated using (
   exists (select 1 from admins a where a.email = auth.email() and (
     a.role = 'owner'
-    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off'))
+    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at'))
     or (a.can_manage_settings and key = 'submission_intake_enabled')
-    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off', 'submission_intake_enabled'))
+    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at', 'submission_intake_enabled'))
   ))
 ) with check (
   exists (select 1 from admins a where a.email = auth.email() and (
     a.role = 'owner'
-    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off'))
+    or (a.is_developer and key in ('maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at'))
     or (a.can_manage_settings and key = 'submission_intake_enabled')
-    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_auto_off', 'submission_intake_enabled'))
+    or (a.can_edit_resources and key not in ('analytics_demo_mode', 'maintenance_mode', 'maintenance_until', 'maintenance_message', 'maintenance_type', 'maintenance_started_at', 'submission_intake_enabled'))
   ))
 );
 
@@ -607,8 +649,18 @@ create policy "analytics viewers can read events" on resource_events for select 
   exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_view_analytics))
 );
 
-insert into storage.buckets (id, name, public) values ('pending-uploads', 'pending-uploads', false)
-on conflict (id) do nothing;
+create policy "staff can read all replaced files" on replaced_files for select to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email())
+);
+create policy "editors can insert replaced files" on replaced_files for insert to authenticated with check (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_edit_resources))
+);
+create policy "owner can hard delete replaced files" on replaced_files for delete to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and a.role = 'owner')
+);
+
+insert into storage.buckets (id, name, public, file_size_limit) values ('pending-uploads', 'pending-uploads', false, 19000000)
+on conflict (id) do update set file_size_limit = 19000000;
 
 create policy "reviewers can upload pending files" on storage.objects for insert to authenticated with check (
   bucket_id = 'pending-uploads' and exists (

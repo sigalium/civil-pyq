@@ -4,6 +4,7 @@ import { useAuth } from '../../context/useAuth'
 import { useResourcesData } from '../../context/useResourcesData'
 import { supabase } from '../../lib/supabaseClient'
 import IstDateTimePicker from '../../components/IstDateTimePicker'
+import ConfirmModal from '../../components/ConfirmModal'
 import { formatIstDisplay } from '../../utils/istDateTime'
 import { backfillFileSizes } from '../../utils/backfillFileSizes'
 import './Dashboard.css'
@@ -92,6 +93,7 @@ const SettingsTab = () => {
   const [backfillBusy, setBackfillBusy] = useState(false)
   const [backfillResult, setBackfillResult] = useState(null)
   const [backfillError, setBackfillError] = useState('')
+  const [confirmBackfill, setConfirmBackfill] = useState(false)
 
   useEffect(() => {
     if (!(maintenanceActive && maintenanceStartedAt)) return undefined
@@ -135,6 +137,7 @@ const SettingsTab = () => {
   }
 
   const runBackfill = async () => {
+    setConfirmBackfill(false)
     setBackfillError('')
     setBackfillResult(null)
     setBackfillBusy(true)
@@ -191,7 +194,7 @@ const SettingsTab = () => {
         <RunRow
           label="File size backfill"
           hint="Fills in file sizes for older uploads that don't have one recorded yet. Safe to run again anytime."
-          onRun={runBackfill}
+          onRun={() => setConfirmBackfill(true)}
           running={backfillBusy}
           allowed={isOwner}
         />
@@ -315,6 +318,18 @@ const SettingsTab = () => {
           </div>
         )}
       </div>
+
+      {confirmBackfill && (
+        <ConfirmModal
+          title="Run the file size backfill?"
+          message="This checks every resource that's missing a recorded file size and looks it up on GitHub. It's safe to run more than once."
+          confirmLabel="Run"
+          cancelLabel="Cancel"
+          danger={false}
+          onConfirm={runBackfill}
+          onCancel={() => setConfirmBackfill(false)}
+        />
+      )}
     </div>
   )
 }
