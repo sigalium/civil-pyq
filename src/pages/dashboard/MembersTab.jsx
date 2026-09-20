@@ -6,6 +6,7 @@ import { useAuth } from '../../context/useAuth'
 import { supabase } from '../../lib/supabaseClient'
 import { adminRoleLabel, adminRoleChipClass, memberSortWeight } from '../../utils/adminRoles'
 import ConfirmModal from '../../components/ConfirmModal'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 const PERMISSION_FIELDS = [
@@ -58,6 +59,7 @@ const AdminRow = ({ member, onChanged }) => {
   const [saving, setSaving] = useState(false)
   const [actionError, setActionError] = useState('')
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const { notify } = useNotifications()
 
   const save = async () => {
     setSaving(true)
@@ -80,6 +82,7 @@ const AdminRow = ({ member, onChanged }) => {
     }
     setEditing(false)
     onChanged()
+    notify({ variant: 'success', message: `"${member.email}" updated.` })
   }
 
   const remove = async () => {
@@ -96,6 +99,7 @@ const AdminRow = ({ member, onChanged }) => {
       return
     }
     onChanged()
+    notify({ variant: 'success', message: `"${member.email}" removed.` })
   }
 
   if (editing) {
@@ -148,6 +152,7 @@ const AdminRow = ({ member, onChanged }) => {
 }
 
 const AddAdminForm = ({ onAdded }) => {
+  const { notify } = useNotifications()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
@@ -178,6 +183,7 @@ const AddAdminForm = ({ onAdded }) => {
     setIsFaculty(false)
     setPermissions(emptyPermissions())
     onAdded()
+    notify({ variant: 'success', message: `"${email.trim()}" added as admin.` })
   }
 
   if (!open) {
@@ -192,10 +198,7 @@ const AddAdminForm = ({ onAdded }) => {
     <div className="member-card">
       <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Google account email" className="member-username-input" autoFocus />
       <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username (optional)" className="member-username-input" />
-      <label className="elective-checkbox">
-        <input type="checkbox" checked={isFaculty} onChange={(e) => setIsFaculty(e.target.checked)} />
-        Faculty admin
-      </label>
+      <ToggleRow label="Faculty admin" checked={isFaculty} onChange={setIsFaculty} className="member-faculty-toggle" />
       <PermissionCheckboxes values={permissions} onChange={setPermissions} />
       {error && <p className="dashboard-error">{error}</p>}
       <div className="resource-item-actions">

@@ -10,6 +10,7 @@ import { buildStagingRepoPath } from '../../utils/resourceSnippet'
 import { uploadFileToGithub } from '../../utils/githubUpload'
 import { insertResourceOnTop } from '../../utils/resourceOrdering'
 import { scanFileForMalware, checkScanStatus } from '../../utils/malwareScan'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 const RESOURCE_TYPES = ['pyq', 'lab', 'syllabus', 'semester_syllabus', 'other']
@@ -232,6 +233,7 @@ const SubmissionsTab = () => {
   const [busyId, setBusyId] = useState(null)
   const [compressingId, setCompressingId] = useState(null)
   const [compressTarget, setCompressTarget] = useState(null)
+  const { notify } = useNotifications()
   const initializedRef = useRef(false)
 
   const semesters = [...new Set(subjectRows.map((row) => row.semester))].sort((a, b) => a - b)
@@ -372,6 +374,7 @@ const SubmissionsTab = () => {
 
       await supabase.storage.from('pending-uploads').remove([submission.file_path])
       setActionMessage(`Marked approved: ${submission.resource_label}. Remember it's on you to have placed the file correctly.`)
+      notify({ variant: 'success', message: `Marked approved: ${submission.resource_label}.` })
       setBusyId(null)
       fetchSubmissions()
       fetchStats()
@@ -467,6 +470,7 @@ const SubmissionsTab = () => {
       setActionError('Published, but could not add it to the resources list: ' + insertErrorMessage)
     } else {
       setActionMessage(`Published and live: ${submission.resource_label}`)
+      notify({ variant: 'success', message: `Published and live: ${submission.resource_label}` })
     }
 
     await supabase.storage.from('pending-uploads').remove([submission.file_path])
@@ -501,6 +505,7 @@ const SubmissionsTab = () => {
     setBusyId(null)
     fetchSubmissions()
     fetchStats()
+    notify({ variant: 'success', message: `Rejected: ${submission.resource_label}.` })
   }
 
   return (

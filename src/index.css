@@ -11,6 +11,9 @@
   --text-secondary: #8892b0;
   --text-secondary-rgb: 136, 146, 176;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #4ade80;
+  --notif-error: #ff6b6b;
+  --notif-warning: #ffb86c;
   --font-heading: 'Montserrat', sans-serif;
   --font-body: 'Montserrat', sans-serif;
   --transition: all 0.3s ease-in-out;
@@ -27,6 +30,9 @@
   --text-secondary: #7fb8a8;
   --text-secondary-rgb: 127, 184, 168;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #4ade80;
+  --notif-error: #ff6b6b;
+  --notif-warning: #ffb86c;
   --font-heading: 'Space Grotesk', sans-serif;
   --font-body: 'Space Grotesk', sans-serif;
 }
@@ -42,6 +48,9 @@
   --text-secondary: #c98d7c;
   --text-secondary-rgb: 201, 141, 124;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #4ade80;
+  --notif-error: #ff4d6d;
+  --notif-warning: #ffd166;
   --font-heading: 'Fraunces', serif;
   --font-body: 'Fraunces', serif;
 }
@@ -57,6 +66,9 @@
   --text-secondary: #4c7a9c;
   --text-secondary-rgb: 76, 122, 156;
   --glass-rgb: 11, 41, 66;
+  --notif-success: #0f6b32;
+  --notif-error: #a51414;
+  --notif-warning: #8a4f06;
   --font-heading: 'Nunito', sans-serif;
   --font-body: 'Nunito', sans-serif;
 }
@@ -72,6 +84,9 @@
   --text-secondary: #7a6a52;
   --text-secondary-rgb: 122, 106, 82;
   --glass-rgb: 44, 36, 23;
+  --notif-success: #2f6018;
+  --notif-error: #b3261e;
+  --notif-warning: #7a4d0d;
   --font-heading: 'Literata', serif;
   --font-body: 'Literata', serif;
 }
@@ -87,6 +102,9 @@
   --text-secondary: #b48ccf;
   --text-secondary-rgb: 180, 140, 207;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #00ffa3;
+  --notif-error: #ff2d55;
+  --notif-warning: #ffe066;
   --font-heading: 'Orbitron', sans-serif;
   --font-body: 'Orbitron', sans-serif;
 }
@@ -102,6 +120,9 @@
   --text-secondary: #8fb593;
   --text-secondary-rgb: 143, 181, 147;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #5eead4;
+  --notif-error: #ff6b6b;
+  --notif-warning: #ffb86c;
   --font-heading: 'Quicksand', sans-serif;
   --font-body: 'Quicksand', sans-serif;
 }
@@ -117,6 +138,9 @@
   --text-secondary: #8c8c8c;
   --text-secondary-rgb: 140, 140, 140;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #4ade80;
+  --notif-error: #ff6b6b;
+  --notif-warning: #ffb86c;
   --font-heading: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
@@ -132,6 +156,9 @@
   --text-secondary: #a6607a;
   --text-secondary-rgb: 166, 96, 122;
   --glass-rgb: 74, 16, 39;
+  --notif-success: #0f6b32;
+  --notif-error: #b91c1c;
+  --notif-warning: #944a08;
   --font-heading: 'Poppins', sans-serif;
   --font-body: 'Poppins', sans-serif;
 }
@@ -147,6 +174,9 @@
   --text-secondary: #9ca3c4;
   --text-secondary-rgb: 156, 163, 196;
   --glass-rgb: 255, 255, 255;
+  --notif-success: #34d399;
+  --notif-error: #fb7185;
+  --notif-warning: #fbbf24;
   --font-heading: 'Space Grotesk', sans-serif;
   --font-body: 'Space Grotesk', sans-serif;
 }

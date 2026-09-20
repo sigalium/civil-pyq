@@ -4,6 +4,7 @@ import { useAuth } from '../../context/useAuth'
 import { useResourcesData } from '../../context/useResourcesData'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CloseIcon from '@mui/icons-material/Close'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 function formatTime(iso) {
@@ -204,8 +205,18 @@ function formatSettingValue(key, value) {
 function describeGlobalResources(action, details) {
   const { new: n } = unwrap(details, action)
   const key = n?.key || 'a setting'
+  const value = n?.value
+
+  const syllabusMatch = key.match(/^syllabus_semester_(\d+)$/)
+  if (syllabusMatch) {
+    return value ? `changed Semester ${syllabusMatch[1]} syllabus` : `cleared Semester ${syllabusMatch[1]} syllabus`
+  }
+  if (key === 'academic_calendar_path') {
+    return value ? 'changed the academic calendar' : 'cleared the academic calendar'
+  }
+
   const label = key.replace(/_/g, ' ')
-  return `set ${label} to ${formatSettingValue(key, n?.value)}`
+  return `set ${label} to ${formatSettingValue(key, value)}`
 }
 
 const DESCRIBERS = {
@@ -247,6 +258,7 @@ const LogTab = () => {
   const [selectedIds, setSelectedIds] = useState(new Set())
   const [confirmAction, setConfirmAction] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const { notify } = useNotifications()
 
   useEffect(() => {
     supabase
@@ -304,11 +316,13 @@ const LogTab = () => {
       return next
     })
     fetchPage()
+    notify({ variant: 'success', message: 'Log entry deleted.' })
   }
 
   const deleteSelected = async () => {
     if (selectedIds.size === 0) return
     setDeleting(true)
+    const count = selectedIds.size
     const { error: deleteError } = await supabase.from('audit_log').delete().in('id', [...selectedIds])
     setDeleting(false)
     setConfirmAction(null)
@@ -318,6 +332,7 @@ const LogTab = () => {
     }
     exitSelectMode()
     fetchPage()
+    notify({ variant: 'success', message: `${count} log entries deleted.` })
   }
 
   const emptyLog = async () => {
@@ -332,6 +347,7 @@ const LogTab = () => {
     exitSelectMode()
     setPage(0)
     fetchPage()
+    notify({ variant: 'success', message: 'Audit log cleared.' })
   }
 
   if (loading) return <p className="dashboard-empty">Loading...</p>

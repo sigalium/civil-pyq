@@ -69,28 +69,3 @@
   height: 1px;
   background: rgba(var(--glass-rgb), 0.15);
 }
-
-.maintenance-admin-badge {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 500;
-  background: var(--secondary);
-  border: 1px solid rgba(var(--accent-rgb), 0.3);
-  color: var(--text-primary);
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.maintenance-admin-badge-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ffb86c;
-  flex-shrink: 0;
-}

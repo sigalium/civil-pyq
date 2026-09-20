@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
     subjectsDeleted: 0,
     contributorsDeleted: 0,
     replacedFilesDeleted: 0,
+    sectionsDeleted: 0,
     githubDeleteErrors: [],
   }
 
@@ -151,6 +152,13 @@ Deno.serve(async (req) => {
     .not('deleted_at', 'is', null)
     .lt('deleted_at', cutoffIso)
   summary.contributorsDeleted = contributorsDeleted || 0
+
+  const { count: sectionsDeleted } = await supabase
+    .from('sections')
+    .delete({ count: 'exact' })
+    .not('deleted_at', 'is', null)
+    .lt('deleted_at', cutoffIso)
+  summary.sectionsDeleted = sectionsDeleted || 0
 
   return json({ ok: true, cutoff: cutoffIso, summary })
 })

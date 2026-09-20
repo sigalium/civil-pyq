@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { ResourcesDataProvider } from './context/ResourcesDataContext'
 import { ContributorsDataProvider } from './context/ContributorsDataContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { registerServiceWorker } from './utils/offlineStorage'
 import './index.css'
 
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ResourcesDataProvider>
             <ContributorsDataProvider>
-              <App />
+              <NotificationProvider>
+                <App />
+              </NotificationProvider>
             </ContributorsDataProvider>
           </ResourcesDataProvider>
         </AuthProvider>

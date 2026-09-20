@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
@@ -21,11 +21,17 @@ import PDFCompressionModal from '../../components/PDFCompressionModal'
 import ConfirmModal from '../../components/ConfirmModal'
 import PositionInput from '../../components/PositionInput'
 import Select from '../../components/Select'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 async function uploadCodeFile(file, name, sectionName) {
   const repoPath = buildCodeRepoPath({ name, fileName: file.name, sectionName })
   return uploadFileToGithub({ file, repoPath, commitMessage: `Add code: ${name}` })
+}
+
+function isSameOrder(a, b) {
+  if (a.length !== b.length) return false
+  return a.every((entry, i) => entry.id === b[i].id)
 }
 
 const SectionsManager = ({ sections, onChanged }) => {
@@ -38,16 +44,23 @@ const SectionsManager = ({ sections, onChanged }) => {
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const { notify } = useNotifications()
+  const orderRef = useRef(sections)
 
   const freshIds = sections.map((s) => s.id).join(',')
   if (!dirty && freshIds !== syncedIds) {
     setOrder(sections)
+    orderRef.current = sections
     setSyncedIds(freshIds)
   }
 
   const handleReorder = (newOrder) => {
+    orderRef.current = newOrder
     setOrder(newOrder)
-    setDirty(true)
+  }
+
+  const handleDragEnd = () => {
+    setDirty(!isSameOrder(orderRef.current, sections))
   }
 
   const reorderByPosition = (id, newPosition) => {
@@ -58,8 +71,9 @@ const SectionsManager = ({ sections, onChanged }) => {
     const newOrder = [...order]
     const [moved] = newOrder.splice(currentIndex, 1)
     newOrder.splice(targetIndex, 0, moved)
+    orderRef.current = newOrder
     setOrder(newOrder)
-    setDirty(true)
+    setDirty(!isSameOrder(newOrder, sections))
   }
 
   const confirmOrder = async () => {
@@ -81,6 +95,7 @@ const SectionsManager = ({ sections, onChanged }) => {
     setNewName('')
     setAdding(false)
     onChanged()
+    notify({ variant: 'success', message: `Section "${newName.trim()}" added.` })
   }
 
   const saveRename = async (id) => {
@@ -91,9 +106,23 @@ const SectionsManager = ({ sections, onChanged }) => {
   }
 
   const deleteSection = async (id) => {
+    const section = sections.find((s) => s.id === id)
     await supabase.from('sections').update({ deleted_at: new Date().toISOString() }).eq('id', id)
     setConfirmDeleteId(null)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `Section "${section?.name || 'Section'}" was moved to trash.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('sections').update({ deleted_at: null }).eq('id', id)
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   return (
@@ -121,6 +150,7 @@ const SectionsManager = ({ sections, onChanged }) => {
             position={order.findIndex((entry) => entry.id === section.id) + 1}
             total={order.length}
             onMove={reorderByPosition}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </Reorder.Group>
@@ -151,7 +181,7 @@ const SectionsManager = ({ sections, onChanged }) => {
   )
 }
 
-const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameChange, onSaveRename, onCancelRename, onRequestDelete, position, total, onMove }) => {
+const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameChange, onSaveRename, onCancelRename, onRequestDelete, position, total, onMove, onDragEnd }) => {
   const dragControls = useDragControls()
 
   if (renaming) {
@@ -167,7 +197,7 @@ const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameCha
   }
 
   return (
-    <Reorder.Item as="div" value={section} dragListener={false} dragControls={dragControls} className="resource-item-row" whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}>
+    <Reorder.Item as="div" value={section} dragListener={false} dragControls={dragControls} className="resource-item-row" whileDrag={{ boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }} onDragEnd={onDragEnd}>
       <span className="drag-handle" onPointerDown={(e) => dragControls.start(e)} title="Drag to reorder">
         <DragIndicatorIcon sx={{ fontSize: 18 }} />
       </span>
@@ -194,7 +224,7 @@ const SectionSelect = ({ sections, value, onChange }) => (
   />
 )
 
-const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove }) => {
+const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, onDragEnd }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
   const [editing, setEditing] = useState(false)
@@ -212,6 +242,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove })
   const [uploadError, setUploadError] = useState('')
   const [confirmTrash, setConfirmTrash] = useState(false)
   const dragControls = useDragControls()
+  const { notify } = useNotifications()
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0]
@@ -259,12 +290,26 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove })
     }
     setEditing(false)
     onChanged()
+    notify({ variant: 'success', message: `"${name}" saved.` })
   }
 
   const remove = async () => {
     setConfirmTrash(false)
     await supabase.from('resources').update({ deleted_at: new Date().toISOString() }).eq('id', item.id)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `"${item.name}" was moved to trash.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('resources').update({ deleted_at: null }).eq('id', item.id)
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   if (editing) {
@@ -318,7 +363,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove })
   }
 
   return (
-    <Reorder.Item as="div" value={item} dragListener={false} dragControls={dragControls} className="resource-item-row" whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}>
+    <Reorder.Item as="div" value={item} dragListener={false} dragControls={dragControls} className="resource-item-row" whileDrag={{ boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }} onDragEnd={onDragEnd}>
       <span className="drag-handle" onPointerDown={(e) => dragControls.start(e)} title="Drag to reorder">
         <DragIndicatorIcon sx={{ fontSize: 18 }} />
       </span>
@@ -352,6 +397,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove })
 const AddCodeForm = ({ sections, onAdded, onOpen }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
+  const { notify } = useNotifications()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -386,6 +432,7 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
       const sectionName = sections.find((s) => s.id === sectionId)?.name
       const url = await uploadCodeFile(pendingFile, name.trim(), sectionName)
       await insertCodeOnTop({ name: name.trim(), path: url, file_size_bytes: pendingFile.size, section_id: sectionId, description: description.trim() })
+      const addedName = name.trim()
       setOpen(false)
       setName('')
       setDescription('')
@@ -394,6 +441,7 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
       setPendingOriginalFile(null)
       setPendingCompressedFile(null)
       onAdded()
+      notify({ variant: 'success', message: `"${addedName}" added.` })
     } catch (err) {
       setUploadError(err.message || 'Could not add this code.')
     }
@@ -454,16 +502,22 @@ const CodeGroup = ({ title, items, sections, onChanged, onOpen }) => {
   const [dirty, setDirty] = useState(false)
   const [committing, setCommitting] = useState(false)
   const [syncedIds, setSyncedIds] = useState(items.map((i) => i.id).join(','))
+  const orderRef = useRef(items)
 
   const freshIds = items.map((i) => i.id).join(',')
   if (!dirty && freshIds !== syncedIds) {
     setOrder(items)
+    orderRef.current = items
     setSyncedIds(freshIds)
   }
 
   const handleReorder = (newOrder) => {
+    orderRef.current = newOrder
     setOrder(newOrder)
-    setDirty(true)
+  }
+
+  const handleDragEnd = () => {
+    setDirty(!isSameOrder(orderRef.current, items))
   }
 
   const reorderByPosition = (id, newPosition) => {
@@ -474,8 +528,9 @@ const CodeGroup = ({ title, items, sections, onChanged, onOpen }) => {
     const newOrder = [...order]
     const [moved] = newOrder.splice(currentIndex, 1)
     newOrder.splice(targetIndex, 0, moved)
+    orderRef.current = newOrder
     setOrder(newOrder)
-    setDirty(true)
+    setDirty(!isSameOrder(newOrder, items))
   }
 
   const confirmOrder = async () => {
@@ -515,6 +570,7 @@ const CodeGroup = ({ title, items, sections, onChanged, onOpen }) => {
             position={order.findIndex((entry) => entry.id === item.id) + 1}
             total={order.length}
             onMove={reorderByPosition}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </Reorder.Group>

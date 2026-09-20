@@ -12,6 +12,7 @@ import { deleteFileFromGithub } from '../../utils/githubUpload'
 import { extractRepoPathFromUrl } from '../../utils/resourceSnippet'
 import ConfirmModal from '../../components/ConfirmModal'
 import Select from '../../components/Select'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 const RETENTION_DAYS = 30
@@ -81,7 +82,7 @@ const TrashRow = ({ label, meta, deletedAt, onPreview, onRestore, onHardDelete, 
 const TrashTab = () => {
   const { profile } = useAuth()
   const isOwner = profile?.role === 'owner'
-  const { subjectRows, resourceRows, sections, refresh: refreshResources } = useResourcesData()
+  const { subjectRows, resourceRows, sections, sectionRows, refresh: refreshResources } = useResourcesData()
   const { contributorRows, refresh: refreshContributors } = useContributorsData()
   const { openPdf } = usePDFWindows()
   const [busyId, setBusyId] = useState(null)
@@ -93,7 +94,9 @@ const TrashTab = () => {
   const [codeSort, setCodeSort] = useState('deleting-soonest')
   const [contributorSort, setContributorSort] = useState('deleting-soonest')
   const [replacedSort, setReplacedSort] = useState('deleting-soonest')
+  const [sectionSort, setSectionSort] = useState('deleting-soonest')
   const [replacedFiles, setReplacedFiles] = useState([])
+  const { notify } = useNotifications()
 
   const refreshReplaced = async () => {
     const { data } = await supabase
@@ -112,10 +115,12 @@ const TrashTab = () => {
   const trashedCodes = sortTrashRows(resourceRows.filter((r) => r.deleted_at && r.resource_type === 'iscode'), codeSort, (r) => r.name)
   const trashedContributors = sortTrashRows(contributorRows.filter((r) => r.deleted_at), contributorSort, (r) => r.name)
   const trashedReplaced = sortTrashRows(replacedFiles, replacedSort, (r) => r.resource_name)
+  const trashedSections = sortTrashRows(sectionRows.filter((r) => r.deleted_at), sectionSort, (r) => r.name)
 
   const codeSectionLabel = (row) => sections.find((s) => s.id === row.section_id)?.name || 'Code'
 
   const restoreSubject = async (row) => {
+    setPending(null)
     setError('')
     setMessage('')
     setBusyId(row.id)
@@ -139,8 +144,10 @@ const TrashTab = () => {
       setError(`"${row.name}" was restored, but its resources could not be: ${resourcesError.message}`)
     } else if (restoredResources && restoredResources.length > 0) {
       setMessage(`Restored "${row.name}" along with ${restoredResources.length} resource(s) trashed with it.`)
+      notify({ variant: 'success', message: `Restored "${row.name}" along with ${restoredResources.length} resource(s).` })
     } else {
       setMessage(`Restored "${row.name}".`)
+      notify({ variant: 'success', message: `Restored "${row.name}".` })
     }
 
     setBusyId(null)
@@ -151,13 +158,19 @@ const TrashTab = () => {
     setPending(null)
     setError('')
     setBusyId(id)
+    const row = subjectRows.find((s) => s.id === id)
     const { error: deleteError } = await supabase.from('subjects').delete().eq('id', id)
-    if (deleteError) setError(`Could not permanently delete this subject: ${deleteError.message}`)
+    if (deleteError) {
+      setError(`Could not permanently delete this subject: ${deleteError.message}`)
+    } else {
+      notify({ variant: 'success', message: `"${row?.name || 'Subject'}" permanently deleted.` })
+    }
     setBusyId(null)
     refreshResources()
   }
 
   const restoreResource = async (row) => {
+    setPending(null)
     setError('')
     setMessage('')
     setBusyId(row.id)
@@ -185,6 +198,7 @@ const TrashTab = () => {
         ? `Restored "${row.name}" and its subject "${row.subject}", which was also in trash.`
         : `Restored "${row.name}".`
     )
+    notify({ variant: 'success', message: `Restored "${row.name}".` })
     setBusyId(null)
     refreshResources()
   }
@@ -203,16 +217,26 @@ const TrashTab = () => {
       }
     }
     const { error: deleteError } = await supabase.from('resources').delete().eq('id', id)
-    if (deleteError) setError(`Could not permanently delete this resource: ${deleteError.message}`)
+    if (deleteError) {
+      setError(`Could not permanently delete this resource: ${deleteError.message}`)
+    } else {
+      notify({ variant: 'success', message: `"${row?.name || 'Resource'}" permanently deleted.` })
+    }
     setBusyId(null)
     refreshResources()
   }
 
   const restoreContributor = async (id) => {
+    setPending(null)
     setError('')
     setBusyId(id)
+    const row = trashedContributors.find((c) => c.id === id)
     const { error: restoreError } = await supabase.from('contributors').update({ deleted_at: null }).eq('id', id)
-    if (restoreError) setError(`Could not restore this contributor: ${restoreError.message}`)
+    if (restoreError) {
+      setError(`Could not restore this contributor: ${restoreError.message}`)
+    } else {
+      notify({ variant: 'success', message: `Restored "${row?.name || 'contributor'}".` })
+    }
     setBusyId(null)
     refreshContributors()
   }
@@ -221,8 +245,13 @@ const TrashTab = () => {
     setPending(null)
     setError('')
     setBusyId(id)
+    const row = trashedContributors.find((c) => c.id === id)
     const { error: deleteError } = await supabase.from('contributors').delete().eq('id', id)
-    if (deleteError) setError(`Could not permanently delete this contributor: ${deleteError.message}`)
+    if (deleteError) {
+      setError(`Could not permanently delete this contributor: ${deleteError.message}`)
+    } else {
+      notify({ variant: 'success', message: `"${row?.name || 'Contributor'}" permanently deleted.` })
+    }
     setBusyId(null)
     refreshContributors()
   }
@@ -240,12 +269,46 @@ const TrashTab = () => {
       }
     }
     const { error: deleteError } = await supabase.from('replaced_files').delete().eq('id', row.id)
-    if (deleteError) setError(`Could not permanently delete this entry: ${deleteError.message}`)
+    if (deleteError) {
+      setError(`Could not permanently delete this entry: ${deleteError.message}`)
+    } else {
+      notify({ variant: 'success', message: `"${row.resource_name}" permanently deleted.` })
+    }
     setBusyId(null)
     refreshReplaced()
   }
 
-  const isEmpty = trashedSubjects.length === 0 && trashedResources.length === 0 && trashedCodes.length === 0 && trashedContributors.length === 0 && trashedReplaced.length === 0
+  const restoreSection = async (id) => {
+    setPending(null)
+    setError('')
+    setBusyId(id)
+    const row = trashedSections.find((s) => s.id === id)
+    const { error: restoreError } = await supabase.from('sections').update({ deleted_at: null }).eq('id', id)
+    if (restoreError) {
+      setError(`Could not restore this section: ${restoreError.message}`)
+    } else {
+      notify({ variant: 'success', message: `Restored "${row?.name || 'section'}".` })
+    }
+    setBusyId(null)
+    refreshResources()
+  }
+
+  const hardDeleteSection = async (id) => {
+    setPending(null)
+    setError('')
+    setBusyId(id)
+    const row = trashedSections.find((s) => s.id === id)
+    const { error: deleteError } = await supabase.from('sections').delete().eq('id', id)
+    if (deleteError) {
+      setError(`Could not permanently delete this section: ${deleteError.message}`)
+    } else {
+      notify({ variant: 'success', message: `"${row?.name || 'Section'}" permanently deleted.` })
+    }
+    setBusyId(null)
+    refreshResources()
+  }
+
+  const isEmpty = trashedSubjects.length === 0 && trashedResources.length === 0 && trashedCodes.length === 0 && trashedContributors.length === 0 && trashedReplaced.length === 0 && trashedSections.length === 0
 
   return (
     <div className="dashboard-panel">
@@ -316,6 +379,27 @@ const TrashTab = () => {
               onPreview={row.path ? () => openPdf({ name: row.name, path: row.path, resourceId: row.id }) : null}
               onRestore={() => setPending({ action: () => restoreResource(row), title: 'Restore code?', message: `"${row.name}" will be restored to Codes & Standards.`, confirmLabel: 'Restore', danger: false })}
               onHardDelete={() => setPending({ action: () => hardDeleteResource(row.id), title: 'Delete permanently?', message: `"${row.name}" will be permanently deleted. This cannot be undone.`, confirmLabel: 'Delete forever' })}
+              isOwner={isOwner}
+              busy={busyId === row.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {trashedSections.length > 0 && (
+        <div className="resource-group">
+          <div className="trash-section-header">
+            <h4>Codes & Standards Sections</h4>
+            <Select value={sectionSort} onChange={setSectionSort} options={SORT_OPTIONS} icon={<FilterAltIcon sx={{ fontSize: 16 }} />} />
+          </div>
+          {trashedSections.map((row) => (
+            <TrashRow
+              key={row.id}
+              label={row.name}
+              meta="Section"
+              deletedAt={row.deleted_at}
+              onRestore={() => setPending({ action: () => restoreSection(row.id), title: 'Restore section?', message: `"${row.name}" will be restored to Codes & Standards.`, confirmLabel: 'Restore', danger: false })}
+              onHardDelete={() => setPending({ action: () => hardDeleteSection(row.id), title: 'Delete permanently?', message: `"${row.name}" will be permanently deleted. Any codes still in it will move to "Code" (unsectioned), not deleted. This cannot be undone.`, confirmLabel: 'Delete forever' })}
               isOwner={isOwner}
               busy={busyId === row.id}
             />

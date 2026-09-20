@@ -7,6 +7,7 @@ import IstDateTimePicker from '../../components/IstDateTimePicker'
 import ConfirmModal from '../../components/ConfirmModal'
 import { formatIstDisplay } from '../../utils/istDateTime'
 import { backfillFileSizes } from '../../utils/backfillFileSizes'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
 
 function formatDuration(ms) {
@@ -83,6 +84,7 @@ const SettingsTab = () => {
 
   const isOwner = profile?.role === 'owner'
   const isDeveloper = isOwner || !!profile?.is_developer
+  const { notify } = useNotifications()
 
   const [savingKey, setSavingKey] = useState('')
   const [savedKey, setSavedKey] = useState('')
@@ -126,6 +128,7 @@ const SettingsTab = () => {
     await refresh()
     setSavingKey('')
     flashSaved('maintenance_start')
+    notify({ variant: 'success', message: 'Maintenance mode turned on.' })
   }
 
   const endMaintenanceNow = async () => {
@@ -134,6 +137,7 @@ const SettingsTab = () => {
     await refresh()
     setSavingKey('')
     flashSaved('maintenance_end')
+    notify({ variant: 'success', message: 'Maintenance mode turned off.' })
   }
 
   const runBackfill = async () => {
@@ -145,8 +149,10 @@ const SettingsTab = () => {
       const result = await backfillFileSizes()
       setBackfillResult(result)
       await refresh()
+      notify({ variant: 'success', message: `File size backfill done: checked ${result.total}, updated ${result.updated}.` })
     } catch (err) {
       setBackfillError(err.message)
+      notify({ variant: 'error', message: `File size backfill failed: ${err.message}` })
     }
     setBackfillBusy(false)
   }

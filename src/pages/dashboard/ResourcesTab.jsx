@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Reorder, useDragControls, motion as Motion, AnimatePresence } from 'framer-motion'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -8,156 +8,82 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
-import CompressIcon from '@mui/icons-material/Compress'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
 import LinkOffIcon from '@mui/icons-material/LinkOff'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import { FileUp } from 'lucide-react'
 import { useResourcesData } from '../../context/useResourcesData'
 import { usePDFWindows } from '../../context/usePDFWindows'
-import { useAuth } from '../../context/useAuth'
+import { useNotifications } from '../../context/useNotifications'
 import { supabase } from '../../lib/supabaseClient'
-import { buildStagingRepoPath } from '../../utils/resourceSnippet'
 import { uploadFileToGithub } from '../../utils/githubUpload'
 import { recordReplacedFile } from '../../utils/replacedFiles'
 import { persistOrder, insertResourceOnTop } from '../../utils/resourceOrdering'
 import { formatBytes } from '../../utils/pdfCompression'
-import PDFCompressionModal from '../../components/PDFCompressionModal'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import BackButton from '../../components/BackButton'
 import { useNavigate, useParams } from 'react-router-dom'
 import CodesAndStandardsPanel from './CodesAndStandardsPanel'
 import ConfirmModal from '../../components/ConfirmModal'
 import PositionInput from '../../components/PositionInput'
+import ResourceFileForm from '../../components/ResourceFileForm'
 import './Dashboard.css'
 
 const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8]
 const TYPE_LABELS = { pyq: 'Previous Year Questions', lab: 'Lab Manuals & Other Resources' }
 
-async function uploadResourceFile({ file, semester, subject, type, label }) {
-  const repoPath = buildStagingRepoPath({
-    semester,
-    subject,
-    resource_type: type,
-    resource_label: label || 'Untitled',
-    file_path: file.name,
-  })
-  return uploadFileToGithub({
-    file,
-    repoPath,
-    commitMessage: `Add ${label || type} (Sem ${semester} - ${subject})`,
-  })
+function isSameOrder(a, b) {
+  if (a.length !== b.length) return false
+  return a.every((entry, i) => entry.id === b[i].id)
 }
 
-const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, draggable, position, total, onMove }) => {
-  const { profile } = useAuth()
-  const canCompress = !!profile
+const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, draggable, position, total, onMove, onDragEnd }) => {
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(item.name)
-  const [path, setPath] = useState(item.path)
-  const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState('')
-  const [pendingFile, setPendingFile] = useState(null)
-  const [pendingOriginalFile, setPendingOriginalFile] = useState(null)
-  const [pendingCompressedFile, setPendingCompressedFile] = useState(null)
-  const [showCompress, setShowCompress] = useState(false)
-  const [fileSize, setFileSize] = useState(item.file_size_bytes || null)
   const [confirmTrash, setConfirmTrash] = useState(false)
   const dragControls = useDragControls()
-
-  const uploadPendingFile = async (file) => {
-    setUploading(true)
-    setUploadError('')
-    try {
-      const url = await uploadResourceFile({ file, semester, subject, type, label: name })
-      setPath(url)
-      setFileSize(file.size)
-      setPendingFile(null)
-      setPendingOriginalFile(null)
-      setPendingCompressedFile(null)
-    } catch (err) {
-      setUploadError(err.message)
-    }
-    setUploading(false)
-  }
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
-    setUploadError('')
-    setPendingFile(file)
-    setPendingOriginalFile(file)
-    setPendingCompressedFile(null)
-  }
-
-  const previewPendingFile = () => {
-    if (!pendingFile) return
-    onOpen({ name: pendingFile.name, path: URL.createObjectURL(pendingFile) })
-  }
-
-  const save = async () => {
-    setSaving(true)
-    if (item.path && path !== item.path) {
-      await recordReplacedFile({ oldUrl: item.path, resourceName: name, resourceType: type, fileSizeBytes: item.file_size_bytes })
-    }
-    await supabase.from('resources').update({ name, path, file_size_bytes: fileSize, updated_at: new Date().toISOString() }).eq('id', item.id)
-    setSaving(false)
-    setEditing(false)
-    onChanged()
-  }
+  const { notify } = useNotifications()
 
   const remove = async () => {
     setConfirmTrash(false)
     await supabase.from('resources').update({ deleted_at: new Date().toISOString() }).eq('id', item.id)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `"${item.name}" was moved to trash.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('resources').update({ deleted_at: null }).eq('id', item.id)
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   if (editing) {
     return (
-      <div className="resource-item-row editing">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
-        <div className="file-upload-field">
-          <label className="file-upload-btn">
-            {uploading ? 'Uploading…' : 'Replace file'}
-            <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={uploading} hidden />
-          </label>
-          {pendingFile ? (
-            <span className="resource-item-path">{pendingFile.name}</span>
-          ) : (
-            <span className="resource-item-path">{path}</span>
-          )}
-          {pendingFile && (
-            <div className="pending-file-actions">
-              <button type="button" className="icon-btn" onClick={previewPendingFile} aria-label="Preview PDF" title="Preview PDF">
-                <OpenInNewIcon sx={{ fontSize: 16 }} />
-              </button>
-              {canCompress && (
-                <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} aria-label="Compress PDF" title="Compress PDF">
-                  <CompressIcon sx={{ fontSize: 16 }} />
-                </button>
-              )}
-              <button type="button" className="action-btn approve-btn" disabled={uploading} onClick={() => uploadPendingFile(pendingFile)}>
-                {uploading ? 'Uploading…' : 'Upload'}
-              </button>
-              <button type="button" className="action-btn reject-btn" disabled={uploading} onClick={() => { setPendingFile(null); setPendingOriginalFile(null); setPendingCompressedFile(null) }}>Discard</button>
-            </div>
-          )}
-        </div>
-        {uploadError && <span className="dashboard-error">{uploadError}</span>}
-        <div className="resource-item-actions">
-          <button className="action-btn approve-btn" disabled={saving || uploading || !!pendingFile} onClick={save}>Save</button>
-          <button className="action-btn reject-btn" onClick={() => setEditing(false)}>Cancel</button>
-        </div>
-        {showCompress && pendingFile && (
-          <PDFCompressionModal
-            file={pendingOriginalFile}
-            initialResult={pendingCompressedFile}
-            onApply={(compressedFile) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setShowCompress(false) }}
-            onClose={() => setShowCompress(false)}
-          />
-        )}
-      </div>
+      <ResourceFileForm
+        mode="edit"
+        semester={semester}
+        subject={subject}
+        type={type}
+        namePlaceholder="Name"
+        initialName={item.name}
+        initialPath={item.path}
+        initialSize={item.file_size_bytes}
+        onOpenPreview={onOpen}
+        onCancel={() => setEditing(false)}
+        onSubmit={async ({ name, path, fileSize, fileChanged }) => {
+          if (fileChanged && item.path && path !== item.path) {
+            await recordReplacedFile({ oldUrl: item.path, resourceName: name, resourceType: type, fileSizeBytes: item.file_size_bytes })
+          }
+          await supabase.from('resources').update({ name, path, file_size_bytes: fileSize, updated_at: new Date().toISOString() }).eq('id', item.id)
+          setEditing(false)
+          onChanged()
+        }}
+      />
     )
   }
 
@@ -229,7 +155,9 @@ const ResourceItemRow = ({ item, semester, subject, type, onChanged, onOpen, dra
       dragListener={false}
       dragControls={dragControls}
       className="resource-item-row"
-      whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}
+      layout="position"
+      whileDrag={{ boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}
+      onDragEnd={onDragEnd}
     >
       {content}
     </Reorder.Item>
@@ -255,9 +183,11 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
   const [page, setPage] = useState(0)
   const [dirty, setDirty] = useState(false)
   const [committing, setCommitting] = useState(false)
+  const orderRef = useRef(items)
 
   useEffect(() => {
     setOrder(items)
+    orderRef.current = items
     setPage(0)
     setDirty(false)
   }, [items])
@@ -266,10 +196,14 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
   const pageItems = order.slice(page * RESOURCE_PAGE_SIZE, page * RESOURCE_PAGE_SIZE + RESOURCE_PAGE_SIZE)
 
   const handleReorder = (newPageOrder) => {
-    const newFullOrder = [...order]
+    const newFullOrder = [...orderRef.current]
     newFullOrder.splice(page * RESOURCE_PAGE_SIZE, pageItems.length, ...newPageOrder)
+    orderRef.current = newFullOrder
     setOrder(newFullOrder)
-    setDirty(true)
+  }
+
+  const handleDragEnd = () => {
+    setDirty(!isSameOrder(orderRef.current, items))
   }
 
   const reorderByPosition = (id, newPosition) => {
@@ -280,8 +214,9 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
     const newFullOrder = [...order]
     const [moved] = newFullOrder.splice(currentIndex, 1)
     newFullOrder.splice(targetIndex, 0, moved)
+    orderRef.current = newFullOrder
     setOrder(newFullOrder)
-    setDirty(true)
+    setDirty(!isSameOrder(newFullOrder, items))
     setPage(Math.floor(targetIndex / RESOURCE_PAGE_SIZE))
   }
 
@@ -315,6 +250,7 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
             position={order.findIndex((entry) => entry.id === item.id) + 1}
             total={order.length}
             onMove={reorderByPosition}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </Reorder.Group>
@@ -333,151 +269,61 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
   )
 }
 
-const AddResourceForm = ({ semester, subject, type, onAdded, onOpen }) => {
-  const { profile } = useAuth()
-  const canCompress = !!profile
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [path, setPath] = useState('')
-  const [fileSize, setFileSize] = useState(null)
-  const [pendingFile, setPendingFile] = useState(null)
-  const [pendingOriginalFile, setPendingOriginalFile] = useState(null)
-  const [pendingCompressedFile, setPendingCompressedFile] = useState(null)
-  const [showCompress, setShowCompress] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState('')
-
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
-    setUploadError('')
-    setPendingFile(file)
-    setPendingOriginalFile(file)
-    setPendingCompressedFile(null)
-  }
-
-  const previewPendingFile = () => {
-    if (!pendingFile) return
-    onOpen({ name: pendingFile.name, path: URL.createObjectURL(pendingFile) })
-  }
-
-  const discardPendingFile = () => {
-    setPendingFile(null)
-    setPendingOriginalFile(null)
-    setPendingCompressedFile(null)
-  }
-
-  const uploadPendingFile = async () => {
-    if (!pendingFile) return
-    setUploading(true)
-    setUploadError('')
-    try {
-      const url = await uploadResourceFile({ file: pendingFile, semester, subject, type, label: name })
-      setPath(url)
-      setFileSize(pendingFile.size)
-      setPendingFile(null)
-      setPendingOriginalFile(null)
-      setPendingCompressedFile(null)
-    } catch (err) {
-      setUploadError(err.message)
-    }
-    setUploading(false)
-  }
-
-  const add = async () => {
-    if (!name.trim() || !path.trim()) return
-    setSaving(true)
-    if (type === 'syllabus') {
-      await supabase.from('resources').update({ deleted_at: new Date().toISOString() }).eq('subject', subject).eq('semester', semester).eq('resource_type', 'syllabus').is('deleted_at', null)
-      await supabase.from('resources').insert({
-        semester,
-        subject,
-        resource_type: type,
-        name: name.trim(),
-        path: path.trim(),
-        file_size_bytes: fileSize,
-      })
-    } else {
-      await insertResourceOnTop({
-        semester,
-        subject,
-        resource_type: type,
-        name: name.trim(),
-        path: path.trim(),
-        file_size_bytes: fileSize,
-      })
-    }
-    setSaving(false)
-    setOpen(false)
-    setName('')
-    setPath('')
-    setFileSize(null)
-    onAdded()
-  }
-
+const AddResourceForm = ({ semester, subject, type, onAdded, onOpen, open, onOpenChange }) => {
   if (!open) {
     return (
-      <button className="add-inline-btn" onClick={() => setOpen(true)}>
+      <button className="add-inline-btn" onClick={() => onOpenChange(true)}>
         <AddIcon sx={{ fontSize: 16 }} /> Add {type === 'syllabus' ? 'syllabus' : type}
       </button>
     )
   }
 
   return (
-    <div className="resource-item-row editing">
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (e.g. ESE Dec 2025)" />
-      <div className="file-upload-field">
-        <label className="file-upload-btn">
-          {pendingFile ? 'Choose different PDF' : 'Choose PDF'}
-          <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={uploading} hidden />
-        </label>
-        {pendingFile ? (
-          <span className="resource-item-path">{pendingFile.name}</span>
-        ) : (
-          path && <span className="resource-item-path">Uploaded</span>
-        )}
-        {pendingFile && (
-          <div className="pending-file-actions">
-            <button type="button" className="icon-btn" onClick={previewPendingFile} aria-label="Preview PDF" title="Preview PDF">
-              <OpenInNewIcon sx={{ fontSize: 16 }} />
-            </button>
-            {canCompress && (
-              <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} aria-label="Compress PDF" title="Compress PDF">
-                <CompressIcon sx={{ fontSize: 16 }} />
-              </button>
-            )}
-            <button type="button" className="action-btn approve-btn" disabled={uploading} onClick={uploadPendingFile}>
-              {uploading ? 'Uploading…' : 'Upload'}
-            </button>
-            <button type="button" className="action-btn reject-btn" disabled={uploading} onClick={discardPendingFile}>Discard</button>
-          </div>
-        )}
-      </div>
-      {uploadError && <span className="dashboard-error">{uploadError}</span>}
-      <div className="resource-item-actions">
-        <button className="action-btn approve-btn" disabled={saving || uploading || !!pendingFile || !path} onClick={add}>Add</button>
-        <button className="action-btn reject-btn" onClick={() => setOpen(false)}>Cancel</button>
-      </div>
-      {showCompress && pendingFile && (
-        <PDFCompressionModal
-          file={pendingOriginalFile}
-          initialResult={pendingCompressedFile}
-          onApply={(compressedFile) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setShowCompress(false) }}
-          onClose={() => setShowCompress(false)}
-        />
-      )}
-    </div>
+    <ResourceFileForm
+      mode="add"
+      semester={semester}
+      subject={subject}
+      type={type}
+      namePlaceholder="Name (e.g. ESE Dec 2025)"
+      onOpenPreview={onOpen}
+      onCancel={() => onOpenChange(false)}
+      onSubmit={async ({ name, path, fileSize }) => {
+        if (type === 'syllabus') {
+          await supabase.from('resources').update({ deleted_at: new Date().toISOString() }).eq('subject', subject).eq('semester', semester).eq('resource_type', 'syllabus').is('deleted_at', null)
+          await supabase.from('resources').insert({
+            semester,
+            subject,
+            resource_type: type,
+            name,
+            path,
+            file_size_bytes: fileSize,
+          })
+        } else {
+          await insertResourceOnTop({
+            semester,
+            subject,
+            resource_type: type,
+            name,
+            path,
+            file_size_bytes: fileSize,
+          })
+        }
+        onOpenChange(false)
+        onAdded()
+      }}
+    />
   )
 }
 
-const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable }) => {
+const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable, onDragEnd }) => {
   const [expanded, setExpanded] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [name, setName] = useState(subjectRow.name)
   const [confirmSubjectTrash, setConfirmSubjectTrash] = useState(false)
+  const [syllabusFormOpen, setSyllabusFormOpen] = useState(false)
+  const [sectionFormOpen, setSectionFormOpen] = useState({ pyq: false, lab: false })
   const dragControls = useDragControls()
+  const { notify } = useNotifications()
 
   const rename = async () => {
     if (!name.trim() || name.trim() === subjectRow.name) {
@@ -505,6 +351,21 @@ const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable }) => {
     await supabase.from('resources').update({ deleted_at: now }).eq('subject', subjectRow.name).eq('semester', subjectRow.semester).is('deleted_at', null)
     await supabase.from('subjects').update({ deleted_at: now }).eq('id', subjectRow.id)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `"${subjectRow.name}" was moved to trash.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error: subjectError } = await supabase.from('subjects').update({ deleted_at: null }).eq('id', subjectRow.id)
+        const { error: resourcesError } = await supabase.from('resources').update({ deleted_at: null }).eq('subject', subjectRow.name).eq('semester', subjectRow.semester).eq('deleted_at', now)
+        const firstError = subjectError || resourcesError
+        if (firstError) {
+          notify({ variant: 'error', message: `Could not fully undo: ${firstError.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   const pyq = entry?.pyq || []
@@ -599,7 +460,15 @@ const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable }) => {
               <p className="snippet-hint">Using the Semester {subjectRow.semester} central syllabus. Upload one here to override it just for this subject.</p>
             )}
             {!syllabus && (
-              <AddResourceForm semester={subjectRow.semester} subject={subjectRow.name} type="syllabus" onAdded={onChanged} onOpen={onOpen} />
+              <AddResourceForm
+                semester={subjectRow.semester}
+                subject={subjectRow.name}
+                type="syllabus"
+                onAdded={onChanged}
+                onOpen={onOpen}
+                open={syllabusFormOpen}
+                onOpenChange={setSyllabusFormOpen}
+              />
             )}
           </div>
 
@@ -615,8 +484,16 @@ const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable }) => {
                 onOpen={onOpen}
               />
               <div className="subject-section-actions">
-                <AddResourceForm semester={subjectRow.semester} subject={subjectRow.name} type={type} onAdded={onChanged} onOpen={onOpen} />
-                {type === 'lab' && (
+                <AddResourceForm
+                  semester={subjectRow.semester}
+                  subject={subjectRow.name}
+                  type={type}
+                  onAdded={onChanged}
+                  onOpen={onOpen}
+                  open={sectionFormOpen[type]}
+                  onOpenChange={(value) => setSectionFormOpen((prev) => ({ ...prev, [type]: value }))}
+                />
+                {type === 'lab' && !sectionFormOpen.lab && (
                   <LinkIsCodeButton semester={subjectRow.semester} subject={subjectRow.name} type={type} onLinked={onChanged} />
                 )}
               </div>
@@ -639,7 +516,9 @@ const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable }) => {
       dragListener={false}
       dragControls={dragControls}
       className="subject-panel"
-      whileDrag={{ scale: 1.01, boxShadow: '0 20px 45px rgba(0,0,0,0.4)', zIndex: 5 }}
+      layout="position"
+      whileDrag={{ boxShadow: '0 20px 45px rgba(0,0,0,0.4)', zIndex: 5 }}
+      onDragEnd={onDragEnd}
     >
       {content}
     </Reorder.Item>
@@ -679,9 +558,11 @@ const AddSubjectForm = ({ semester, sortOrder, onAdded }) => {
   return (
     <div className="resource-item-row editing">
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Subject name" autoFocus />
-      <label className="elective-checkbox">
-        <input type="checkbox" checked={isElective} onChange={(e) => setIsElective(e.target.checked)} />
-        Elective
+      <label className="toggle-switch-field elective-toggle-row" onClick={(e) => e.stopPropagation()}>
+        <span>Elective</span>
+        <span className={`toggle-switch ${isElective ? 'on' : ''}`} onClick={() => setIsElective(!isElective)}>
+          <span className="toggle-switch-knob" />
+        </span>
       </label>
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
@@ -760,11 +641,10 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
   const [saving, setSaving] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pendingReplaceFile, setPendingReplaceFile] = useState(null)
+  const { notify } = useNotifications()
 
-  const handleUpload = async (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
+  const uploadFile = async (file) => {
     setSaving(true)
     setUploadError('')
     try {
@@ -781,12 +661,43 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
     setSaving(false)
   }
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    if (path) {
+      setPendingReplaceFile(file)
+    } else {
+      uploadFile(file)
+    }
+  }
+
+  const confirmReplace = () => {
+    const file = pendingReplaceFile
+    setPendingReplaceFile(null)
+    uploadFile(file)
+  }
+
   const remove = async () => {
     setConfirmRemove(false)
+    const oldPath = path
     setSaving(true)
     await supabase.from('global_resources').upsert({ key: 'academic_calendar_path', value: '', updated_at: new Date().toISOString() })
     setSaving(false)
     onChanged()
+    notify({
+      variant: 'success',
+      message: 'Academic Calendar removed.',
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('global_resources').upsert({ key: 'academic_calendar_path', value: oldPath, updated_at: new Date().toISOString() })
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   return (
@@ -808,8 +719,8 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
               </button>
             )}
             <label className="icon-btn" aria-label="Upload">
-              {saving ? '…' : <EditIcon sx={{ fontSize: 18 }} />}
-              <input type="file" accept="application/pdf" onChange={handleUpload} disabled={saving} hidden />
+              {saving ? '…' : <FileUp size={18} />}
+              <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={saving} hidden />
             </label>
             {path && (
               <button className="icon-btn danger" onClick={() => setConfirmRemove(true)} aria-label="Remove"><DeleteIcon sx={{ fontSize: 18 }} /></button>
@@ -827,6 +738,16 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
           onCancel={() => setConfirmRemove(false)}
         />
       )}
+      {pendingReplaceFile && (
+        <ConfirmModal
+          title="Replace Academic Calendar?"
+          message="This will replace the current Academic Calendar PDF for everyone."
+          confirmLabel="Replace"
+          danger={false}
+          onConfirm={confirmReplace}
+          onCancel={() => setPendingReplaceFile(null)}
+        />
+      )}
     </div>
   )
 }
@@ -834,14 +755,14 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
 const CentralSyllabusPanel = ({ semester, centralSyllabus, onOpen, onChanged }) => {
   const [saving, setSaving] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [confirmRemove, setConfirmRemove] = useState(false)
+  const [pendingReplaceFile, setPendingReplaceFile] = useState(null)
+  const { notify } = useNotifications()
   const path = centralSyllabus[semester] || ''
   const settingKey = `syllabus_semester_${semester}`
   const repoPath = `pdfs/Semester${semester}/Syllabus.pdf`
 
-  const handleUpload = async (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
+  const uploadFile = async (file) => {
     setSaving(true)
     setUploadError('')
     try {
@@ -858,14 +779,43 @@ const CentralSyllabusPanel = ({ semester, centralSyllabus, onOpen, onChanged }) 
     setSaving(false)
   }
 
-  const [confirmRemove, setConfirmRemove] = useState(false)
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    if (path) {
+      setPendingReplaceFile(file)
+    } else {
+      uploadFile(file)
+    }
+  }
+
+  const confirmReplace = () => {
+    const file = pendingReplaceFile
+    setPendingReplaceFile(null)
+    uploadFile(file)
+  }
 
   const remove = async () => {
     setConfirmRemove(false)
+    const oldPath = path
     setSaving(true)
     await supabase.from('global_resources').upsert({ key: settingKey, value: '', updated_at: new Date().toISOString() })
     setSaving(false)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `Semester ${semester} central syllabus removed.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('global_resources').upsert({ key: settingKey, value: oldPath, updated_at: new Date().toISOString() })
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   return (
@@ -890,8 +840,8 @@ const CentralSyllabusPanel = ({ semester, centralSyllabus, onOpen, onChanged }) 
               </button>
             )}
             <label className="icon-btn" aria-label="Upload">
-              {saving ? '…' : <EditIcon sx={{ fontSize: 18 }} />}
-              <input type="file" accept="application/pdf" onChange={handleUpload} disabled={saving} hidden />
+              {saving ? '…' : <FileUp size={18} />}
+              <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={saving} hidden />
             </label>
             {path && (
               <button className="icon-btn danger" onClick={() => setConfirmRemove(true)} aria-label="Remove"><DeleteIcon sx={{ fontSize: 18 }} /></button>
@@ -909,6 +859,16 @@ const CentralSyllabusPanel = ({ semester, centralSyllabus, onOpen, onChanged }) 
           onCancel={() => setConfirmRemove(false)}
         />
       )}
+      {pendingReplaceFile && (
+        <ConfirmModal
+          title="Replace central syllabus?"
+          message={`This will replace the current Semester ${semester} central syllabus for everyone.`}
+          confirmLabel="Replace"
+          danger={false}
+          onConfirm={confirmReplace}
+          onCancel={() => setPendingReplaceFile(null)}
+        />
+      )}
     </div>
   )
 }
@@ -922,6 +882,7 @@ const ResourcesTab = () => {
   const [semesterSubjectsOrder, setSemesterSubjectsOrder] = useState([])
   const [subjectOrderDirty, setSubjectOrderDirty] = useState(false)
   const [committingSubjectOrder, setCommittingSubjectOrder] = useState(false)
+  const semesterSubjectsOrderRef = useRef([])
 
   const semesterSubjects = subjectRows
     .filter((row) => row.semester === semester && !row.deleted_at)
@@ -929,12 +890,17 @@ const ResourcesTab = () => {
 
   useEffect(() => {
     setSemesterSubjectsOrder(semesterSubjects)
+    semesterSubjectsOrderRef.current = semesterSubjects
     setSubjectOrderDirty(false)
   }, [subjectRows, semester])
 
   const handleSubjectReorder = (newOrder) => {
+    semesterSubjectsOrderRef.current = newOrder
     setSemesterSubjectsOrder(newOrder)
-    setSubjectOrderDirty(true)
+  }
+
+  const handleSubjectDragEnd = () => {
+    setSubjectOrderDirty(!isSameOrder(semesterSubjectsOrderRef.current, semesterSubjects))
   }
 
   const confirmSubjectOrder = async () => {
@@ -1004,6 +970,7 @@ const ResourcesTab = () => {
                 onChanged={refresh}
                 onOpen={openPdf}
                 draggable
+                onDragEnd={handleSubjectDragEnd}
               />
             ))}
           </Reorder.Group>

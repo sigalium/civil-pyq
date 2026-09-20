@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Reorder, useDragControls } from 'framer-motion'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -13,7 +13,13 @@ import { DEFAULT_AVATARS, buildDefaultAvatarUrl, buildContributorPhotoUrl } from
 import { persistOrder } from '../../utils/resourceOrdering'
 import ConfirmModal from '../../components/ConfirmModal'
 import PositionInput from '../../components/PositionInput'
+import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
+
+function isSameOrder(a, b) {
+  if (a.length !== b.length) return false
+  return a.every((entry, i) => entry.id === b[i].id)
+}
 
 async function uploadContributorPhoto(file, name) {
   const safeName = sanitizePathSegment(name) || 'contributor'
@@ -45,7 +51,7 @@ const AvatarPicker = ({ value, onChange }) => (
   </div>
 )
 
-const ContributorRow = ({ contributor, onChanged, draggable, position, total, onMove }) => {
+const ContributorRow = ({ contributor, onChanged, draggable, position, total, onMove, onDragEnd }) => {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(contributor.name)
   const [batchYear, setBatchYear] = useState(contributor.batch_year || '')
@@ -57,6 +63,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
   const [uploadError, setUploadError] = useState('')
   const [confirmTrash, setConfirmTrash] = useState(false)
   const dragControls = useDragControls()
+  const { notify } = useNotifications()
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0]
@@ -85,12 +92,26 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
     setSaving(false)
     setEditing(false)
     onChanged()
+    notify({ variant: 'success', message: `"${name}" saved.` })
   }
 
   const remove = async () => {
     setConfirmTrash(false)
     await supabase.from('contributors').update({ deleted_at: new Date().toISOString() }).eq('id', contributor.id)
     onChanged()
+    notify({
+      variant: 'success',
+      message: `"${contributor.name}" was moved to trash.`,
+      actionLabel: 'Undo',
+      onAction: async () => {
+        const { error } = await supabase.from('contributors').update({ deleted_at: null }).eq('id', contributor.id)
+        if (error) {
+          notify({ variant: 'error', message: `Could not undo: ${error.message}` })
+          return
+        }
+        onChanged()
+      },
+    })
   }
 
   if (editing) {
@@ -183,7 +204,8 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
       dragListener={false}
       dragControls={dragControls}
       className="resource-item-row"
-      whileDrag={{ scale: 1.02, boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}
+      whileDrag={{ boxShadow: '0 12px 30px rgba(0,0,0,0.35)', zIndex: 5 }}
+      onDragEnd={onDragEnd}
     >
       {content}
     </Reorder.Item>
@@ -191,6 +213,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
 }
 
 const AddContributorForm = ({ roleType, sortOrder, onAdded }) => {
+  const { notify } = useNotifications()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [batchYear, setBatchYear] = useState('')
@@ -233,6 +256,7 @@ const AddContributorForm = ({ roleType, sortOrder, onAdded }) => {
     setDepartment('')
     setProfilePic('')
     onAdded()
+    notify({ variant: 'success', message: `"${name.trim()}" added.` })
   }
 
   if (!open) {
@@ -287,9 +311,11 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
   const [order, setOrder] = useState(items)
   const [dirty, setDirty] = useState(false)
   const [committing, setCommitting] = useState(false)
+  const orderRef = useRef(items)
 
   useEffect(() => {
     setOrder(items)
+    orderRef.current = items
     setDirty(false)
   }, [items])
 
@@ -301,10 +327,14 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
   }, [totalPages, page])
 
   const handleReorder = (newPageOrder) => {
-    const newFullOrder = [...order]
+    const newFullOrder = [...orderRef.current]
     newFullOrder.splice(page * CONTRIBUTORS_PAGE_SIZE, pageItems.length, ...newPageOrder)
+    orderRef.current = newFullOrder
     setOrder(newFullOrder)
-    setDirty(true)
+  }
+
+  const handleDragEnd = () => {
+    setDirty(!isSameOrder(orderRef.current, items))
   }
 
   const reorderByPosition = (id, newPosition) => {
@@ -315,8 +345,9 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
     const newFullOrder = [...order]
     const [moved] = newFullOrder.splice(currentIndex, 1)
     newFullOrder.splice(targetIndex, 0, moved)
+    orderRef.current = newFullOrder
     setOrder(newFullOrder)
-    setDirty(true)
+    setDirty(!isSameOrder(newFullOrder, items))
     setPage(Math.floor(targetIndex / CONTRIBUTORS_PAGE_SIZE))
   }
 
@@ -347,6 +378,7 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
             position={order.findIndex((entry) => entry.id === c.id) + 1}
             total={order.length}
             onMove={reorderByPosition}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </Reorder.Group>

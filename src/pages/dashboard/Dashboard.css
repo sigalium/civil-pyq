@@ -248,6 +248,115 @@
   font-size: 0.85rem;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.dashboard .resource-file-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  background: rgba(var(--glass-rgb), 0.04);
+  margin-bottom: 0.4rem;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.dashboard .subject-section-actions .resource-file-form {
+  flex: 1 1 100%;
+  margin-bottom: 0;
+}
+
+.dashboard .resource-file-form-name {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--glass-rgb), 0.2);
+  background: rgba(var(--glass-rgb), 0.05);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.dashboard .resource-file-form-file {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.dashboard .resource-file-form-status {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.dashboard .resource-file-form-filename {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.dashboard .resource-file-form-size {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dashboard .resource-file-form-placeholder {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.dashboard .resource-file-form-pending-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.dashboard .resource-file-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .dashboard .resource-file-form-file {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard .resource-file-form-file .file-upload-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .dashboard .resource-file-form-status {
+    justify-content: space-between;
+  }
+
+  .dashboard .resource-file-form-pending-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .dashboard .resource-file-form-pending-actions .action-btn {
+    flex: 1 1 auto;
+  }
+
+  .dashboard .resource-file-form-actions .action-btn {
+    flex: 1;
+  }
 }
 
 .dashboard .drag-handle {
