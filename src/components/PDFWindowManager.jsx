@@ -106,6 +106,7 @@ const PDFWindowManager = () => {
           key={win.id}
           className={`pdf-taskbar-item ${!win.minimized && topWindow?.id === win.id ? 'active' : ''}`}
           onClick={() => (win.minimized ? restorePdf(win.id) : focusPdf(win.id))}
+          title={win.name}
         >
           <PictureAsPdfIcon sx={{ fontSize: 16 }} />
           <span className="pdf-taskbar-label">{win.name}</span>
