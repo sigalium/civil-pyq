@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import SignOutConfirmModal from '../components/SignOutConfirmModal'
+import CleanupBanner from '../components/CleanupBanner'
+import DashboardTour from '../components/DashboardTour'
+import { useCleanup } from '../context/useCleanup'
 import SubmissionsTab from './dashboard/SubmissionsTab'
 import ResourcesTab from './dashboard/ResourcesTab'
 import UploadTab from './dashboard/UploadTab'
@@ -14,12 +17,16 @@ import AnalyticsTab from './dashboard/AnalyticsTab'
 import SettingsTab from './dashboard/SettingsTab'
 import './dashboard/Dashboard.css'
 
+const WRITE_TABS = new Set(['submissions', 'resources', 'upload', 'migration', 'contributors', 'trash'])
+
 const Dashboard = () => {
-  const { signOut, profile } = useAuth()
+  const { signOut, profile, completeTutorial } = useAuth()
+  const { locked } = useCleanup()
   const navigate = useNavigate()
   const { tab: tabParam } = useParams()
   const isOwner = profile?.role === 'owner'
   const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [tourOpen, setTourOpen] = useState(() => profile?.viewed_tutorial === false)
   const [visitedTabs, setVisitedTabs] = useState(() => new Set(tabParam ? [tabParam] : []))
 
   const TABS = [
@@ -36,6 +43,11 @@ const Dashboard = () => {
   ].filter((t) => t.visible)
 
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam : TABS[0]?.id
+
+  const finishTour = () => {
+    setTourOpen(false)
+    if (profile?.viewed_tutorial === false) completeTutorial()
+  }
 
   const handleTabChange = (id) => {
     navigate(`/dashboard/${id}`, { replace: true })
@@ -57,13 +69,21 @@ const Dashboard = () => {
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1>Dashboard</h1>
-          <button className="sign-out-btn" onClick={() => setConfirmSignOut(true)}>Sign out</button>
+          <div className="dashboard-header-actions">
+            {TABS.length > 0 && (
+              <button className="tour-replay-btn" onClick={() => setTourOpen(true)}>Take the tour</button>
+            )}
+            <button className="sign-out-btn" onClick={() => setConfirmSignOut(true)}>Sign out</button>
+          </div>
         </div>
+
+        <CleanupBanner />
 
         <div className="dashboard-tabs">
           {TABS.map((t) => (
             <button
               key={t.id}
+              data-tour={t.id}
               className={`dashboard-tab ${tab === t.id ? 'active' : ''}`}
               onClick={() => handleTabChange(t.id)}
             >
@@ -76,7 +96,13 @@ const Dashboard = () => {
           TABS.map((t) =>
             visitedTabs.has(t.id) ? (
               <div key={t.id} className="dashboard-tab-panel" style={{ display: t.id === tab ? 'block' : 'none' }}>
-                <t.Component />
+                {WRITE_TABS.has(t.id) ? (
+                  <fieldset disabled={locked} className="dashboard-lock-fieldset">
+                    <t.Component />
+                  </fieldset>
+                ) : (
+                  <t.Component />
+                )}
               </div>
             ) : null
           )
@@ -84,6 +110,8 @@ const Dashboard = () => {
           <p className="dashboard-empty">You don't have access to any dashboard sections yet.</p>
         )}
       </div>
+
+      {tourOpen && TABS.length > 0 && <DashboardTour visibleTabs={TABS.map((t) => t.id)} onFinish={finishTour} />}
 
       {confirmSignOut && (
         <SignOutConfirmModal onConfirm={signOut} onCancel={() => setConfirmSignOut(false)} />

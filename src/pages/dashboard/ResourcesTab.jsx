@@ -256,11 +256,11 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
       </Reorder.Group>
       {order.length > RESOURCE_PAGE_SIZE && (
         <div className="pagination-bar">
-          <button className="action-btn reject-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+          <button className="action-btn neutral-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
             Previous
           </button>
           <span className="pagination-status">Page {page + 1} of {totalPages}</span>
-          <button className="action-btn reject-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <button className="action-btn neutral-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </button>
         </div>
@@ -269,11 +269,68 @@ const DraggableResourceList = ({ items, semester, subject, type, onChanged, onOp
   )
 }
 
+const isPdfFile = (file) => !!file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name))
+
+const dragHasFiles = (event) => Array.from(event.dataTransfer?.types || []).includes('Files')
+
 const AddResourceForm = ({ semester, subject, type, onAdded, onOpen, open, onOpenChange }) => {
+  const { notify } = useNotifications()
+  const [dropActive, setDropActive] = useState(false)
+  const [droppedFile, setDroppedFile] = useState(null)
+  const dragDepth = useRef(0)
+
+  const closeForm = () => {
+    setDroppedFile(null)
+    onOpenChange(false)
+  }
+
+  const handleDragEnter = (event) => {
+    if (!dragHasFiles(event)) return
+    event.preventDefault()
+    dragDepth.current += 1
+    setDropActive(true)
+  }
+
+  const handleDragOver = (event) => {
+    if (!dragHasFiles(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  const handleDragLeave = () => {
+    dragDepth.current = Math.max(0, dragDepth.current - 1)
+    if (dragDepth.current === 0) setDropActive(false)
+  }
+
+  const handleDrop = (event) => {
+    if (!dragHasFiles(event)) return
+    event.preventDefault()
+    dragDepth.current = 0
+    setDropActive(false)
+    const file = event.dataTransfer.files?.[0]
+    if (!file) return
+    if (!isPdfFile(file)) {
+      notify({ variant: 'error', message: 'Only PDF files can be added.' })
+      return
+    }
+    setDroppedFile(file)
+    onOpenChange(true)
+  }
+
   if (!open) {
     return (
-      <button className="add-inline-btn" onClick={() => onOpenChange(true)}>
+      <button
+        className={`add-inline-btn ${dropActive ? 'drop-active' : ''}`}
+        onClick={() => onOpenChange(true)}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <AddIcon sx={{ fontSize: 16 }} /> Add {type === 'syllabus' ? 'syllabus' : type}
+        <span className="add-inline-btn-drop">
+          <FileUp size={14} /> Drop PDF here
+        </span>
       </button>
     )
   }
@@ -281,12 +338,13 @@ const AddResourceForm = ({ semester, subject, type, onAdded, onOpen, open, onOpe
   return (
     <ResourceFileForm
       mode="add"
+      initialFile={droppedFile}
       semester={semester}
       subject={subject}
       type={type}
       namePlaceholder="Name (e.g. ESE Dec 2025)"
       onOpenPreview={onOpen}
-      onCancel={() => onOpenChange(false)}
+      onCancel={closeForm}
       onSubmit={async ({ name, path, fileSize }) => {
         if (type === 'syllabus') {
           await supabase.from('resources').update({ deleted_at: new Date().toISOString() }).eq('subject', subject).eq('semester', semester).eq('resource_type', 'syllabus').is('deleted_at', null)
@@ -308,7 +366,7 @@ const AddResourceForm = ({ semester, subject, type, onAdded, onOpen, open, onOpe
             file_size_bytes: fileSize,
           })
         }
-        onOpenChange(false)
+        closeForm()
         onAdded()
       }}
     />
@@ -457,7 +515,7 @@ const SubjectPanel = ({ subjectRow, entry, onChanged, onOpen, draggable, onDragE
               />
             )}
             {!syllabus && usingCentralSyllabus && (
-              <p className="snippet-hint">Using the Semester {subjectRow.semester} central syllabus. Upload one here to override it just for this subject.</p>
+              <p className="snippet-hint">Using the Semester {subjectRow.semester} central syllabus.</p>
             )}
             {!syllabus && (
               <AddResourceForm
@@ -566,7 +624,7 @@ const AddSubjectForm = ({ semester, sortOrder, onAdded }) => {
       </label>
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
-        <button className="action-btn reject-btn" onClick={() => setOpen(false)}>Cancel</button>
+        <button className="action-btn neutral-btn" onClick={() => setOpen(false)}>Cancel</button>
       </div>
     </div>
   )
@@ -624,7 +682,7 @@ const LinkIsCodeButton = ({ semester, subject, type, onLinked }) => {
           onChange={(e) => setQuery(e.target.value)}
         />
         <div className="link-iscode-list">
-          {filtered.length === 0 && <p className="dashboard-empty">No codes found. Add some from "Manage Codes & Standards" above first.</p>}
+          {filtered.length === 0 && <p className="dashboard-empty">No codes available.</p>}
           {filtered.map((code) => (
             <button key={code.id} className="link-iscode-option" disabled={linking} onClick={() => link(code)}>
               <span className="link-iscode-option-name">{code.name}</span>
@@ -732,7 +790,7 @@ const AcademicCalendarPanel = ({ path, onOpen, onChanged }) => {
       {confirmRemove && (
         <ConfirmModal
           title="Remove Academic Calendar?"
-          message="The button on the site will have nothing to open until a new one is uploaded."
+          message="The site button will have nothing to open."
           confirmLabel="Remove"
           onConfirm={remove}
           onCancel={() => setConfirmRemove(false)}
@@ -826,7 +884,7 @@ const CentralSyllabusPanel = ({ semester, centralSyllabus, onOpen, onChanged }) 
       </div>
       <div className="subject-panel-body" style={{ borderTop: '1px solid rgba(var(--glass-rgb), 0.1)' }}>
         <p className="snippet-hint">
-          Used by every subject in Semester {semester} that doesn't have its own syllabus uploaded.
+          Default syllabus for Semester {semester} subjects.
         </p>
         <div className="resource-item-row">
           <div className="resource-item-text">

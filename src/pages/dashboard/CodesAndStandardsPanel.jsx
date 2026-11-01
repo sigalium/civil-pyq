@@ -7,7 +7,6 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
-import CompressIcon from '@mui/icons-material/Compress'
 import { useResourcesData } from '../../context/useResourcesData'
 import { useAuth } from '../../context/useAuth'
 import { supabase } from '../../lib/supabaseClient'
@@ -17,7 +16,9 @@ import { buildCodeRepoPath } from '../../utils/resourceSnippet'
 import { insertCodeOnTop } from '../../utils/isCodesOrdering'
 import { persistOrder } from '../../utils/resourceOrdering'
 import { formatBytes } from '../../utils/pdfCompression'
-import PDFCompressionModal from '../../components/PDFCompressionModal'
+import PDFToolModal from '../../components/PDFToolModal'
+import { usePdfToolMeta } from '../../components/usePdfToolMeta'
+import FileToolTags from '../../components/FileToolTags'
 import ConfirmModal from '../../components/ConfirmModal'
 import PositionInput from '../../components/PositionInput'
 import Select from '../../components/Select'
@@ -154,13 +155,13 @@ const SectionsManager = ({ sections, onChanged }) => {
           />
         ))}
       </Reorder.Group>
-      {order.length === 0 && <p className="dashboard-empty">No sections yet. Codes will show under "Other" until you add one.</p>}
+      {order.length === 0 && <p className="dashboard-empty">No sections yet.</p>}
       {adding ? (
         <div className="iscode-add-form">
           <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. IS Codes, NBC, IRC" />
           <div className="resource-item-actions">
             <button className="action-btn approve-btn" disabled={!newName.trim()} onClick={addSection}>Add</button>
-            <button className="action-btn reject-btn" onClick={() => { setAdding(false); setNewName('') }}>Cancel</button>
+            <button className="action-btn neutral-btn" onClick={() => { setAdding(false); setNewName('') }}>Cancel</button>
           </div>
         </div>
       ) : (
@@ -190,7 +191,7 @@ const SectionRow = ({ section, renaming, renameValue, onStartRename, onRenameCha
         <input value={renameValue} onChange={(e) => onRenameChange(e.target.value)} placeholder="Section name" />
         <div className="resource-item-actions">
           <button className="action-btn approve-btn" disabled={!renameValue.trim()} onClick={onSaveRename}>Save</button>
-          <button className="action-btn reject-btn" onClick={onCancelRename}>Cancel</button>
+          <button className="action-btn neutral-btn" onClick={onCancelRename}>Cancel</button>
         </div>
       </div>
     )
@@ -227,6 +228,7 @@ const SectionSelect = ({ sections, value, onChange }) => (
 const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, onDragEnd }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
+  const pdfTool = usePdfToolMeta()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [description, setDescription] = useState(item.description || '')
@@ -236,6 +238,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
   const [pendingFile, setPendingFile] = useState(null)
   const [pendingOriginalFile, setPendingOriginalFile] = useState(null)
   const [pendingCompressedFile, setPendingCompressedFile] = useState(null)
+  const [pendingToolMeta, setPendingToolMeta] = useState(null)
   const [showCompress, setShowCompress] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -252,6 +255,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
     setPendingFile(file)
     setPendingOriginalFile(file)
     setPendingCompressedFile(null)
+    setPendingToolMeta(null)
   }
 
   const previewPendingFile = () => {
@@ -270,6 +274,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
       setPendingFile(null)
       setPendingOriginalFile(null)
       setPendingCompressedFile(null)
+      setPendingToolMeta(null)
     } catch (err) {
       setUploadError(err.message)
     }
@@ -324,7 +329,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
             <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={uploading} hidden />
           </label>
           {pendingFile ? (
-            <span className="resource-item-path">{pendingFile.name}</span>
+            <span className="resource-item-path">{pendingFile.name}<FileToolTags meta={pendingToolMeta} /></span>
           ) : (
             <span className="resource-item-path">{path}</span>
           )}
@@ -334,27 +339,27 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
                 <OpenInNewIcon sx={{ fontSize: 16 }} />
               </button>
               {canCompress && (
-                <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} aria-label="Compress PDF" title="Compress PDF">
-                  <CompressIcon sx={{ fontSize: 16 }} />
+                <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} aria-label={pdfTool.label} title={pdfTool.label}>
+                  <pdfTool.Icon sx={{ fontSize: 16 }} />
                 </button>
               )}
               <button type="button" className="action-btn approve-btn" disabled={uploading} onClick={uploadPendingFile}>
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
-              <button type="button" className="action-btn reject-btn" disabled={uploading} onClick={() => { setPendingFile(null); setPendingOriginalFile(null); setPendingCompressedFile(null) }}>Discard</button>
+              <button type="button" className="action-btn neutral-btn" disabled={uploading} onClick={() => { setPendingFile(null); setPendingOriginalFile(null); setPendingCompressedFile(null); setPendingToolMeta(null) }}>Discard</button>
             </div>
           )}
         </div>
         {uploadError && <span className="dashboard-error">{uploadError}</span>}
         <div className="resource-item-actions">
           <button className="action-btn approve-btn" disabled={saving || uploading || !!pendingFile} onClick={save}>Save</button>
-          <button className="action-btn reject-btn" onClick={() => setEditing(false)}>Cancel</button>
+          <button className="action-btn neutral-btn" onClick={() => setEditing(false)}>Cancel</button>
         </div>
         {showCompress && pendingFile && (
-          <PDFCompressionModal
+          <PDFToolModal
             file={pendingOriginalFile}
             initialResult={pendingCompressedFile}
-            onApply={(compressedFile) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setShowCompress(false) }}
+            onApply={(compressedFile, meta) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setPendingToolMeta(meta || null); setShowCompress(false) }}
             onClose={() => setShowCompress(false)}
           />
         )}
@@ -397,6 +402,7 @@ const CodeRow = ({ item, sections, onChanged, onOpen, position, total, onMove, o
 const AddCodeForm = ({ sections, onAdded, onOpen }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
+  const pdfTool = usePdfToolMeta()
   const { notify } = useNotifications()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
@@ -405,6 +411,7 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
   const [pendingFile, setPendingFile] = useState(null)
   const [pendingOriginalFile, setPendingOriginalFile] = useState(null)
   const [pendingCompressedFile, setPendingCompressedFile] = useState(null)
+  const [pendingToolMeta, setPendingToolMeta] = useState(null)
   const [showCompress, setShowCompress] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -417,6 +424,7 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
     setPendingFile(file)
     setPendingOriginalFile(file)
     setPendingCompressedFile(null)
+    setPendingToolMeta(null)
   }
 
   const previewPendingFile = () => {
@@ -440,6 +448,7 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
       setPendingFile(null)
       setPendingOriginalFile(null)
       setPendingCompressedFile(null)
+      setPendingToolMeta(null)
       onAdded()
       notify({ variant: 'success', message: `"${addedName}" added.` })
     } catch (err) {
@@ -466,14 +475,14 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
           {pendingFile ? 'Choose different PDF' : 'Choose PDF'}
           <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={saving} hidden />
         </label>
-        <span className="resource-item-path">{pendingFile ? pendingFile.name : 'No file chosen'}</span>
+        <span className="resource-item-path">{pendingFile ? pendingFile.name : 'No file chosen'}{pendingFile && <FileToolTags meta={pendingToolMeta} />}</span>
         <div className="iscode-add-file-actions">
           <button type="button" className="icon-btn" onClick={previewPendingFile} disabled={!pendingFile} aria-label="Preview PDF" title="Preview PDF">
             <OpenInNewIcon sx={{ fontSize: 16 }} />
           </button>
           {canCompress && (
-            <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} disabled={!pendingFile} aria-label="Compress PDF" title="Compress PDF">
-              <CompressIcon sx={{ fontSize: 16 }} />
+            <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} disabled={!pendingFile} aria-label={pdfTool.label} title={pdfTool.label}>
+              <pdfTool.Icon sx={{ fontSize: 16 }} />
             </button>
           )}
         </div>
@@ -483,13 +492,13 @@ const AddCodeForm = ({ sections, onAdded, onOpen }) => {
         <button className="action-btn approve-btn" disabled={saving || !name.trim() || !pendingFile} onClick={add}>
           {saving ? 'Adding…' : 'Add code'}
         </button>
-        <button className="action-btn reject-btn" disabled={saving} onClick={() => setOpen(false)}>Cancel</button>
+        <button className="action-btn neutral-btn" disabled={saving} onClick={() => setOpen(false)}>Cancel</button>
       </div>
       {showCompress && pendingFile && (
-        <PDFCompressionModal
+        <PDFToolModal
           file={pendingOriginalFile}
           initialResult={pendingCompressedFile}
-          onApply={(compressedFile) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setShowCompress(false) }}
+          onApply={(compressedFile, meta) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setPendingToolMeta(meta || null); setShowCompress(false) }}
           onClose={() => setShowCompress(false)}
         />
       )}

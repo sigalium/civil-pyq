@@ -266,6 +266,11 @@
   transform: translateY(-1px);
 }
 
+.control-btn.bookmark-control.active {
+  background-color: var(--accent);
+  color: var(--primary);
+}
+
 .react-pdf__Page__canvas {
   display: block;
   margin: 0 auto;

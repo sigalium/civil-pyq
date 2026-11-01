@@ -12,7 +12,10 @@ import AnimatedBackground from './components/AnimatedBackground'
 import NotFound from './pages/NotFound'
 import Domains from './pages/Domains'
 import BottomNavbar from './components/BottomNavbar';
+import CleanupNotices from './components/CleanupNotices';
 import Settings from './pages/Settings'
+import Notifications from './pages/Notifications'
+import Bookmarks from './pages/Bookmarks'
 import OfflineLibrary from './pages/OfflineLibrary'
 import OfflineRedirect from './components/OfflineRedirect'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -58,6 +61,7 @@ function App() {
         <div className="app">
           <AnimatedBackground />
           <BottomNavbar />
+          <CleanupNotices />
           <Navbar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
           <div className={`content ${isMenuOpen ? 'blur' : ''}`}>
             <MaintenanceGate>
@@ -72,6 +76,8 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/domains" element={<Domains />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/bookmarks" element={<Bookmarks />} />
                 <Route path="/offline-library" element={<OfflineLibrary />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Suspense fallback={<DashboardFallback />}><Dashboard /></Suspense></ProtectedRoute>} />
                 <Route path="/dashboard/:tab" element={<ProtectedRoute><Suspense fallback={<DashboardFallback />}><Dashboard /></Suspense></ProtectedRoute>} />

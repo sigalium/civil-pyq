@@ -8,11 +8,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import AccountMenuContent from './AccountMenuContent';
+import { useInbox } from '../context/useInbox';
 import './css/BottomNavbar.css';
 
 const BottomNavbar = () => {
   const [activeTab, setActiveTab] = useState('/');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { hasUnread } = useInbox();
   const location = useLocation();
 
   useEffect(() => {
@@ -61,12 +63,13 @@ const BottomNavbar = () => {
         <button
           type="button"
           className={`bottom-nav-item bottom-nav-item-button ${
-            activeTab === '/settings' || activeTab === '/dashboard' || activeTab === '/offline-library' ? 'active' : ''
+            ['/settings', '/dashboard', '/offline-library', '/notifications', '/bookmarks'].includes(activeTab) ? 'active' : ''
           }`}
           onClick={() => setIsSheetOpen(true)}
         >
           <AccountCircleIcon className="bottom-nav-icon" />
           <span className="bottom-nav-label">Account</span>
+          {hasUnread && <span className="alert-dot" />}
         </button>
       </div>
 

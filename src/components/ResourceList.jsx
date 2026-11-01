@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CloudDownload, CloudDone, HourglassEmpty } from '@mui/icons-material';
+import { CloudDownload, CloudDone, HourglassEmpty, Bookmark, BookmarkBorder } from '@mui/icons-material';
+import { useBookmarks } from '../context/useBookmarks';
 import { saveOffline, removeOffline, isSavedOffline, isOfflineSupported } from '../utils/offlineStorage';
 import './css/ResourceList.css'
 
 const ResourceList = ({ title, items, onItemClick, subject, footer }) => {
   const [offlineMap, setOfflineMap] = useState({});
   const [pendingPath, setPendingPath] = useState(null);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
 
   const refreshOfflineState = useCallback(() => {
     const map = {};
@@ -56,6 +58,20 @@ const ResourceList = ({ title, items, onItemClick, subject, footer }) => {
                   {item.description && <span className="resource-item-description">{item.description}</span>}
                 </div>
                 <div className="resource-item-actions">
+                  {path && (
+                    <button
+                      className={`offline-toggle-btn resource-bookmark-btn ${isBookmarked(path) ? 'saved' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleBookmark({ name: subject ? `${subject} - ${item.name || item}` : (item.name || item), path, resourceId: item.id });
+                      }}
+                      title={isBookmarked(path) ? 'Remove bookmark' : 'Bookmark'}
+                      aria-label={isBookmarked(path) ? 'Remove bookmark' : 'Bookmark'}
+                      aria-pressed={isBookmarked(path)}
+                    >
+                      {isBookmarked(path) ? <Bookmark sx={{ fontSize: 18 }} /> : <BookmarkBorder sx={{ fontSize: 18 }} />}
+                    </button>
+                  )}
                   {isOfflineSupported() && path && (
                     <button
                       className={`offline-toggle-btn ${isSaved ? 'saved' : ''}`}

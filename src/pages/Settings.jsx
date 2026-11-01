@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, CloudDone, ChevronRight, PhoneIphone } from '@mui/icons-material';
+import { CheckCircle, PhoneIphone } from '@mui/icons-material';
 import { useTheme } from '../context/useTheme';
-import { listOfflineItems } from '../utils/offlineStorage';
 import BackButton from '../components/BackButton';
 import './styles/Settings.css';
 
@@ -9,14 +8,34 @@ const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width:
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { theme, setTheme, themes } = useTheme();
-  const offlineCount = listOfflineItems().length;
+  const { theme, setTheme, themes, performanceMode, setPerformanceMode } = useTheme();
 
   return (
     <div className="settings-page fade-in">
       <div className="settings-container">
         <BackButton onClick={() => navigate('/')} text="Home" className="back-btn-page-top" />
         <h2 className="settings-title">Settings</h2>
+
+        <section className="settings-section">
+          <div className="perf-toggle-row">
+            <div>
+              <h3 className="settings-section-title">Performance mode</h3>
+              <p className="settings-section-hint perf-hint">
+                Turns off animated backgrounds and blur effects for smoother use on slow computers and phones.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={performanceMode}
+              aria-label="Performance mode"
+              className="perf-switch"
+              onClick={() => setPerformanceMode(!performanceMode)}
+            >
+              <span className="perf-switch-knob" />
+            </button>
+          </div>
+        </section>
 
         <section className="settings-section">
           <h3 className="settings-section-title">Theme</h3>
@@ -44,24 +63,6 @@ const Settings = () => {
               </button>
             ))}
           </div>
-        </section>
-
-        <section className="settings-section">
-          <h3 className="settings-section-title">Storage</h3>
-          <button className="settings-link-row" onClick={() => navigate('/offline-library')}>
-            <div className="settings-link-row-left">
-              <CloudDone className="settings-link-icon" />
-              <div>
-                <span className="settings-link-label">Offline Library</span>
-                <span className="settings-link-sub">
-                  {offlineCount > 0
-                    ? `${offlineCount} file${offlineCount > 1 ? 's' : ''} saved for offline use`
-                    : 'No files saved yet'}
-                </span>
-              </div>
-            </div>
-            <ChevronRight />
-          </button>
         </section>
 
         {isMobile && (

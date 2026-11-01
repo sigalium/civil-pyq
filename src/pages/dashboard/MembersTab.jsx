@@ -112,7 +112,7 @@ const AdminRow = ({ member, onChanged }) => {
         {actionError && <p className="dashboard-error">{actionError}</p>}
         <div className="resource-item-actions">
           <button className="action-btn approve-btn" disabled={saving} onClick={save}>Save</button>
-          <button className="action-btn reject-btn" onClick={() => setEditing(false)}>Cancel</button>
+          <button className="action-btn neutral-btn" onClick={() => setEditing(false)}>Cancel</button>
         </div>
       </div>
     )
@@ -204,7 +204,7 @@ const AddAdminForm = ({ onAdded }) => {
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
         <button
-          className="action-btn reject-btn"
+          className="action-btn neutral-btn"
           onClick={() => {
             setOpen(false)
             setEmail('')

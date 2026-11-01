@@ -3,7 +3,7 @@ import { X, ChevronsDown } from 'lucide-react'
 import { useNotifications } from '../context/useNotifications'
 import './css/NotificationStack.css'
 
-const StatusPill = ({ item, onToggle }) => {
+const StatusPill = ({ item, onToggle, onClear }) => {
   if (item.collapsed) {
     return (
       <button
@@ -25,6 +25,11 @@ const StatusPill = ({ item, onToggle }) => {
       <button type="button" className="notification-collapse-btn" onClick={onToggle} aria-label="Hide">
         <ChevronsDown size={14} />
       </button>
+      {item.dismissible && (
+        <button type="button" className="notification-collapse-btn" onClick={onClear} aria-label="Dismiss">
+          <X size={14} />
+        </button>
+      )}
     </div>
   )
 }
@@ -76,7 +81,7 @@ const Toast = ({ item, onDismiss, onPause, onResume }) => {
 }
 
 const NotificationStack = () => {
-  const { notifications, dismiss, pauseToast, resumeToast, toggleStatusCollapsed } = useNotifications()
+  const { notifications, dismiss, pauseToast, resumeToast, toggleStatusCollapsed, clearStatus } = useNotifications()
 
   if (notifications.length === 0) return null
 
@@ -84,7 +89,7 @@ const NotificationStack = () => {
     <div className="notification-stack" aria-live="polite">
       {notifications.map((item) => (
         item.kind === 'status' ? (
-          <StatusPill key={item.id} item={item} onToggle={() => toggleStatusCollapsed(item.id)} />
+          <StatusPill key={item.id} item={item} onToggle={() => toggleStatusCollapsed(item.id)} onClear={() => clearStatus(item.id)} />
         ) : (
           <Toast
             key={item.id}

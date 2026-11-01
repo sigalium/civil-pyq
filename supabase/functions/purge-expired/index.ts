@@ -1,8 +1,9 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { lockedResponse } from '../_shared/lock.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret, x-cleanup-run-id',
 }
 
 const ALLOWED_PREFIXES = ['pdfs/', 'Contributor/']
@@ -19,6 +20,13 @@ function extractRepoPath(url) {
   if (typeof url !== 'string' || !url) return null
   const match = url.match(/\/gh\/[^/]+\/[^@]+@[^/]+\/(.+)$/)
   return match ? decodeURIComponent(match[1]) : null
+}
+
+function customPhotoPath(profilePic) {
+  if (typeof profilePic !== 'string' || !profilePic) return null
+  const path = /^https?:\/\//i.test(profilePic) ? extractRepoPath(profilePic) : profilePic.replace(/^\/+/, '')
+  if (!path || !path.startsWith('Contributor/') || path.startsWith('Contributor/Default/')) return null
+  return path
 }
 
 function isAllowedPath(path) {
@@ -101,11 +109,15 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
   )
 
+  const locked = await lockedResponse(supabase, req, CORS_HEADERS)
+  if (locked) return locked
+
   const cutoffIso = new Date(Date.now() - RETENTION_MS).toISOString()
   const summary = {
     resourcesDeleted: 0,
     subjectsDeleted: 0,
     contributorsDeleted: 0,
+    contributorPhotosDeleted: 0,
     replacedFilesDeleted: 0,
     sectionsDeleted: 0,
     githubDeleteErrors: [],
@@ -146,12 +158,39 @@ Deno.serve(async (req) => {
     .lt('deleted_at', cutoffIso)
   summary.subjectsDeleted = subjectsDeleted || 0
 
-  const { count: contributorsDeleted } = await supabase
+  const { data: expiredContributors } = await supabase
     .from('contributors')
-    .delete({ count: 'exact' })
+    .select('id, name, profile_pic')
     .not('deleted_at', 'is', null)
     .lt('deleted_at', cutoffIso)
-  summary.contributorsDeleted = contributorsDeleted || 0
+
+  for (const row of expiredContributors || []) {
+    const photoPath = customPhotoPath(row.profile_pic)
+    if (photoPath) {
+      const { count: sharedCount } = await supabase
+        .from('contributors')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_pic', row.profile_pic)
+        .neq('id', row.id)
+      if (!sharedCount) {
+        const result = await deleteFromGithub(photoPath, `Purge expired contributor photo: ${row.name}`, ghConfig)
+        if (!result.ok) {
+          summary.githubDeleteErrors.push({ resource: `${row.name} (photo)`, error: result.error })
+          continue
+        }
+        summary.contributorPhotosDeleted += 1
+        await supabase.from('audit_log').insert({
+          actor_email: 'system',
+          action: 'DELETE',
+          table_name: 'contributor_photos',
+          record_id: row.id,
+          details: { name: row.name, path: photoPath },
+        })
+      }
+    }
+    const { error } = await supabase.from('contributors').delete().eq('id', row.id)
+    if (!error) summary.contributorsDeleted += 1
+  }
 
   const { count: sectionsDeleted } = await supabase
     .from('sections')

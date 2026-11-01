@@ -58,6 +58,17 @@ function reorderContextLabel(entry, sectionsById = {}) {
   return 'items'
 }
 
+function clip(text, max = 90) {
+  const cleaned = (text || '').trim().replace(/\s+/g, ' ')
+  return cleaned.length > max ? `${cleaned.slice(0, max - 1)}…` : cleaned
+}
+
+function photoKind(profilePic) {
+  if (!profilePic) return 'none'
+  if (/(^|\/)Contributor\/Default\//.test(profilePic)) return 'default'
+  return 'custom'
+}
+
 function groupEntries(entries) {
   const groups = []
   let i = 0
@@ -131,18 +142,56 @@ function describeSubjects(action, details) {
   return `changed subject ${label}`
 }
 
-function describeContributors(action, details) {
+function describeContributors(action, details, sectionsById, isSystem) {
   const { old: o, new: n } = unwrap(details, action)
   const row = n || o
   const label = row?.name ? `"${row.name}"` : 'a contributor'
 
   if (action === 'INSERT') return `added contributor ${label} (${row?.role_type || 'unknown'})`
-  if (action === 'DELETE') return `permanently deleted contributor ${label}`
+  if (action === 'DELETE') {
+    const withPhoto = !isSystem && photoKind(row?.profile_pic) === 'custom'
+    return `permanently deleted contributor ${label}${withPhoto ? ' and removed their uploaded photo from GitHub' : ''}`
+  }
   if (action === 'UPDATE') {
     if (!o?.deleted_at && n?.deleted_at) return `moved contributor ${label} to trash`
     if (o?.deleted_at && !n?.deleted_at) return `restored contributor ${label} from trash`
-    if (o?.is_top_contributor !== n?.is_top_contributor) return `${n?.is_top_contributor ? 'marked' : 'unmarked'} ${label} as a top contributor`
-    if (o?.profile_pic !== n?.profile_pic) return `updated the photo for ${label}`
+
+    const changes = []
+    if (o?.name !== n?.name) {
+      changes.push({ text: `renamed contributor "${o?.name}" to "${n?.name}"`, short: `renamed from "${o?.name}"` })
+    }
+    if (o?.is_top_contributor !== n?.is_top_contributor) {
+      changes.push({
+        text: `${n?.is_top_contributor ? 'marked' : 'unmarked'} ${label} as a top contributor`,
+        short: n?.is_top_contributor ? 'marked as top contributor' : 'unmarked as top contributor',
+      })
+    }
+    if (o?.profile_pic !== n?.profile_pic) {
+      const kind = photoKind(n?.profile_pic)
+      const short = kind === 'none' ? 'photo removed' : kind === 'default' ? 'default avatar' : 'new uploaded photo'
+      const text =
+        kind === 'none'
+          ? `removed the photo of ${label}`
+          : kind === 'default'
+            ? `set a default avatar for ${label}`
+            : `uploaded a new photo for ${label}`
+      changes.push({ text, short })
+    }
+    if (o?.batch_year !== n?.batch_year) {
+      changes.push({
+        text: `changed the batch of ${label} from ${o?.batch_year || 'empty'} to ${n?.batch_year || 'empty'}`,
+        short: `batch ${o?.batch_year || 'empty'} to ${n?.batch_year || 'empty'}`,
+      })
+    }
+    if (o?.department !== n?.department) {
+      changes.push({
+        text: `changed the department of ${label} from ${o?.department || 'empty'} to ${n?.department || 'empty'}`,
+        short: `department ${o?.department || 'empty'} to ${n?.department || 'empty'}`,
+      })
+    }
+
+    if (changes.length === 1) return changes[0].text
+    if (changes.length > 1) return `edited contributor ${label}: ${changes.map((c) => c.short).join(', ')}`
     if (o?.sort_order !== n?.sort_order) return `reordered contributor ${label}`
     return `updated contributor ${label}`
   }
@@ -167,6 +216,7 @@ function describeAdmins(action, details) {
       if (revoked.length) parts.push(`revoked ${revoked.join(', ')}`)
       return `${parts.join(' and ')} for ${label}`
     }
+    if (n?.viewed_tutorial && !o?.viewed_tutorial) return `${label} finished the dashboard tour`
     return `updated ${label}`
   }
   return `changed admin ${label}`
@@ -182,12 +232,86 @@ function describeSubmissions(action, details) {
   if (action === 'UPDATE') {
     if (o?.status !== n?.status) {
       if (n?.status === 'approved') return `approved submission ${label}${who}`
-      if (n?.status === 'rejected') return `rejected submission ${label}${who}`
+      if (n?.status === 'rejected') {
+        return n?.rejection_reason
+          ? `rejected submission ${label}${who} with the reason "${clip(n.rejection_reason)}"`
+          : `rejected submission ${label}${who} without giving a reason`
+      }
+      if (n?.status === 'pending') return `undid the ${o?.status} decision for submission ${label}${who}`
       return `set submission ${label} to ${n?.status}`
     }
-    return `updated submission ${label}`
+    if (o?.file_path !== n?.file_path) return `replaced the file of submission ${label}${who} with an edited version`
+    if (o?.rejection_reason !== n?.rejection_reason) {
+      return n?.rejection_reason
+        ? `changed the rejection reason for submission ${label}${who} to "${clip(n.rejection_reason)}"`
+        : `removed the rejection reason for submission ${label}${who}`
+    }
+    const changes = []
+    if (o?.resource_label !== n?.resource_label) changes.push('name')
+    if (o?.subject !== n?.subject) changes.push('subject')
+    if (o?.semester !== n?.semester) changes.push('semester')
+    if (o?.resource_type !== n?.resource_type) changes.push('type')
+    if (changes.length) return `edited submission ${label}${who} (${changes.join(', ')})`
+    return `updated submission ${label}${who}`
   }
   return `changed submission ${label}`
+}
+
+function describeAnnouncements(action, details) {
+  const { old: o, new: n } = unwrap(details, action)
+  const row = n || o
+  const label = row?.title ? `"${row.title}"` : 'an announcement'
+
+  if (action === 'INSERT') return `sent announcement ${label} to everyone`
+  if (action === 'DELETE') return `permanently deleted announcement ${label}`
+  if (action === 'UPDATE') {
+    if (!o?.deleted_at && n?.deleted_at) return `deleted announcement ${label}`
+    if (o?.deleted_at && !n?.deleted_at) return `restored announcement ${label}`
+    const changes = []
+    if (o?.title !== n?.title) changes.push('title')
+    if (o?.message !== n?.message) changes.push('text')
+    if (!!o?.title_underline !== !!n?.title_underline) changes.push(`title line turned ${n?.title_underline ? 'on' : 'off'}`)
+    if (changes.length === 1 && changes[0] === 'title') return `renamed announcement "${o?.title}" to "${n?.title}"`
+    if (changes.length) return `edited announcement ${label} (${changes.join(', ')})`
+    return `updated announcement ${label}`
+  }
+  return `changed announcement ${label}`
+}
+
+function describeReplacedFiles(action, details) {
+  const { old: o, new: n } = unwrap(details, action)
+  const row = n || o
+  const isPhoto = row?.resource_type === 'contributor photo'
+  const name = (row?.resource_name || '').replace(/ \(contributor photo\)$/, '')
+  const label = name ? `"${name}"` : isPhoto ? 'a contributor' : 'a resource'
+  const noun = isPhoto ? `photo of ${label}` : `file of ${label}`
+
+  if (action === 'INSERT') return `moved the old ${noun} to Replaced (it is deleted from GitHub after 30 days)`
+  if (action === 'DELETE') return `permanently deleted the old ${noun} from GitHub`
+  return `updated the Replaced entry for the ${noun}`
+}
+
+function describeContributorPhotos(action, details) {
+  const { old: o, new: n } = unwrap(details, action)
+  const row = o || n
+  return `permanently deleted the photo of "${row?.name || 'a contributor'}" from GitHub`
+}
+
+function describeSections(action, details) {
+  const { old: o, new: n } = unwrap(details, action)
+  const row = n || o
+  const label = row?.name ? `"${row.name}"` : 'a section'
+
+  if (action === 'INSERT') return `added section ${label} to Codes & Standards`
+  if (action === 'DELETE') return `permanently deleted section ${label}`
+  if (action === 'UPDATE') {
+    if (!o?.deleted_at && n?.deleted_at) return `moved section ${label} to trash`
+    if (o?.deleted_at && !n?.deleted_at) return `restored section ${label} from trash`
+    if (o?.name !== n?.name) return `renamed section "${o?.name}" to "${n?.name}"`
+    if (o?.sort_order !== n?.sort_order) return `reordered section ${label}`
+    return `updated section ${label}`
+  }
+  return `changed section ${label}`
 }
 
 function formatSettingValue(key, value) {
@@ -219,20 +343,82 @@ function describeGlobalResources(action, details) {
   return `set ${label} to ${formatSettingValue(key, value)}`
 }
 
+const CLEANUP_KIND_LABELS = { scheduled: 'monthly', fallback: 'fallback', emergency: 'emergency' }
+
+function formatCleanupSize(kb) {
+  if (!kb) return 'unknown'
+  return kb >= 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${kb} KB`
+}
+
+function describeHistoryCleanup(action, details) {
+  const kind = CLEANUP_KIND_LABELS[details?.kind] || 'history'
+  const mode = details?.dry_run ? 'test run' : 'cleanup'
+  switch (details?.event) {
+    case 'started':
+      return `started the ${kind} ${mode}${details.reason ? ` (reason: "${details.reason}")` : ''}`
+    case 'succeeded':
+      return details.dry_run
+        ? `the ${kind} test run passed${(details.message || '').replace(/^Test run passed\.\s*/, '') ? `. ${details.message.replace(/^Test run passed\.\s*/, '')}` : ''}`
+        : `finished the ${kind} cleanup. History was rewritten and every live and trash file was kept`
+    case 'failed':
+      return `the ${kind} ${mode} failed: ${details.message}`
+    case 'rolled_back':
+      return `the ${kind} cleanup was rolled back and nothing was lost: ${details.message}`
+    case 'aborted':
+      return `the ${kind} ${mode} did not run: ${details.message}`
+    case 'followup':
+      return `morning check passed. Repository size ${formatCleanupSize(details.repo_size_before_kb)} to ${formatCleanupSize(details.repo_size_after_kb)}`
+    case 'health_failed':
+      return `morning check found problems: ${details.message}`
+    case 'error':
+      return `the ${kind} ${mode} hit an unexpected error: ${details.message}`
+    default:
+      return `history cleanup event`
+  }
+}
+
+function describeCleanupSettings(action, details) {
+  if (action !== 'UPDATE') return 'changed the cleanup schedule'
+  const o = details?.old
+  const n = details?.new
+  const changes = []
+  if (o?.enabled !== n?.enabled) changes.push(n?.enabled ? 'turned the monthly cleanup on' : 'turned the monthly cleanup off')
+  if (o?.run_day !== n?.run_day) changes.push(`moved the monthly cleanup from day ${o?.run_day} to day ${n?.run_day}`)
+  if (o?.dry_run !== n?.dry_run) changes.push(n?.dry_run ? 'switched the cleanup to test mode' : 'switched the cleanup to live mode')
+  if (o?.repo_pushed_at !== n?.repo_pushed_at) changes.push('recorded new repository activity')
+  if (JSON.stringify(o?.skipped_months) !== JSON.stringify(n?.skipped_months)) {
+    const added = (n?.skipped_months || []).filter((m) => !(o?.skipped_months || []).includes(m))
+    const removed = (o?.skipped_months || []).filter((m) => !(n?.skipped_months || []).includes(m))
+    if (added.length) changes.push(`skipped the cleanup for ${added.join(', ')}`)
+    if (removed.length) changes.push(`restored the cleanup for ${removed.join(', ')}`)
+  }
+  return changes.length ? changes.join(' and ') : 'updated the cleanup settings'
+}
+
 const DESCRIBERS = {
+  history_cleanup: describeHistoryCleanup,
+  cleanup_settings: describeCleanupSettings,
   resources: describeResources,
   subjects: describeSubjects,
   contributors: describeContributors,
   admins: describeAdmins,
   submissions: describeSubmissions,
   global_resources: describeGlobalResources,
+  announcements: describeAnnouncements,
+  replaced_files: describeReplacedFiles,
+  contributor_photos: describeContributorPhotos,
+  sections: describeSections,
 }
 
 function describeEntry(entry, sectionsById = {}) {
   const describer = DESCRIBERS[entry.table_name]
   if (!describer) return `${entry.action.toLowerCase()} in ${entry.table_name}`
   try {
-    return describer(entry.action, entry.details, sectionsById)
+    const text = describer(entry.action, entry.details, sectionsById, entry.actor_email === 'system')
+    if (entry.actor_email === 'system' && entry.action === 'DELETE') {
+      return `${text.replace(/^permanently deleted/, 'automatically purged')} (30 days after it was removed)`
+    }
+    return text
   } catch {
     return `${entry.action.toLowerCase()} in ${entry.table_name}`
   }
@@ -441,11 +627,11 @@ const LogTab = () => {
       )}
 
       <div className="pagination-bar">
-        <button className="action-btn reject-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+        <button className="action-btn neutral-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
           Previous
         </button>
         <span className="pagination-status">Page {page + 1} of {totalPages}</span>
-        <button className="action-btn reject-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+        <button className="action-btn neutral-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>

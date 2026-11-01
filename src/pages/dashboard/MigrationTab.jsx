@@ -102,7 +102,7 @@ const MigrationTab = () => {
     if (failed > 0) {
       setError(`${failed} of ${items.length} file(s) could not be migrated.`)
     } else if (warnings > 0) {
-      setMessage(`Migrated ${items.length} file(s), but ${warnings} old file(s) on GitHub could not be removed automatically — safe to delete by hand later.`)
+      setMessage(`Migrated ${items.length} file(s), but ${warnings} old file(s) on GitHub could not be removed.`)
     } else {
       setMessage(`Migrated ${items.length} file(s) to Sem ${targetSemester} - ${targetSubject}.`)
     }

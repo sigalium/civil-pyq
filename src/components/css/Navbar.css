@@ -98,6 +98,7 @@
 }
 
 .nav-settings-link {
+  position: relative;
   display: flex;
   align-items: center;
   color: var(--text-secondary);
@@ -444,9 +445,23 @@
   margin-top: 4px;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  background: rgba(var(--accent-rgb), 0.15);
-  color: var(--accent);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.account-menu-role-chip.role-owner {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
+}
+
+.account-menu-role-chip.role-admin {
+  background: linear-gradient(rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.15)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
+  color: var(--accent);
+}
+
+.account-menu-role-chip.role-admin-faculty {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
 }

@@ -1,4 +1,5 @@
 import JSZip from 'jszip'
+import { fetchWithFallback } from './cdnFallback'
 
 function sanitizeFileName(name) {
   return (name || 'file').replace(/[\\/:*?"<>|]/g, '-')
@@ -16,7 +17,7 @@ export async function downloadSubjectZip(subjectName, files, onProgress) {
 
   for (const file of files) {
     try {
-      const response = await fetch(file.path)
+      const response = await fetchWithFallback(file.path)
       if (!response.ok) throw new Error('fetch failed')
       const blob = await response.blob()
       let fileName = `${sanitizeFileName(file.name)}${extensionFromPath(file.path)}`

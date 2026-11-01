@@ -9,12 +9,14 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import AccountMenuContent from './AccountMenuContent';
 import { usePDFWindows } from '../context/usePDFWindows'
 import { useResourcesData } from '../context/useResourcesData'
+import { useInbox } from '../context/useInbox'
 import './css/Navbar.css'
 
 
 const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
   const { openPdf } = usePDFWindows()
   const { academicCalendarPath } = useResourcesData()
+  const { hasUnread } = useInbox()
   const [scrolled, setScrolled] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
@@ -159,6 +161,7 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
                 onClick={() => setIsAccountOpen(!isAccountOpen)}
               >
                 <AccountCircleIcon sx={{ fontSize: 22 }} />
+                {hasUnread && <span className="alert-dot" />}
               </button>
 
               <div className={`account-dropdown-menu ${isAccountOpen ? 'show' : ''}`}>

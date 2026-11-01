@@ -1,3 +1,4 @@
+import { fetchWithFallback } from './cdnFallback';
 export const CACHE_NAME = 'civilpyq-offline-v1';
 const INDEX_KEY = 'civilpyq-offline-index';
 
@@ -36,7 +37,7 @@ export async function saveOffline({ path, name, subject, type }) {
   }
 
   const cache = await caches.open(CACHE_NAME);
-  const response = await fetch(path);
+  const response = await fetchWithFallback(path);
   if (!response.ok) throw new Error('Could not download this file');
 
   const sizeBlob = await response.clone().blob();

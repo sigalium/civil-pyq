@@ -91,7 +91,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  background: rgba(var(--secondary-rgb), 0.5);
+  background: rgba(var(--secondary-rgb), 0.8);
+  backdrop-filter: var(--surface-blur);
   border: 1px solid rgba(var(--glass-rgb), 0.08);
   border-radius: 12px;
   padding: 0.8rem 1rem;

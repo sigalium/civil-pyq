@@ -64,8 +64,13 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
   }
 
+  const completeTutorial = async () => {
+    await supabase.rpc('mark_tutorial_viewed')
+    setProfile((current) => (current ? { ...current, viewed_tutorial: true } : current))
+  }
+
   return (
-    <AuthContext.Provider value={{ status, session, profile, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ status, session, profile, signInWithGoogle, signOut, completeTutorial }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,0 +1,83 @@
+.announcement-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.announcement-body p {
+  margin: 0;
+}
+
+.announcement-body strong {
+  color: var(--text-primary);
+}
+
+.announcement-body ul,
+.announcement-body ol {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.announcement-body ul ul {
+  list-style: circle;
+}
+
+.announcement-body ul ul ul {
+  list-style: square;
+}
+
+.announcement-body ol ol {
+  list-style: lower-alpha;
+}
+
+.announcement-body ol ol ol {
+  list-style: lower-roman;
+}
+
+.announcement-body u {
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.announcement-body code {
+  padding: 0.1rem 0.4rem;
+  border-radius: 5px;
+  background: rgba(var(--glass-rgb), 0.12);
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+.announcement-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.announcement-body a.announcement-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  margin: 0.15rem 0.35rem 0.15rem 0;
+  padding: 0 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.announcement-body a.announcement-btn:hover {
+  background: var(--accent);
+  color: var(--primary);
+}

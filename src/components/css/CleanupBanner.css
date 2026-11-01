@@ -1,0 +1,92 @@
+.cleanup-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.cleanup-banner {
+  --tone: var(--notif-info);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border-left: 4px solid var(--tone);
+  background: var(--secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.cleanup-banner.warning {
+  --tone: var(--notif-warning);
+}
+
+.cleanup-banner.lock,
+.cleanup-banner.error {
+  --tone: var(--notif-error);
+}
+
+.cleanup-banner.success {
+  --tone: var(--notif-success);
+}
+
+.cleanup-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tone);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.cleanup-banner-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cleanup-banner-text strong {
+  color: var(--tone);
+  font-size: 0.92rem;
+}
+
+.cleanup-banner-text span {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.cleanup-banner-close {
+  position: relative;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.dashboard .dashboard-lock-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dashboard .dashboard-lock-fieldset:disabled {
+  opacity: 0.55;
+}
+
+.dashboard .dashboard-lock-fieldset:disabled button,
+.dashboard .dashboard-lock-fieldset:disabled input,
+.dashboard .dashboard-lock-fieldset:disabled select,
+.dashboard .dashboard-lock-fieldset:disabled textarea {
+  cursor: not-allowed;
+}

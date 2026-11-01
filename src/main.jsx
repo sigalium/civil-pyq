@@ -7,6 +7,9 @@ import { AuthProvider } from './context/AuthContext'
 import { ResourcesDataProvider } from './context/ResourcesDataContext'
 import { ContributorsDataProvider } from './context/ContributorsDataContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { InboxProvider } from './context/InboxContext'
+import { BookmarksProvider } from './context/BookmarksContext'
+import { CleanupProvider } from './context/CleanupContext'
 import { registerServiceWorker } from './utils/offlineStorage'
 import './index.css'
 
@@ -20,7 +23,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <ResourcesDataProvider>
             <ContributorsDataProvider>
               <NotificationProvider>
-                <App />
+                <InboxProvider>
+                  <BookmarksProvider>
+                    <CleanupProvider>
+                      <App />
+                    </CleanupProvider>
+                  </BookmarksProvider>
+                </InboxProvider>
               </NotificationProvider>
             </ContributorsDataProvider>
           </ResourcesDataProvider>

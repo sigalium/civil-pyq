@@ -8,11 +8,13 @@ CivilPYQ is a full-stack study platform for civil engineering students: a fast, 
 
 - 🪟 **Multi-Window PDF Workspace** – Open several question papers or manuals side by side in draggable, resizable windows with taskbar-style minimize/restore, instead of the usual single-tab PDF viewer.
 - 🤖 **AI Study Layer, Powered by Gemini** – Get step-by-step problem solutions, chat with the AI about the exact PDF you're reading, generate revision notes, and surface high-probability topics from historical question trends, all while reading the actual document content instead of just its title.
+- ✂️ **Built-In PDF Editor** – Admins can crop (with automatic page-edge detection that handles photographed papers), rotate, reorder, delete, annotate, filter and compress pages right in the browser before publishing; edited files are tagged "Edited" in the upload forms.
 - 🔍 **Fast, Zoomable PDF Rendering** – PDF.js-based viewer tuned for quick loads even on slow connections.
 - 📚 **Structured Resource Library** – Papers, lab manuals, and syllabi organized by semester and subject, always up to date.
 - 🤝 **Community Contribution Pipeline** – Students can submit resources directly from the site, protected against spam and abuse.
 - 📁 **CDN-Backed File Delivery** – Files are served through a GitHub + jsDelivr pipeline for fast, reliable global delivery, capped at 19MB per file to stay safely under jsDelivr's hard 20MB CDN limit.
-- 🧹 **Self-Cleaning Trash** – Deleted and replaced files are automatically purged, including from GitHub, 30 days after deletion, with no manual cleanup needed.
+- 🧹 **Self-Cleaning Trash** – Deleted and replaced files are automatically purged, including from GitHub, 30 days after deletion (checked on fixed dates), with no manual cleanup needed.
+- 🗜️ **Monthly History Cleanup** – Once a month the PDF repository's Git history is rewritten so deleted files stop taking up space and are no longer reachable. Live files and files in Trash are never touched, and the dashboard is safely paused while it runs.
 - 🛠️ **Live Maintenance Mode** – Schedule a maintenance window or start an indefinite one; the site computes whether it's currently active in real time, with no background job required to turn it back off.
 - 📴 **Installable & Offline-Ready** – Add CivilPYQ to your home screen like a native app, and keep previously opened papers available in an offline library even without a connection.
 - 🎨 **Polished, Responsive UI** – Dark theme, fluid transitions, and a layout that holds up from phone to desktop.
@@ -101,7 +103,7 @@ supabase link --project-ref your-project-ref
 
 `supabase login` opens a browser window to authenticate the CLI with your Supabase account. Your project ref is the short ID in your project's dashboard URL (`supabase.com/dashboard/project/<this-part>`), also shown under Project Settings → General.
 
-3. Create a fine-grained GitHub Personal Access Token scoped only to the PDF repo from step 1, with **Contents: Read and write** permission. Then set these as Supabase Edge Function secrets:
+3. Create a fine-grained GitHub Personal Access Token scoped only to the PDF repo from step 1, with **Contents: Read and write** permission (for a classic token, the `repo` scope). The monthly history cleanup force-pushes the PDF repo's branch with this same token, so if that branch has protection rules, allow force pushes for the token. Then set these as Supabase Edge Function secrets:
 
 ```bash
 supabase secrets set GITHUB_TOKEN=github_pat_xxxxxxxx
@@ -114,16 +116,13 @@ supabase secrets set CRON_SECRET=a-long-random-string-you-generate
 
 `GITHUB_OWNER`, `GITHUB_REPO` and `GITHUB_BRANCH` must exactly match the `VITE_JSDELIVR_*` values from Part 1, otherwise the URLs stored in the database won't resolve.
 
-4. Deploy the edge functions:
+4. Deploy all the edge functions:
 
 ```bash
-supabase functions deploy github-upload
-supabase functions deploy github-delete
-supabase functions deploy submit-resource
-supabase functions deploy purge-expired
+supabase functions deploy
 ```
 
-5. On the GitHub repo that hosts *this* codebase (not the PDF repo), add two Actions secrets under Settings → Secrets and variables → Actions: `SUPABASE_URL` (your project URL) and `CRON_SECRET` (the exact same value from step 3). This is what lets the daily scheduled workflow authenticate to `purge-expired`, covered under "Scheduled Cleanup" below.
+5. On the GitHub repo that hosts *this* codebase (not the PDF repo), add two Actions secrets under Settings → Secrets and variables → Actions: `SUPABASE_URL` (your project URL) and `CRON_SECRET` (the exact same value from step 3). This is what lets the scheduled workflows authenticate to `purge-expired` and `history-cleanup`, covered under "Scheduled Cleanup" below.
 
 ## How It Works
 
@@ -156,6 +155,8 @@ The `/dashboard` route is only accessible to signed-in Google accounts that have
 - **Developer** – one more individual switch, specifically for who can access maintenance mode controls inside Settings.
 
 Every meaningful change made through the dashboard is recorded in an activity log, viewable under the Log tab.
+
+A new admin sees a short guided tour the first time they open the dashboard, covering only the sections they have access to. It can be skipped, and replayed any time with **Take the tour** in the dashboard header. Whether an admin has seen it is stored in the `viewed_tutorial` column of the `admins` table.
 
 ### Dashboard Tabs
 
@@ -199,12 +200,71 @@ Every admin who should be able to publish files needs one of `can_review_submiss
 
 ## Scheduled Cleanup
 
-A GitHub Actions workflow (`.github/workflows/purge-expired.yml`) runs once a day and calls the `purge-expired` edge function, which:
+Two scheduled jobs keep the file repository tidy. They are designed never to overlap.
 
-- Permanently deletes resources, subjects, and contributors that have been sitting in Trash for 30+ days, including deleting the matching file from GitHub for anything that had one.
+| Job | Workflow | When (IST) |
+|---|---|---|
+| Trash purge | `.github/workflows/purge-expired.yml` | 08:30 AM on the 6th, 10th, 14th, 18th, 22nd, 26th and 30th of each month |
+| Monthly history cleanup | `.github/workflows/history-cleanup.yml` | Checked daily at 03:00 AM, runs on the chosen day (the 2nd by default) |
+
+### Trash purge
+
+The `purge-expired` edge function:
+
+- Permanently deletes resources, subjects, and contributors that have been sitting in Trash for 30+ days, including deleting the matching file from GitHub for anything that had one. Contributor photos are removed too, except the shared default avatars.
 - Permanently deletes entries in the Replaced section of Trash that have aged past 30 days, same GitHub cleanup included.
 
-This function authenticates via a shared `CRON_SECRET` header rather than a user login, since a scheduled job has no one signed in; see the one-time setup above for how that's configured. It can also be triggered manually from the Actions tab (`workflow_dispatch`) to test it without waiting for the schedule.
+It authenticates via a shared `CRON_SECRET` header rather than a user login, since a scheduled job has no one signed in; see Part 2 of Installation. It can also be triggered manually from the Actions tab (`workflow_dispatch`).
+
+Deleting a file this way removes it from the current repository, but Git still remembers it in the repository's history. The monthly history cleanup below is what erases that.
+
+### Monthly history cleanup
+
+**What it does.** The `history-cleanup` edge function takes the repository's current file tree, saves it as a brand-new first commit with no history, and moves the branch to that commit. Because the new commit reuses the exact same tree, every file that exists right now, including everything still in Trash, is preserved byte for byte. Only history that is no longer reachable disappears, which is what makes the repository smaller.
+
+**Order of a run (03:00 AM IST on the chosen day):**
+
+1. Check it is inside the lock window and that nobody pushed to the repository in the last 30 minutes.
+2. Run the Trash purge so expired files are gone before the rewrite.
+3. Record the current commit, create a temporary backup branch, and build the new commit.
+4. Move the branch, then verify: new commit has no parents, same tree, branches and tags still present, and sample live files still resolve with the right size.
+5. If anything fails, the branch is restored automatically. Otherwise the backup branch is deleted.
+
+The next morning a follow-up check records the repository size after the cleanup and loads a few live PDFs through the CDN to confirm the site still works.
+
+**The dashboard lock.** From 1:00 AM to 5:00 AM IST on the cleanup day the dashboard is paused: uploads, edits, deletes and approvals are blocked on the server, not just in the interface. Browsing, analytics, announcements and settings keep working, and visitors can still read everything. Student submissions still arrive (they go to Supabase Storage). The lock is calculated from the database clock, so a missed or failed run can never leave it stuck; it always ends at 5:00 AM. If the job finishes early the lock lifts early.
+
+**Telling admins.** All admins see a banner at the top of the dashboard 24 hours before, 2 hours before (with a countdown) and while the lock is active, plus a toast and a status badge in the bottom corner. Admins also see it under System notices on the Notifications page. After a run a summary shows the repository size before and after, or a warning if it failed or was rolled back.
+
+**Controls.** In Dashboard, Settings, Monthly history cleanup:
+
+- Everyone who can open Settings sees the status.
+- Only the **owner and admins with the Developer permission** can change the run day, switch test mode on or off, skip a month, or start an **Emergency cleanup**. The server enforces the same rule.
+- A new installation starts in **test mode**. A test run does everything except the final branch move. A live run is refused until at least one test run has passed. Check the first one in the Log tab, then switch the mode to Live.
+- The emergency cleanup locks the dashboard immediately, needs a written reason and typing `CLEAN`, and runs when the repository has been quiet for 5 minutes. Use it for urgent privacy removals.
+
+**Fixed dates, no collisions.** The run day can only be set to days that do not overlap the Trash purge dates (and the day after, which is the automatic retry). If the main run fails, it retries once the next day.
+
+**If something goes wrong.** The run records the previous commit in the Log tab and in the `history_cleanup_runs` table before it changes anything. A failed run restores the branch by itself. If a message ever says the automatic restore failed, run the command it shows (it looks like `gh api -X PATCH repos/OWNER/REPO/git/refs/heads/BRANCH -f sha=OLD_SHA -F force=true`). The old commit stays retrievable by its ID for a while after a rewrite, so this works even a day later.
+
+**Good to know.**
+
+- **Re-clone any local copy of the PDF repository** after a cleanup and delete the old one. Pushing from an old clone would bring the deleted history back.
+- GitHub does not shrink its storage instantly. Old commits become unreachable immediately but GitHub frees the space on its own schedule, usually within days. Forks, extra branches or tags, and anyone who already cloned the repository keep their own copies. The cleanup reports any extra branches or tags it finds. For urgent removal of something sensitive, contact GitHub Support to run garbage collection.
+- Daily workflow runs also keep Supabase awake on the free tier.
+- **GitHub can switch the schedules off.** On public repositories, GitHub disables scheduled workflows after 60 days without repository activity such as a commit. When that happens the history cleanup, trash purge and Supabase keep-alive all stop silently. The daily cleanup workflow reports this repository's last push date, and from day 50 every admin gets a warning banner at the top of the dashboard, a toast, and a System notice on the Notifications page. Push a commit to clear it, or open the Actions tab and re-enable the workflows if they were already switched off.
+
+### Changing the Trash purge dates
+
+The schedule is a single line in `.github/workflows/purge-expired.yml`:
+
+```yaml
+on:
+  schedule:
+    - cron: '0 3 6,10,14,18,22,26,30 * *'
+```
+
+The fields are minute, hour, day of month, month and day of week, in UTC (`0 3` is 03:00 UTC, 08:30 IST). Edit the line, commit and push. Keep the purge dates away from the cleanup run day and the day after it, and keep the history cleanup workflow (which runs daily) as it is, because it decides on its own whether today is the run day.
 
 ## Edge Functions
 
@@ -216,7 +276,8 @@ This function authenticates via a shared `CRON_SECRET` header rather than a user
 | `migrate-file` | Used by the dashboard's Migration tab to move or relink existing resource files |
 | `scan-file` | Scans uploaded files before they're accepted, used by Submissions, Resources, Bulk Upload, and Contributors tabs |
 | `backfill-file-sizes` | Fills in file sizes for older resources that don't have one recorded yet, by looking the file up on GitHub. Safe to run more than once |
-| `purge-expired` | Runs daily via GitHub Actions; permanently deletes expired Trash and Replaced-file entries, GitHub files included, as described above |
+| `purge-expired` | Runs on fixed dates via GitHub Actions; permanently deletes expired Trash and Replaced-file entries, GitHub files and contributor photos included, as described above |
+| `history-cleanup` | Runs daily via GitHub Actions and acts on the monthly run day: rewrites the PDF repository's history, verifies it, rolls back on failure. Also serves the owner/developer-only emergency cleanup. See Monthly history cleanup |
 
 ## AI Features (Bring Your Own Key)
 
@@ -232,6 +293,6 @@ Quick reference for setting things up: where each value belongs.
 |---|---|---|
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Netlify env vars | Safe to be public, this is what the site uses to talk to Supabase |
 | `VITE_JSDELIVR_OWNER/REPO/BRANCH`, `VITE_TURNSTILE_SITE_KEY` | Netlify env vars | Also public-safe |
-| `GITHUB_TOKEN`, `GITHUB_OWNER/REPO/BRANCH` | Supabase Edge Function secrets | Grants write access to your PDF repo. Never expose this to the frontend |
+| `GITHUB_TOKEN`, `GITHUB_OWNER/REPO/BRANCH` | Supabase Edge Function secrets | Grants write access to your PDF repo, including force-push for the monthly history cleanup. Never expose this to the frontend |
 | `TURNSTILE_SECRET_KEY` | Supabase Edge Function secrets | Server-side only |
-| `CRON_SECRET` | Both Supabase Edge Function secrets **and** GitHub Actions secrets on this repo | Has to match in both places; it's how the daily cleanup job proves it's allowed to run |
+| `CRON_SECRET` | Both Supabase Edge Function secrets **and** GitHub Actions secrets on this repo | Has to match in both places; it's how the scheduled cleanup job proves it's allowed to run |

@@ -169,3 +169,9 @@
 .account-sheet-item:active {
   background: rgba(var(--accent-rgb), 0.1);
 }
+
+.bottom-nav-item .alert-dot {
+  top: 0.45rem;
+  right: auto;
+  left: calc(50% + 0.5rem);
+}

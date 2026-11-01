@@ -1,13 +1,15 @@
-import { Close, ZoomIn, ZoomOut, Download, Remove, IosShare } from '@mui/icons-material';
+import { Close, ZoomIn, ZoomOut, Download, Remove, IosShare, Bookmark, BookmarkBorder } from '@mui/icons-material';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useState, useEffect, useRef } from 'react';
 import AIChatWidget from './AIChatWidget';
 import AskGeminiButton from './AskGeminiButton';
 import { logResourceEvent } from '../utils/analytics';
+import { useBookmarks } from '../context/useBookmarks';
 import './css/PDFViewer.css';
 
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
+import { toRawGithubUrl } from '../utils/cdnFallback';
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const isMobile = window.matchMedia('(max-width: 800px)').matches;
@@ -24,10 +26,18 @@ const PDFViewer = ({
   isFocused = true,
   externalClosing = false,
 }) => {
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const bookmarked = isBookmarked(pdfPath);
   const [numPages, setNumPages] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageHeight, setPageHeight] = useState(null);
   const [loadProgress, setLoadProgress] = useState(null);
+  const [fallbackFor, setFallbackFor] = useState(null);
+  const fallbackUrl = toRawGithubUrl(pdfPath);
+  const activePath = fallbackUrl && fallbackFor === pdfPath ? fallbackUrl : pdfPath;
+  const handleLoadError = () => {
+    if (fallbackUrl && fallbackFor !== pdfPath) setFallbackFor(pdfPath);
+  };
   const [scale, setScale] = useState(isMobile ? 0.5 : 1.0);
   const [isClosing, setIsClosing] = useState(false);
   const [showPageIndicator, setShowPageIndicator] = useState(false);
@@ -125,7 +135,7 @@ const PDFViewer = ({
 
   const handleDownload = () => {
     if (resourceId) logResourceEvent(resourceId, 'download');
-    window.open(pdfPath, '_blank', 'noopener,noreferrer');
+    window.open(activePath, '_blank', 'noopener,noreferrer');
   };
 
   const [shareCopied, setShareCopied] = useState(false);
@@ -180,7 +190,8 @@ const PDFViewer = ({
               <div className="pdf-viewer-content pdf-viewer-content-mobile" ref={contentRef} style={{ flex: 1, overflowY: 'auto' }}>
                 <div className="pdf-placeholder" style={{ padding: '20px' }}>
                   <Document
-                    file={pdfPath}
+                    file={activePath}
+                    onLoadError={handleLoadError}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadProgress={({ loaded, total }) => {
                       setLoadProgress(total > 0 ? Math.round((loaded / total) * 100) : null);
@@ -243,6 +254,14 @@ const PDFViewer = ({
                 </button>
                 <button className="control-btn share-btn" onClick={handleShare} aria-label="Copy link">
                   <IosShare />
+                </button>
+                <button
+                  className={`control-btn bookmark-control${bookmarked ? ' active' : ''}`}
+                  onClick={() => toggleBookmark({ name: pdfName, path: pdfPath, resourceId })}
+                  aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark'}
+                  aria-pressed={bookmarked}
+                >
+                  {bookmarked ? <Bookmark /> : <BookmarkBorder />}
                 </button>
               </div>
             </div>

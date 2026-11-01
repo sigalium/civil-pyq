@@ -1,17 +1,24 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Reorder, useDragControls } from 'framer-motion'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
+import DownloadIcon from '@mui/icons-material/Download'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
+import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useContributorsData } from '../../context/useContributorsData'
 import { supabase } from '../../lib/supabaseClient'
 import { uploadFileToGithub, sanitizePathSegment, getFileExtension } from '../../utils/githubUpload'
 import { DEFAULT_AVATARS, buildDefaultAvatarUrl, buildContributorPhotoUrl } from '../../utils/resourceSnippet'
 import { persistOrder } from '../../utils/resourceOrdering'
+import { getCustomPhotoRepoPath, trackAbandonedPhoto, downloadContributorPhoto } from '../../utils/contributorPhotos'
 import ConfirmModal from '../../components/ConfirmModal'
+import BackButton from '../../components/BackButton'
+import SubmissionContributorsPanel from './SubmissionContributorsPanel'
 import PositionInput from '../../components/PositionInput'
 import { useNotifications } from '../../context/useNotifications'
 import './Dashboard.css'
@@ -73,6 +80,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
     setUploadError('')
     try {
       const url = await uploadContributorPhoto(file, name)
+      if (profilePic && profilePic !== contributor.profile_pic) await trackAbandonedPhoto(profilePic, name)
       setProfilePic(url)
     } catch (err) {
       setUploadError(err.message)
@@ -80,15 +88,31 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
     setUploading(false)
   }
 
+  const cancelEdit = async () => {
+    if (profilePic !== (contributor.profile_pic || '')) {
+      await trackAbandonedPhoto(profilePic, name)
+      setProfilePic(contributor.profile_pic || '')
+    }
+    setEditing(false)
+  }
+
   const save = async () => {
     setSaving(true)
-    await supabase.from('contributors').update({
+    const { error: saveError } = await supabase.from('contributors').update({
       name,
       batch_year: batchYear || null,
       department: department || null,
       profile_pic: profilePic || null,
       is_top_contributor: isTop,
     }).eq('id', contributor.id)
+    if (saveError) {
+      setSaving(false)
+      notify({ variant: 'error', message: `Could not save: ${saveError.message}` })
+      return
+    }
+    if (contributor.profile_pic && contributor.profile_pic !== profilePic) {
+      await trackAbandonedPhoto(contributor.profile_pic, name)
+    }
     setSaving(false)
     setEditing(false)
     onChanged()
@@ -125,6 +149,16 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
         )}
         <div className="photo-upload-field">
           {profilePic && <img className="photo-upload-preview" src={buildContributorPhotoUrl(profilePic)} alt="" />}
+          {getCustomPhotoRepoPath(profilePic) && (
+            <button
+              type="button"
+              className="photo-upload-btn photo-download-btn"
+              onClick={() => downloadContributorPhoto(profilePic, name)}
+              title="Download this photo"
+            >
+              <DownloadIcon sx={{ fontSize: 16 }} /> Download
+            </button>
+          )}
           <label className="photo-upload-btn">
             {uploading ? 'Uploading…' : 'Upload photo'}
             <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} hidden />
@@ -144,7 +178,7 @@ const ContributorRow = ({ contributor, onChanged, draggable, position, total, on
         </div>
         <div className="resource-item-actions">
           <button className="action-btn approve-btn" disabled={saving} onClick={save}>Save</button>
-          <button className="action-btn reject-btn" onClick={() => setEditing(false)}>Cancel</button>
+          <button className="action-btn neutral-btn" onClick={cancelEdit}>Cancel</button>
         </div>
       </div>
     )
@@ -231,11 +265,18 @@ const AddContributorForm = ({ roleType, sortOrder, onAdded }) => {
     setUploadError('')
     try {
       const url = await uploadContributorPhoto(file, name)
+      if (profilePic) await trackAbandonedPhoto(profilePic, name)
       setProfilePic(url)
     } catch (err) {
       setUploadError(err.message)
     }
     setUploading(false)
+  }
+
+  const cancelAdd = async () => {
+    if (profilePic) await trackAbandonedPhoto(profilePic, name)
+    setProfilePic('')
+    setOpen(false)
   }
 
   const add = async () => {
@@ -286,7 +327,7 @@ const AddContributorForm = ({ roleType, sortOrder, onAdded }) => {
       <AvatarPicker value={profilePic} onChange={setProfilePic} />
       <div className="resource-item-actions">
         <button className="action-btn approve-btn" disabled={saving} onClick={add}>Add</button>
-        <button className="action-btn reject-btn" onClick={() => setOpen(false)}>Cancel</button>
+        <button className="action-btn neutral-btn" onClick={cancelAdd}>Cancel</button>
       </div>
     </div>
   )
@@ -385,11 +426,11 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
       {items.length === 0 && <p className="dashboard-empty">No {title.toLowerCase()} yet.</p>}
       {totalPages > 1 && (
         <div className="pagination-bar">
-          <button className="action-btn reject-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+          <button className="action-btn neutral-btn" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
             Previous
           </button>
           <span className="pagination-status">Page {page + 1} of {totalPages}</span>
-          <button className="action-btn reject-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <button className="action-btn neutral-btn" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </button>
         </div>
@@ -401,14 +442,33 @@ const PaginatedGroup = ({ title, items, roleType, onChanged }) => {
 
 const ContributorsTab = () => {
   const { contributorRows, loading, error, refresh } = useContributorsData()
+  const navigate = useNavigate()
+  const { subpath } = useParams()
   const students = contributorRows.filter((c) => c.role_type === 'student' && !c.deleted_at)
   const faculty = contributorRows.filter((c) => c.role_type === 'faculty' && !c.deleted_at)
+
+  if (subpath === 'submission-contributors') {
+    return (
+      <div className="dashboard-panel">
+        <BackButton onClick={() => navigate('/dashboard/contributors')} text="Back to Contributors" />
+        <SubmissionContributorsPanel />
+      </div>
+    )
+  }
 
   if (loading) return <p className="dashboard-empty">Loading...</p>
   if (error) return <p className="dashboard-error">{error}</p>
 
   return (
     <div className="dashboard-panel">
+      <button className="manage-iscodes-btn" onClick={() => navigate('/dashboard/contributors/submission-contributors')}>
+        <span className="manage-iscodes-btn-icon"><VolunteerActivismIcon sx={{ fontSize: 18 }} /></span>
+        <span className="manage-iscodes-btn-text">
+          Submission Contributor
+          <span className="manage-iscodes-btn-subtitle">Names and contribution counts from approved submissions</span>
+        </span>
+        <ChevronRightIcon className="manage-iscodes-btn-arrow" sx={{ fontSize: 20 }} />
+      </button>
       <PaginatedGroup title="Student Contributors" items={students} roleType="student" onChanged={refresh} />
       <PaginatedGroup title="Faculty Contributors" items={faculty} roleType="faculty" onChanged={refresh} />
     </div>

@@ -150,3 +150,9 @@
   margin-left: 0.5rem;
   opacity: 0.75;
 }
+
+@media (max-width: 768px) {
+  .resource-bookmark-btn {
+    display: none;
+  }
+}

@@ -23,6 +23,7 @@
         try {
           var saved = window.localStorage.getItem('civilpyq-theme');
           if (saved) document.documentElement.setAttribute('data-theme', saved);
+          if (window.localStorage.getItem('civilpyq-perf') === '1') document.documentElement.setAttribute('data-perf', 'lite');
         } catch (e) {}
       })();
     </script>

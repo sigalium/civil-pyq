@@ -34,6 +34,7 @@ const PDFWindowManager = () => {
   const visibleWindows = windows.filter((w) => !w.minimized)
   const topWindow = [...visibleWindows].sort((a, b) => b.zIndex - a.zIndex)[0]
   const allClosing = visibleWindows.length > 0 && visibleWindows.every((w) => w.closing)
+  const everythingClosing = windows.length > 0 && windows.every((w) => w.closing)
 
   useEffect(() => {
     if (visibleWindows.length > 0 && !hasPushedRef.current) {
@@ -122,41 +123,45 @@ const PDFWindowManager = () => {
     </div>
   )
 
-  if (count === 0) {
-    return <div className="pdf-taskbar-only">{taskbar}</div>
-  }
+  const idle = count === 0
+  const closingClass = everythingClosing ? 'closing' : allClosing ? 'closing-visible' : ''
 
   return (
-    <div className={`pdf-window-backdrop ${allClosing ? 'closing' : ''}`} onMouseDown={handleBackdropClick}>
-      <div
-        className={`pdf-window-grid count-${count}`}
-        style={
-          count === 1
-            ? undefined
-            : { gridTemplateColumns: layout.columns, gridTemplateRows: layout.rows, gridTemplateAreas: layout.areas }
-        }
-      >
-        {visibleWindows.map((win, index) => (
-          <div
-            key={win.id}
-            className={`pdf-window-cell ${count === 1 ? 'single' : ''}`}
-            style={count === 1 ? undefined : { gridArea: CELL_NAMES[index] }}
-            onMouseDownCapture={() => focusPdf(win.id)}
-          >
-            <PDFViewer
-              pdfName={win.name}
-              pdfPath={win.path}
-              resourceId={win.resourceId}
-              onClose={() => closePdf(win.id)}
-              onMinimize={() => minimizePdf(win.id)}
-              windowed
-              closeOnOutsideClick={false}
-              isFocused={topWindow?.id === win.id}
-              externalClosing={!!win.closing}
-            />
-          </div>
-        ))}
-      </div>
+    <div
+      className={`pdf-window-backdrop ${idle ? 'idle' : ''} ${closingClass}`}
+      onMouseDown={idle ? undefined : handleBackdropClick}
+    >
+      {!idle && (
+        <div
+          className={`pdf-window-grid count-${count}`}
+          style={
+            count === 1
+              ? undefined
+              : { gridTemplateColumns: layout.columns, gridTemplateRows: layout.rows, gridTemplateAreas: layout.areas }
+          }
+        >
+          {visibleWindows.map((win, index) => (
+            <div
+              key={win.id}
+              className={`pdf-window-cell ${count === 1 ? 'single' : ''}`}
+              style={count === 1 ? undefined : { gridArea: CELL_NAMES[index] }}
+              onMouseDownCapture={() => focusPdf(win.id)}
+            >
+              <PDFViewer
+                pdfName={win.name}
+                pdfPath={win.path}
+                resourceId={win.resourceId}
+                onClose={() => closePdf(win.id)}
+                onMinimize={() => minimizePdf(win.id)}
+                windowed
+                closeOnOutsideClick={false}
+                isFocused={topWindow?.id === win.id}
+                externalClosing={!!win.closing}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {taskbar}
     </div>

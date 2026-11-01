@@ -163,7 +163,8 @@
 .contributors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 2.5rem; /* Gap ensures badges don't overlap */
+  column-gap: 2.5rem;
+  row-gap: 0;
 }
 
 /* Card - Relative positioning is key for the badge */
@@ -172,12 +173,14 @@
   background-color: var(--secondary);
   border-radius: 8px;
   padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  justify-items: center;
+  align-content: start;
+  margin-bottom: 2.5rem;
   transition: all 0.3s ease;
-  height: 100%;
   border: 1px solid transparent;
 }
 
@@ -286,7 +289,11 @@
 
   .contributors-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1.5rem;
+    column-gap: 1.5rem;
+  }
+
+  .contributor-card {
+    margin-bottom: 1.5rem;
   }
 
   .contribute-btn-main {
@@ -355,7 +362,8 @@
   padding: 0.65rem 0.85rem;
   border-radius: 8px;
   border: 1px solid rgba(var(--glass-rgb), 0.2);
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   color: var(--text-primary);
   font-size: 0.95rem;
 }
@@ -373,7 +381,8 @@
 
 .upload-dropzone.dragging {
   border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.08);
+  background: linear-gradient(rgba(var(--accent-rgb), 0.08), rgba(var(--accent-rgb), 0.08)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
 }
 
 .upload-dropzone.has-file {
@@ -457,17 +466,142 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   border-radius: 8px;
   padding: 0.6rem 1rem;
+}
+
+.my-submission-placeholder {
+  visibility: hidden;
+}
+
+.my-submission-item {
+  position: relative;
+  min-height: 2.75rem;
+}
+
+.my-submission-item.info-open {
+  z-index: 5;
 }
 
 .my-submission-label {
   color: var(--text-primary);
   font-size: 0.9rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.my-submission-trailing {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+}
+
+.my-submission-info-wrap {
+  position: relative;
+  display: flex;
+}
+
+.my-submission-info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--glass-rgb), 0.2);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+
+.my-submission-info-btn:hover,
+.my-submission-info-btn[aria-expanded='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.my-submission-info-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -4px;
+  width: max-content;
+  max-width: min(280px, 70vw);
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: var(--secondary);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  overflow-wrap: anywhere;
+}
+
+.my-submission-info-pop.wide {
+  width: min(300px, 70vw);
+}
+
+.my-submission-info-pop p {
+  margin: 0 0 0.6rem;
+}
+
+.my-submission-info-link {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.my-submission-info-link:hover {
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+.my-submission-skeleton-label {
+  height: 14px;
+  width: 45%;
+}
+
+.my-submission-skeleton-status {
+  height: 20px;
+  width: 72px;
+  border-radius: 6px;
+}
+
+.skeleton-pfp {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.skeleton-name {
+  height: 18px;
+  width: 70%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-sub {
+  height: 13px;
+  width: 55%;
 }
 
 .my-submission-status {
+  box-sizing: border-box;
+  min-width: 4.75rem;
+  text-align: center;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.2rem 0.6rem;
@@ -501,7 +635,8 @@
   padding: 0.4rem 0.9rem;
   border-radius: 8px;
   border: 1px solid rgba(var(--glass-rgb), 0.2);
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   color: var(--text-primary);
   font-size: 0.8rem;
   cursor: pointer;

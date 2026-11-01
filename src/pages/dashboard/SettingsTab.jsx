@@ -4,6 +4,8 @@ import { useAuth } from '../../context/useAuth'
 import { useResourcesData } from '../../context/useResourcesData'
 import { supabase } from '../../lib/supabaseClient'
 import IstDateTimePicker from '../../components/IstDateTimePicker'
+import AnnouncementPanel from './AnnouncementPanel'
+import HistoryCleanupPanel from './HistoryCleanupPanel'
 import ConfirmModal from '../../components/ConfirmModal'
 import { formatIstDisplay } from '../../utils/istDateTime'
 import { backfillFileSizes } from '../../utils/backfillFileSizes'
@@ -187,7 +189,7 @@ const SettingsTab = () => {
         <h4>Submissions</h4>
         <ToggleRow
           label="Submission intake"
-          hint="Turn off to pause new uploads from the public Contribute page."
+          hint="Accept new uploads from the Contribute page."
           checked={submissionIntakeEnabled}
           allowed={savingKey !== 'submission_intake_enabled'}
           onToggle={() => setSetting('submission_intake_enabled', submissionIntakeEnabled ? 'false' : 'true')}
@@ -195,11 +197,15 @@ const SettingsTab = () => {
         {savedKey === 'submission_intake_enabled' && <p className="settings-saved-note">Saved.</p>}
       </div>
 
+      <AnnouncementPanel />
+
+      <HistoryCleanupPanel />
+
       <div className="resource-group">
         <h4>Storage</h4>
         <RunRow
           label="File size backfill"
-          hint="Fills in file sizes for older uploads that don't have one recorded yet. Safe to run again anytime."
+          hint="Fills missing file sizes for older uploads."
           onRun={() => setConfirmBackfill(true)}
           running={backfillBusy}
           allowed={isOwner}
@@ -229,7 +235,7 @@ const SettingsTab = () => {
               <p className="settings-field-hint maintenance-panel-hint">
                 {maintenanceType === 'scheduled'
                   ? `Ends automatically at ${formatIstDisplay(maintenanceUntil)}.`
-                  : 'Indefinite - ends only when you end it below.'}
+                  : 'Indefinite.'}
               </p>
             )}
 
@@ -274,7 +280,7 @@ const SettingsTab = () => {
 
                 {!maintenanceActive && (
                   <>
-                    <p className="maintenance-status-hint">Currently off. Configure and start below.</p>
+                    <p className="maintenance-status-hint">Maintenance is off.</p>
                     {maintenanceStartedAt && (
                       <p className="maintenance-status-hint maintenance-status-hint-muted">
                         Last on {formatIstDisplay(maintenanceStartedAt)}
@@ -301,7 +307,7 @@ const SettingsTab = () => {
                     <button className="action-btn approve-btn" disabled={savingKey === 'maintenance_details'} onClick={saveMaintenanceDetails}>
                       {savingKey === 'maintenance_details' ? 'Saving…' : 'Save changes'}
                     </button>
-                    <button className="action-btn reject-btn" disabled={savingKey === 'maintenance_end'} onClick={endMaintenanceNow}>
+                    <button className="action-btn neutral-btn" disabled={savingKey === 'maintenance_end'} onClick={endMaintenanceNow}>
                       {savingKey === 'maintenance_end' ? 'Ending…' : 'End maintenance now'}
                     </button>
                     {savedKey === 'maintenance_details' && <span className="settings-saved-note">Saved.</span>}

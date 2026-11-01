@@ -1,0 +1,34 @@
+name: History Cleanup
+
+on:
+  schedule:
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read last push time of this repository
+        id: repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pushed=$(gh api "repos/${{ github.repository }}" --jq .pushed_at || true)
+          echo "pushed_at=$pushed" >> "$GITHUB_OUTPUT"
+      - name: Call history-cleanup edge function
+        env:
+          PUSHED_AT: ${{ steps.repo.outputs.pushed_at }}
+        run: |
+          response=$(curl -s -o response.json -w "%{http_code}" \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/history-cleanup" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"repo_pushed_at\":\"$PUSHED_AT\"}")
+          echo "history-cleanup responded with HTTP $response"
+          cat response.json
+          if [ "$response" -ge 400 ]; then
+            echo "History cleanup failed with status $response"
+            exit 1
+          fi

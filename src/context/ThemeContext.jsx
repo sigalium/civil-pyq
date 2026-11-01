@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ThemeContext } from './useTheme';
 
 const STORAGE_KEY = 'civilpyq-theme';
+const PERF_STORAGE_KEY = 'civilpyq-perf';
 const DEFAULT_THEME = 'nebula';
 
 const THEMES = [
@@ -65,6 +66,18 @@ const THEMES = [
     description: 'Deep violet dark mode with drifting glowing orbs',
     swatch: ['#0a0a18', '#15152b', '#a78bfa'],
   },
+  {
+    id: 'galaxy',
+    label: 'Galaxy',
+    description: 'Near-black space with a slowly turning golden spiral',
+    swatch: ['#07080f', '#14152a', '#fbbf24'],
+  },
+  {
+    id: 'storm',
+    label: 'Storm',
+    description: 'Slate night with layered rain and distant lightning',
+    swatch: ['#0a0f1a', '#152036', '#60a5fa'],
+  },
 ];
 
 const THEME_IDS = THEMES.map((t) => t.id);
@@ -80,8 +93,27 @@ function getInitialTheme() {
   return DEFAULT_THEME;
 }
 
+function getInitialPerformanceMode() {
+  try {
+    return window.localStorage.getItem(PERF_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(getInitialTheme);
+  const [performanceMode, setPerformanceMode] = useState(getInitialPerformanceMode);
+
+  useEffect(() => {
+    if (performanceMode) document.documentElement.setAttribute('data-perf', 'lite');
+    else document.documentElement.removeAttribute('data-perf');
+    try {
+      window.localStorage.setItem(PERF_STORAGE_KEY, performanceMode ? '1' : '0');
+    } catch {
+      return;
+    }
+  }, [performanceMode]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -97,7 +129,7 @@ export function ThemeProvider({ children }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES }}>
+    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES, performanceMode, setPerformanceMode }}>
       {children}
     </ThemeContext.Provider>
   );

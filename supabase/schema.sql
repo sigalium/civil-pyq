@@ -16,6 +16,7 @@ create table admins (
   can_view_analytics boolean not null default false,
   can_manage_settings boolean not null default false,
   is_developer boolean not null default false,
+  viewed_tutorial boolean not null default false,
   added_by text,
   created_at timestamptz not null default now()
 );
@@ -103,7 +104,8 @@ create table submissions (
   institution text,
   uploader_semester integer,
   submitter_ip text,
-  file_size_bytes bigint
+  file_size_bytes bigint,
+  rejection_reason text
 );
 
 create table resource_events (
@@ -141,6 +143,29 @@ create table replaced_files (
 );
 
 create index replaced_files_deleted_at_idx on replaced_files(deleted_at);
+
+create table announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  message text not null,
+  created_by text,
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz,
+  title_underline boolean not null default false
+);
+
+create index announcements_created_at_idx on announcements(created_at desc);
+
+create table submission_contributors (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  name_key text generated always as (lower(regexp_replace(btrim(name), '\s+', ' ', 'g'))) stored,
+  contributions integer not null default 1,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index submission_contributors_name_key_idx on submission_contributors(name_key);
 
 create or replace function public.is_owner()
 returns boolean
@@ -193,6 +218,33 @@ begin
 end;
 $function$;
 
+create or replace function public.record_submission_contributor(p_name text)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  clean text;
+begin
+  clean := regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g');
+  if clean = '' or lower(clean) = 'anonymous' then
+    return;
+  end if;
+  if not exists (
+    select 1 from admins a
+    where lower(a.email) = lower(auth.email())
+      and (a.role = 'owner' or a.can_review_submissions = true or a.can_manage_contributors = true)
+  ) then
+    raise exception 'not allowed';
+  end if;
+  insert into submission_contributors (name) values (clean)
+  on conflict (name_key) do update
+    set contributions = submission_contributors.contributions + 1,
+        updated_at = now();
+end;
+$function$;
+
 create or replace function public.maintenance_status()
 returns table (active boolean, mode boolean, until timestamptz, type text, message text, started_at timestamptz)
 language sql
@@ -212,6 +264,46 @@ as $function$
     nullif(max(value) filter (where key = 'maintenance_started_at'), '')::timestamptz as started_at
   from global_resources
   where key in ('maintenance_mode', 'maintenance_until', 'maintenance_type', 'maintenance_message', 'maintenance_started_at');
+$function$;
+
+create or replace function public.my_submissions(
+  p_local_id text,
+  p_limit integer default 5,
+  p_offset integer default 0,
+  p_only_reviewed boolean default false
+)
+returns table (
+  id uuid,
+  resource_label text,
+  subject text,
+  status text,
+  rejection_reason text,
+  reviewed_at timestamptz,
+  created_at timestamptz,
+  total_count bigint
+)
+language sql
+stable
+security definer
+set search_path to 'public'
+as $function$
+  select
+    s.id,
+    s.resource_label,
+    s.subject,
+    s.status,
+    s.rejection_reason,
+    s.reviewed_at,
+    s.created_at,
+    count(*) over () as total_count
+  from submissions s
+  where p_local_id is not null
+    and length(p_local_id) > 0
+    and s.local_id = p_local_id
+    and (not p_only_reviewed or s.status in ('approved', 'rejected'))
+  order by case when p_only_reviewed then s.reviewed_at else s.created_at end desc nulls last
+  limit greatest(1, least(coalesce(p_limit, 5), 100))
+  offset greatest(0, coalesce(p_offset, 0));
 $function$;
 
 create or replace function public.log_audit_event()
@@ -462,11 +554,50 @@ as $function$
     (select coalesce(avg(file_size_bytes), 0) from resources where deleted_at is null and file_size_bytes is not null);
 $function$;
 
+grant select on public.admins to anon;
+grant select on public.announcements to anon;
+grant select on public.contributors to anon;
+grant select on public.global_resources to anon;
+grant select on public.resources to anon;
+grant select on public.sections to anon;
+grant select on public.subjects to anon;
+grant insert on public.resource_events to anon;
+grant select, insert, update, delete on public.admins to authenticated;
+grant select, insert, update, delete on public.announcements to authenticated;
+grant select, delete on public.audit_log to authenticated;
+grant select, insert, update, delete on public.contributors to authenticated;
+grant select, insert, update on public.global_resources to authenticated;
+grant select, insert, delete on public.replaced_files to authenticated;
+grant select on public.resource_events to authenticated;
+grant select, insert, update, delete on public.resources to authenticated;
+grant select, insert, update, delete on public.sections to authenticated;
+grant select, insert, update, delete on public.subjects to authenticated;
+grant select, delete on public.submission_contributors to authenticated;
+grant select, update on public.submissions to authenticated;
+grant select, insert, update, delete on public.admins to service_role;
+grant select, insert, update, delete on public.announcements to service_role;
+grant select, insert, update, delete on public.audit_log to service_role;
+grant select, insert, update, delete on public.contributors to service_role;
+grant select, insert, update, delete on public.global_resources to service_role;
+grant select, insert, update, delete on public.replaced_files to service_role;
+grant select, insert, update, delete on public.resource_events to service_role;
+grant select, insert, update, delete on public.resources to service_role;
+grant select, insert, update, delete on public.sections to service_role;
+grant select, insert, update, delete on public.subjects to service_role;
+grant select, insert, update, delete on public.submission_contributors to service_role;
+grant select, insert, update, delete on public.submissions to service_role;
+
 revoke execute on function public.purge_expired_trash() from public, authenticated, anon;
 grant execute on function public.purge_expired_trash() to service_role;
 
 revoke execute on function public.maintenance_status() from public;
 grant execute on function public.maintenance_status() to anon, authenticated;
+
+revoke execute on function public.my_submissions(text, integer, integer, boolean) from public;
+grant execute on function public.my_submissions(text, integer, integer, boolean) to anon, authenticated;
+
+revoke execute on function public.record_submission_contributor(text) from public, anon;
+grant execute on function public.record_submission_contributor(text) to authenticated;
 
 revoke execute on function public.can_view_members_list() from public, anon;
 revoke execute on function public.can_edit_members_list() from public, anon;
@@ -520,6 +651,9 @@ create trigger trg_submissions_audit after insert or update on submissions
 create trigger trg_replaced_files_audit after insert or update or delete on replaced_files
   for each row execute function log_audit_event();
 
+create trigger trg_announcements_audit after insert or update or delete on announcements
+  for each row execute function log_audit_event();
+
 alter table admins enable row level security;
 alter table audit_log enable row level security;
 alter table contributors enable row level security;
@@ -530,6 +664,8 @@ alter table resources enable row level security;
 alter table submissions enable row level security;
 alter table resource_events enable row level security;
 alter table replaced_files enable row level security;
+alter table submission_contributors enable row level security;
+alter table announcements enable row level security;
 
 create policy "self admin check" on admins for select to public using (auth.email() = email);
 create policy "members list visible to permitted staff" on admins for select to authenticated using (can_view_members_list());
@@ -689,3 +825,352 @@ create policy "reviewers can delete pending files" on storage.objects for delete
     select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_review_submissions)
   )
 );
+
+create policy "contributor managers can read submission contributors" on submission_contributors for select to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_contributors))
+);
+create policy "contributor managers can delete submission contributors" on submission_contributors for delete to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_contributors))
+);
+
+create policy "public can read active announcements" on announcements for select to public using (deleted_at is null);
+create policy "settings managers can read all announcements" on announcements for select to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_settings))
+);
+create policy "settings managers can insert announcements" on announcements for insert to authenticated with check (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_settings))
+);
+create policy "settings managers can update announcements" on announcements for update to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_settings))
+) with check (
+  exists (select 1 from admins a where a.email = auth.email() and (a.role = 'owner' or a.can_manage_settings))
+);
+create policy "owner can hard delete announcements" on announcements for delete to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email() and a.role = 'owner')
+);
+
+create table cleanup_settings (
+  id integer primary key default 1 check (id = 1),
+  enabled boolean not null default true,
+  run_day integer not null default 2 check (run_day between 1 and 28),
+  dry_run boolean not null default true,
+  skipped_months text[] not null default '{}',
+  token_expires_at timestamptz,
+  repo_pushed_at timestamptz,
+  updated_by text,
+  updated_at timestamptz not null default now()
+);
+
+insert into cleanup_settings (id) values (1) on conflict (id) do nothing;
+
+create table history_cleanup_runs (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('scheduled', 'fallback', 'emergency')),
+  dry_run boolean not null default true,
+  phase text not null default 'started',
+  status text not null default 'running' check (status in ('waiting', 'running', 'succeeded', 'failed', 'rolled_back', 'aborted')),
+  started_by text,
+  reason text,
+  run_month text,
+  lock_until timestamptz,
+  started_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  finished_at timestamptz,
+  old_head_sha text,
+  tree_sha text,
+  new_head_sha text,
+  backup_ref text,
+  repo_size_before_kb integer,
+  repo_size_after_kb integer,
+  followup_done boolean not null default false,
+  details jsonb not null default '{}'::jsonb,
+  error text
+);
+
+create index history_cleanup_runs_started_at_idx on history_cleanup_runs(started_at desc);
+
+alter table cleanup_settings enable row level security;
+alter table history_cleanup_runs enable row level security;
+
+create policy "admins can read cleanup settings" on cleanup_settings for select to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email())
+);
+create policy "admins can read cleanup runs" on history_cleanup_runs for select to authenticated using (
+  exists (select 1 from admins a where a.email = auth.email())
+);
+
+grant select on public.cleanup_settings to authenticated;
+grant select on public.history_cleanup_runs to authenticated;
+grant select, insert, update, delete on public.cleanup_settings to service_role;
+grant select, insert, update, delete on public.history_cleanup_runs to service_role;
+
+create or replace function public.cleanup_schedule(p_now timestamptz default now())
+returns table (run_at timestamptz, kind text, lock_start timestamptz, lock_end timestamptz, run_month text, satisfied boolean)
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $function$
+declare
+  s cleanup_settings%rowtype;
+  base date;
+  month_start date;
+  i integer;
+  d timestamptz;
+begin
+  select * into s from cleanup_settings where id = 1;
+  if not found or not s.enabled then
+    return;
+  end if;
+  base := date_trunc('month', p_now at time zone 'Asia/Kolkata')::date;
+  for i in -1..1 loop
+    month_start := (base + make_interval(months => i))::date;
+    run_month := to_char(month_start, 'YYYY-MM');
+    if run_month = any (s.skipped_months) then
+      continue;
+    end if;
+    d := make_timestamptz(extract(year from month_start)::integer, extract(month from month_start)::integer, s.run_day, 3, 0, 0, 'Asia/Kolkata');
+    run_at := d;
+    kind := 'scheduled';
+    lock_start := d - interval '2 hours';
+    lock_end := d + interval '2 hours';
+    satisfied := exists (
+      select 1 from history_cleanup_runs r
+      where r.run_month = cleanup_schedule.run_month and r.kind = 'scheduled' and r.status = 'succeeded'
+    );
+    return next;
+    if p_now >= d + interval '2 hours' and not exists (
+      select 1 from history_cleanup_runs r
+      where r.run_month = cleanup_schedule.run_month and r.kind in ('scheduled', 'fallback') and r.status = 'succeeded'
+    ) then
+      run_at := d + interval '1 day';
+      kind := 'fallback';
+      lock_start := run_at - interval '2 hours';
+      lock_end := run_at + interval '2 hours';
+      satisfied := exists (
+        select 1 from history_cleanup_runs r
+        where r.run_month = cleanup_schedule.run_month and r.kind = 'fallback' and r.status = 'succeeded'
+      );
+      return next;
+    end if;
+  end loop;
+end;
+$function$;
+
+create or replace function public.cleanup_lock_status(p_now timestamptz default now())
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $function$
+declare
+  emergency history_cleanup_runs%rowtype;
+  win record;
+  nxt record;
+  locked boolean := false;
+  reason text;
+  starts timestamptz;
+  ends timestamptz;
+  stage text := 'none';
+begin
+  select * into emergency from history_cleanup_runs r
+  where r.kind = 'emergency' and r.status in ('waiting', 'running') and r.lock_until is not null and r.lock_until > p_now
+  order by r.started_at desc limit 1;
+
+  if found then
+    locked := true;
+    reason := 'emergency';
+    starts := emergency.started_at;
+    ends := emergency.lock_until;
+  else
+    select * into win from cleanup_schedule(p_now) w
+    where p_now >= w.lock_start and p_now < w.lock_end and not w.satisfied
+    order by w.lock_start limit 1;
+    if found then
+      locked := true;
+      reason := win.kind;
+      starts := win.lock_start;
+      ends := win.lock_end;
+    end if;
+  end if;
+
+  select * into nxt from cleanup_schedule(p_now) w
+  where w.lock_end > p_now and not w.satisfied
+  order by w.lock_start limit 1;
+
+  if locked then
+    stage := 'locked';
+  elsif nxt.run_at is not null then
+    if p_now >= nxt.lock_start - interval '2 hours' then
+      stage := 'two_hours';
+    elsif p_now >= nxt.lock_start - interval '24 hours' then
+      stage := 'day_before';
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'locked', locked,
+    'reason', reason,
+    'starts_at', starts,
+    'ends_at', ends,
+    'stage', stage,
+    'next_run_at', nxt.run_at,
+    'next_kind', nxt.kind,
+    'next_lock_start', nxt.lock_start,
+    'next_lock_end', nxt.lock_end,
+    'next_run_month', nxt.run_month
+  );
+end;
+$function$;
+
+create or replace function public.enforce_cleanup_lock()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  status jsonb;
+begin
+  if coalesce(auth.role(), '') not in ('authenticated', 'anon') then
+    return coalesce(new, old);
+  end if;
+  status := cleanup_lock_status();
+  if coalesce((status ->> 'locked')::boolean, false) then
+    raise exception 'The dashboard is paused for the monthly cleanup until % IST.',
+      to_char((status ->> 'ends_at')::timestamptz at time zone 'Asia/Kolkata', 'HH12:MI AM')
+      using errcode = 'P0423';
+  end if;
+  return coalesce(new, old);
+end;
+$function$;
+
+create trigger trg_cleanup_lock before insert or update or delete on resources
+  for each row execute function enforce_cleanup_lock();
+create trigger trg_cleanup_lock before insert or update or delete on subjects
+  for each row execute function enforce_cleanup_lock();
+create trigger trg_cleanup_lock before insert or update or delete on sections
+  for each row execute function enforce_cleanup_lock();
+create trigger trg_cleanup_lock before insert or update or delete on contributors
+  for each row execute function enforce_cleanup_lock();
+create trigger trg_cleanup_lock before insert or update or delete on replaced_files
+  for each row execute function enforce_cleanup_lock();
+create trigger trg_cleanup_lock before update or delete on submissions
+  for each row execute function enforce_cleanup_lock();
+
+create or replace function public.can_control_cleanup()
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $function$
+  select exists (
+    select 1 from admins a
+    where a.email = auth.email() and (a.role = 'owner' or a.is_developer)
+  );
+$function$;
+
+create or replace function public.cleanup_status()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path to 'public'
+as $function$
+begin
+  if not exists (select 1 from admins a where a.email = auth.email()) then
+    return null;
+  end if;
+  return cleanup_lock_status() || jsonb_build_object(
+    'can_control', can_control_cleanup(),
+    'settings', (select to_jsonb(s) from cleanup_settings s where s.id = 1),
+    'last_run', (
+      select jsonb_build_object(
+        'id', r.id, 'kind', r.kind, 'dry_run', r.dry_run, 'status', r.status, 'phase', r.phase,
+        'started_at', r.started_at, 'finished_at', r.finished_at, 'error', r.error,
+        'repo_size_before_kb', r.repo_size_before_kb, 'repo_size_after_kb', r.repo_size_after_kb,
+        'started_by', r.started_by,
+        'health_ok', (r.details -> 'health' ->> 'ok')::boolean,
+        'extra_refs', case when jsonb_typeof(r.details -> 'extraRefs') = 'array' then jsonb_array_length(r.details -> 'extraRefs') else 0 end
+      )
+      from history_cleanup_runs r order by r.started_at desc limit 1
+    ),
+    'last_success', (
+      select jsonb_build_object(
+        'finished_at', r.finished_at, 'dry_run', r.dry_run,
+        'repo_size_before_kb', r.repo_size_before_kb, 'repo_size_after_kb', r.repo_size_after_kb,
+        'health_ok', (r.details -> 'health' ->> 'ok')::boolean
+      )
+      from history_cleanup_runs r where r.status = 'succeeded' and not r.dry_run order by r.finished_at desc limit 1
+    )
+  );
+end;
+$function$;
+
+create or replace function public.update_cleanup_settings(
+  p_enabled boolean,
+  p_run_day integer,
+  p_dry_run boolean,
+  p_skipped_months text[]
+)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  blocked integer[] := array[6, 10, 14, 18, 22, 26, 30];
+  month_value text;
+begin
+  if not can_control_cleanup() then
+    raise exception 'Only the owner or a developer can change the cleanup schedule.' using errcode = '42501';
+  end if;
+  if p_run_day is null or p_run_day < 1 or p_run_day > 28 or p_run_day = any (blocked) or (p_run_day + 1) = any (blocked) then
+    raise exception 'That day overlaps the regular trash purge dates.' using errcode = '22023';
+  end if;
+  foreach month_value in array coalesce(p_skipped_months, '{}') loop
+    if month_value !~ '^\d{4}-(0[1-9]|1[0-2])$' then
+      raise exception 'Invalid month: %', month_value using errcode = '22023';
+    end if;
+  end loop;
+  update cleanup_settings
+  set enabled = coalesce(p_enabled, enabled),
+      run_day = p_run_day,
+      dry_run = coalesce(p_dry_run, dry_run),
+      skipped_months = coalesce(p_skipped_months, '{}'),
+      updated_by = auth.email(),
+      updated_at = now()
+  where id = 1;
+end;
+$function$;
+
+create trigger trg_cleanup_settings_audit after insert or update or delete on cleanup_settings
+  for each row execute function log_audit_event();
+
+revoke execute on function public.cleanup_schedule(timestamptz) from public, anon, authenticated;
+revoke execute on function public.cleanup_lock_status(timestamptz) from public, anon, authenticated;
+revoke execute on function public.enforce_cleanup_lock() from public, anon, authenticated;
+revoke execute on function public.can_control_cleanup() from public, anon;
+revoke execute on function public.cleanup_status() from public, anon;
+revoke execute on function public.update_cleanup_settings(boolean, integer, boolean, text[]) from public, anon;
+grant execute on function public.cleanup_schedule(timestamptz) to service_role;
+grant execute on function public.cleanup_lock_status(timestamptz) to service_role;
+grant execute on function public.can_control_cleanup() to authenticated, service_role;
+grant execute on function public.cleanup_status() to authenticated;
+grant execute on function public.update_cleanup_settings(boolean, integer, boolean, text[]) to authenticated;
+
+create or replace function public.mark_tutorial_viewed()
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+begin
+  update admins set viewed_tutorial = true where email = auth.email() and viewed_tutorial = false;
+end;
+$function$;
+
+revoke execute on function public.mark_tutorial_viewed() from public, anon;
+grant execute on function public.mark_tutorial_viewed() to authenticated;

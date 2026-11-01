@@ -21,7 +21,7 @@ const Footer = () => {
           <Link to="/domains">Alternative Domains</Link>
         </div>
         <div className="footer-links footer-products">
-          <h4>More Products</h4>
+          <h4>Other Products</h4>
           <a href={PRODUCT_LINKS.shearFrame} target="_blank" rel="noopener noreferrer">ShearFrame</a>
           <a href={PRODUCT_LINKS.shearCad} target="_blank" rel="noopener noreferrer">ShearCAD</a>
           <a href={PRODUCT_LINKS.shearFooting} target="_blank" rel="noopener noreferrer">ShearFooting</a>

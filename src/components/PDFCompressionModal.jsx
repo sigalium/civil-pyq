@@ -163,7 +163,7 @@ const PDFCompressionModal = ({ file, initialResult, onApply, onClose }) => {
               <button
                 className="action-btn approve-btn"
                 disabled={!result || compressing}
-                onClick={() => onApply(result)}
+                onClick={() => onApply(result, { compressed: true })}
               >
                 Use compressed file
               </button>

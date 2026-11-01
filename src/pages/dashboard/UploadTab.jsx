@@ -3,9 +3,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import ErrorIcon from '@mui/icons-material/Error'
-import CompressIcon from '@mui/icons-material/Compress'
 import Select from '../../components/Select'
-import PDFCompressionModal from '../../components/PDFCompressionModal'
+import PDFToolModal from '../../components/PDFToolModal'
+import { usePdfToolMeta } from '../../components/usePdfToolMeta'
+import FileToolTags from '../../components/FileToolTags'
 import ConfirmModal from '../../components/ConfirmModal'
 import { useResourcesData } from '../../context/useResourcesData'
 import { useAuth } from '../../context/useAuth'
@@ -59,6 +60,7 @@ const UploadTab = () => {
   const { subjectRows, refresh } = useResourcesData()
   const { profile } = useAuth()
   const canCompress = !!profile
+  const pdfTool = usePdfToolMeta()
   const [staged, setStaged] = useState([])
   const [dragActive, setDragActive] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -75,7 +77,7 @@ const UploadTab = () => {
     const incomingTotal = incoming.reduce((sum, f) => sum + f.size, 0)
 
     if (staged.length + incoming.length > MAX_FILES) {
-      setGlobalError(`You can stage up to ${MAX_FILES} files at once. Publish or remove some before adding more.`)
+      setGlobalError(`Up to ${MAX_FILES} files can be staged at once.`)
       return
     }
     if (currentTotal + incomingTotal > MAX_TOTAL_BYTES) {
@@ -90,6 +92,7 @@ const UploadTab = () => {
         file,
         originalFile: file,
         compressedFile: null,
+        toolMeta: null,
         semester: guessedSubject?.semester || '',
         subject: guessedSubject?.name || '',
         type: guessType(file.name),
@@ -119,8 +122,8 @@ const UploadTab = () => {
     setConfirmRemoveId(null)
   }
 
-  const applyCompression = (id, compressedFile) => {
-    updateEntry(id, { file: compressedFile, compressedFile })
+  const applyCompression = (id, compressedFile, meta) => {
+    updateEntry(id, { file: compressedFile, compressedFile, toolMeta: meta || null })
     setCompressingEntryId(null)
   }
 
@@ -256,6 +259,7 @@ const UploadTab = () => {
                   <div className="bulk-staged-filename" title={entry.file.name}>
                     <span className="bulk-staged-filename-text">{entry.file.name}</span>
                     <span className="bulk-staged-size">({formatBytes(entry.file.size)})</span>
+                    <FileToolTags meta={entry.toolMeta} />
                   </div>
                   <input
                     className="bulk-label-input"
@@ -297,10 +301,10 @@ const UploadTab = () => {
                       className="icon-btn"
                       onClick={() => setCompressingEntryId(entry.id)}
                       disabled={entry.status === 'done' || entry.status === 'uploading'}
-                      aria-label="Compress PDF"
-                      title="Compress PDF"
+                      aria-label={pdfTool.label}
+                      title={pdfTool.label}
                     >
-                      <CompressIcon sx={{ fontSize: 18 }} />
+                      <pdfTool.Icon sx={{ fontSize: 18 }} />
                     </button>
                   )}
                   <button
@@ -322,7 +326,7 @@ const UploadTab = () => {
             </span>
             <div className="bulk-actions-buttons">
               {doneCount > 0 && (
-                <button className="action-btn reject-btn" onClick={clearFinished} disabled={publishing}>
+                <button className="action-btn neutral-btn" onClick={clearFinished} disabled={publishing}>
                   Clear published
                 </button>
               )}
@@ -335,17 +339,17 @@ const UploadTab = () => {
       )}
 
       {compressingEntryId && (
-        <PDFCompressionModal
+        <PDFToolModal
           file={staged.find((e) => e.id === compressingEntryId)?.originalFile}
           initialResult={staged.find((e) => e.id === compressingEntryId)?.compressedFile || null}
-          onApply={(compressedFile) => applyCompression(compressingEntryId, compressedFile)}
+          onApply={(compressedFile, meta) => applyCompression(compressingEntryId, compressedFile, meta)}
           onClose={() => setCompressingEntryId(null)}
         />
       )}
       {confirmRemoveId && (
         <ConfirmModal
           title="Remove this file?"
-          message="It will be removed from this staged batch. Nothing has been uploaded yet."
+          message="It will be removed from the staged batch."
           confirmLabel="Remove"
           onConfirm={() => removeEntry(confirmRemoveId)}
           onCancel={() => setConfirmRemoveId(null)}

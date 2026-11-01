@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import CompressIcon from '@mui/icons-material/Compress'
 import { useAuth } from '../context/useAuth'
 import { useNotifications } from '../context/useNotifications'
 import { uploadResourceFile } from '../utils/resourceUpload'
 import { formatBytes } from '../utils/pdfCompression'
-import PDFCompressionModal from './PDFCompressionModal'
+import PDFToolModal from './PDFToolModal'
+import { usePdfToolMeta } from './usePdfToolMeta'
+import FileToolTags from './FileToolTags'
 
 const ResourceFileForm = ({
   mode,
@@ -16,17 +17,22 @@ const ResourceFileForm = ({
   initialName = '',
   initialPath = '',
   initialSize = null,
+  initialFile = null,
   onOpenPreview,
   onSubmit,
   onCancel,
 }) => {
   const { profile } = useAuth()
   const canCompress = !!profile
+  const pdfTool = usePdfToolMeta()
   const { notify } = useNotifications()
   const [name, setName] = useState(initialName)
-  const [pendingFile, setPendingFile] = useState(null)
-  const [pendingOriginalFile, setPendingOriginalFile] = useState(null)
+  const [pendingFile, setPendingFile] = useState(initialFile)
+  const [pendingOriginalFile, setPendingOriginalFile] = useState(initialFile)
+  const [dropActive, setDropActive] = useState(false)
+  const dragDepth = useRef(0)
   const [pendingCompressedFile, setPendingCompressedFile] = useState(null)
+  const [pendingToolMeta, setPendingToolMeta] = useState(null)
   const [showCompress, setShowCompress] = useState(false)
   const [phase, setPhase] = useState('idle')
   const [error, setError] = useState('')
@@ -36,20 +42,60 @@ const ResourceFileForm = ({
   const displayFileName = pendingFile ? pendingFile.name : existingFileName
   const displaySize = pendingFile ? pendingFile.size : initialSize
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0]
-    e.target.value = ''
-    if (!file) return
+  const acceptFile = (file) => {
     setError('')
     setPendingFile(file)
     setPendingOriginalFile(file)
     setPendingCompressedFile(null)
+    setPendingToolMeta(null)
+  }
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    acceptFile(file)
+  }
+
+  const dragHasFiles = (event) => Array.from(event.dataTransfer?.types || []).includes('Files')
+
+  const handleDragEnter = (event) => {
+    if (busy || !dragHasFiles(event)) return
+    event.preventDefault()
+    dragDepth.current += 1
+    setDropActive(true)
+  }
+
+  const handleDragOver = (event) => {
+    if (busy || !dragHasFiles(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  const handleDragLeave = () => {
+    dragDepth.current = Math.max(0, dragDepth.current - 1)
+    if (dragDepth.current === 0) setDropActive(false)
+  }
+
+  const handleDrop = (event) => {
+    if (busy || !dragHasFiles(event)) return
+    event.preventDefault()
+    dragDepth.current = 0
+    setDropActive(false)
+    const file = event.dataTransfer.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+      notify({ variant: 'error', message: 'Only PDF files can be added.' })
+      return
+    }
+    acceptFile(file)
   }
 
   const discardPendingFile = () => {
     setPendingFile(null)
     setPendingOriginalFile(null)
     setPendingCompressedFile(null)
+    setPendingToolMeta(null)
   }
 
   const previewPendingFile = () => {
@@ -90,7 +136,13 @@ const ResourceFileForm = ({
         disabled={busy}
         autoFocus={mode === 'add'}
       />
-      <div className="resource-file-form-file">
+      <div
+        className={`resource-file-form-file ${dropActive ? 'drop-active' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <label className="file-upload-btn">
           {mode === 'edit' ? 'Replace file' : (pendingFile ? 'Choose different PDF' : 'Choose PDF')}
           <input type="file" accept="application/pdf" onChange={handleFileSelect} disabled={busy} hidden />
@@ -99,6 +151,7 @@ const ResourceFileForm = ({
           <span className="resource-file-form-status">
             <span className="resource-file-form-filename">{displayFileName}</span>
             {displaySize != null && <span className="resource-file-form-size">{formatBytes(displaySize)}</span>}
+            {pendingFile && <FileToolTags meta={pendingToolMeta} />}
           </span>
         ) : (
           <span className="resource-file-form-status resource-file-form-placeholder">No file chosen</span>
@@ -109,11 +162,11 @@ const ResourceFileForm = ({
               <OpenInNewIcon sx={{ fontSize: 16 }} />
             </button>
             {canCompress && (
-              <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} disabled={busy} aria-label="Compress PDF" title="Compress PDF">
-                <CompressIcon sx={{ fontSize: 16 }} />
+              <button type="button" className="icon-btn" onClick={() => setShowCompress(true)} disabled={busy} aria-label={pdfTool.label} title={pdfTool.label}>
+                <pdfTool.Icon sx={{ fontSize: 16 }} />
               </button>
             )}
-            <button type="button" className="action-btn reject-btn" disabled={busy} onClick={discardPendingFile}>Discard</button>
+            <button type="button" className="action-btn neutral-btn" disabled={busy} onClick={discardPendingFile}>Discard</button>
           </div>
         )}
       </div>
@@ -126,13 +179,13 @@ const ResourceFileForm = ({
         >
           {phase === 'uploading' ? 'Uploading…' : phase === 'saving' ? 'Saving…' : mode === 'add' ? 'Add' : 'Save'}
         </button>
-        <button className="action-btn reject-btn" disabled={busy} onClick={onCancel}>Cancel</button>
+        <button className="action-btn neutral-btn" disabled={busy} onClick={onCancel}>Cancel</button>
       </div>
       {showCompress && pendingFile && (
-        <PDFCompressionModal
+        <PDFToolModal
           file={pendingOriginalFile}
           initialResult={pendingCompressedFile}
-          onApply={(compressedFile) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setShowCompress(false) }}
+          onApply={(compressedFile, meta) => { setPendingFile(compressedFile); setPendingCompressedFile(compressedFile); setPendingToolMeta(meta || null); setShowCompress(false) }}
           onClose={() => setShowCompress(false)}
         />
       )}

@@ -5,6 +5,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import FilterAltIcon from '@mui/icons-material/FilterAlt'
 import { useResourcesData } from '../../context/useResourcesData'
 import { useContributorsData } from '../../context/useContributorsData'
+import { getCustomPhotoRepoPath } from '../../utils/contributorPhotos'
 import { useAuth } from '../../context/useAuth'
 import { usePDFWindows } from '../../context/usePDFWindows'
 import { supabase } from '../../lib/supabaseClient'
@@ -246,6 +247,15 @@ const TrashTab = () => {
     setError('')
     setBusyId(id)
     const row = trashedContributors.find((c) => c.id === id)
+    const photoPath = getCustomPhotoRepoPath(row?.profile_pic)
+    const photoShared = contributorRows.some((c) => c.id !== id && c.profile_pic === row?.profile_pic)
+    if (photoPath && !photoShared) {
+      try {
+        await deleteFileFromGithub({ repoPath: photoPath, commitMessage: `Delete contributor photo for ${row.name}` })
+      } catch (githubError) {
+        setError(`Removed from the database, but the photo on GitHub could not be deleted: ${githubError.message}`)
+      }
+    }
     const { error: deleteError } = await supabase.from('contributors').delete().eq('id', id)
     if (deleteError) {
       setError(`Could not permanently delete this contributor: ${deleteError.message}`)
@@ -435,7 +445,7 @@ const TrashTab = () => {
             <Select value={replacedSort} onChange={setReplacedSort} options={SORT_OPTIONS} icon={<FilterAltIcon sx={{ fontSize: 16 }} />} />
           </div>
           <p className="snippet-hint">
-            Old versions of files that were swapped out for a new upload. Restored automatically only by staying here; there is no "restore to live" for these, since a newer file already took their place.
+            Replaced file versions. Deleted after 30 days.
           </p>
           {trashedReplaced.map((row) => (
             <TrashRow

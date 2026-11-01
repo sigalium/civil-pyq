@@ -1,5 +1,6 @@
 .ist-calendar {
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   border: 1px solid rgba(var(--glass-rgb), 0.15);
   border-radius: 10px;
   padding: 0.75rem;
@@ -112,7 +113,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   border: 1px solid rgba(var(--glass-rgb), 0.15);
   border-radius: 10px;
   padding: 0.85rem;
@@ -155,7 +157,7 @@
 }
 
 .ist-time-select .custom-select-menu {
-  max-height: 220px;
+  max-height: min(220px, var(--select-available, 220px));
   text-align: center;
 }
 
@@ -172,7 +174,8 @@
 }
 
 .ist-ampm-toggle button {
-  background: rgba(var(--glass-rgb), 0.05);
+  background: linear-gradient(rgba(var(--glass-rgb), 0.05), rgba(var(--glass-rgb), 0.05)), var(--surface-base);
+  backdrop-filter: var(--surface-blur);
   border: none;
   color: var(--text-secondary);
   font-size: 0.8rem;

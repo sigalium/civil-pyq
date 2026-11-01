@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import './styles/Contribute.css'
 import { useContributorsData } from '../context/useContributorsData'
 import { useResourcesData } from '../context/useResourcesData'
@@ -30,9 +31,12 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 }
 
+const HAD_SUBMISSIONS_KEY = 'civilpyq_had_submissions'
+const SKELETON_CARDS = [0, 1, 2, 3]
+
 const Contribute = () => {
   const { subjects, loading: resourcesLoading, submissionIntakeEnabled } = useResourcesData()
-  const { contributorRows } = useContributorsData()
+  const { contributorRows, loading: contributorsLoading } = useContributorsData()
   const SEMESTERS = Object.keys(subjects)
     .filter((key) => subjects[key])
     .map(Number)
@@ -58,6 +62,14 @@ const Contribute = () => {
   const [mySubmissions, setMySubmissions] = useState([])
   const [mySubmissionsPage, setMySubmissionsPage] = useState(0)
   const [mySubmissionsTotal, setMySubmissionsTotal] = useState(0)
+  const [mySubmissionsLoading, setMySubmissionsLoading] = useState(() => {
+    try {
+      return localStorage.getItem(HAD_SUBMISSIONS_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const [openReasonId, setOpenReasonId] = useState(null)
   const fileInputRef = useRef(null)
   const MY_SUBMISSIONS_PAGE_SIZE = 5
 
@@ -71,19 +83,22 @@ const Contribute = () => {
     let isMounted = true
 
     const from = mySubmissionsPage * MY_SUBMISSIONS_PAGE_SIZE
-    const to = from + MY_SUBMISSIONS_PAGE_SIZE - 1
 
     supabase
-      .from('submissions')
-      .select('id, resource_label, subject, status, created_at', { count: 'exact' })
-      .eq('local_id', localId)
-      .order('created_at', { ascending: false })
-      .range(from, to)
-      .then(({ data, count }) => {
-        if (isMounted) {
-          if (data) setMySubmissions(data)
-          setMySubmissionsTotal(count || 0)
+      .rpc('my_submissions', { p_local_id: localId, p_limit: MY_SUBMISSIONS_PAGE_SIZE, p_offset: from })
+      .then(({ data, error }) => {
+        if (!isMounted) return
+        if (!error && data) {
+          setMySubmissions(data)
+          const total = data.length ? Number(data[0].total_count) : 0
+          setMySubmissionsTotal(total)
+          try {
+            if (total > 0) localStorage.setItem(HAD_SUBMISSIONS_KEY, '1')
+          } catch {
+            void total
+          }
         }
+        setMySubmissionsLoading(false)
       })
 
     return () => {
@@ -94,6 +109,15 @@ const Contribute = () => {
   useEffect(() => {
     if (submitSuccess) setMySubmissionsPage(0)
   }, [submitSuccess])
+
+  useEffect(() => {
+    if (openReasonId === null) return undefined
+    const handleOutside = (event) => {
+      if (!event.target.closest('.my-submission-info-wrap')) setOpenReasonId(null)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [openReasonId])
 
   const openWhatsApp = () => {
     window.open(SITE_LINKS.whatsappGroup, '_blank')
@@ -113,7 +137,7 @@ const Contribute = () => {
     const selected = event.target.files?.[0]
     if (!selected) return
     if (selected.size > MAX_FILE_BYTES) {
-      setSubmitError('This file is larger than 19MB. Files above that size cannot be hosted on our CDN. Please compress the PDF and try again.')
+      setSubmitError('File is larger than 19MB. Compress it and try again.')
       return
     }
     setFile(selected)
@@ -125,7 +149,7 @@ const Contribute = () => {
     const dropped = event.dataTransfer.files?.[0]
     if (dropped && dropped.type === 'application/pdf') {
       if (dropped.size > MAX_FILE_BYTES) {
-        setSubmitError('This file is larger than 19MB. Files above that size cannot be hosted on our CDN. Please compress the PDF and try again.')
+        setSubmitError('File is larger than 19MB. Compress it and try again.')
         return
       }
       setFile(dropped)
@@ -230,6 +254,8 @@ const Contribute = () => {
 
   const studentContributors = contributorRows.filter((c) => c.role_type === 'student' && !c.deleted_at)
   const facultyContributors = contributorRows.filter((c) => c.role_type === 'faculty' && !c.deleted_at)
+  const firstApprovedId = mySubmissions.find((item) => item.status === 'approved')?.id
+  const showContributorSkeleton = contributorsLoading && contributorRows.length === 0
 
   return (
     <div className="contribute fade-in">
@@ -413,25 +439,81 @@ const Contribute = () => {
             </form>
           )}
 
-          {mySubmissions.length > 0 && (
+          {(mySubmissions.length > 0 || mySubmissionsLoading) && (
             <div className="my-submissions">
               <h3>My submissions</h3>
               <div className="my-submissions-list">
-                {mySubmissions.map((item) => (
-                  <div className="my-submission-item" key={item.id}>
-                    <span className="my-submission-label">{item.resource_label}</span>
-                    <span className={`my-submission-status status-${item.status}`}>
-                      {STATUS_LABELS[item.status]}
-                    </span>
-                  </div>
-                ))}
+                {mySubmissionsLoading
+                  ? Array.from({ length: mySubmissionsTotal > MY_SUBMISSIONS_PAGE_SIZE ? MY_SUBMISSIONS_PAGE_SIZE : 3 }).map((_, i) => (
+                      <div className="my-submission-item" key={`skeleton-${i}`} aria-hidden="true">
+                        <span className="skeleton my-submission-skeleton-label" />
+                        <span className="skeleton my-submission-skeleton-status" />
+                      </div>
+                    ))
+                  : mySubmissions.map((item) => (
+                      <div className={`my-submission-item ${openReasonId === item.id ? 'info-open' : ''}`} key={item.id}>
+                        <span className="my-submission-label">{item.resource_label}</span>
+                        <div className="my-submission-trailing">
+                          {(item.status === 'rejected' || item.id === firstApprovedId) && (
+                            <div className="my-submission-info-wrap">
+                              <button
+                                type="button"
+                                className="my-submission-info-btn"
+                                onClick={() => setOpenReasonId((current) => (current === item.id ? null : item.id))}
+                                aria-label={item.status === 'rejected' ? 'Rejection reason' : 'Contributors page photo'}
+                                aria-expanded={openReasonId === item.id}
+                              >
+                                <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                              </button>
+                              {openReasonId === item.id && (
+                                <div className={`my-submission-info-pop${item.status === 'approved' ? ' wide' : ''}`} role="status">
+                                  {item.status === 'rejected' ? (
+                                    item.rejection_reason || 'No reason was provided.'
+                                  ) : (
+                                    <>
+                                      <p>
+                                        If you would like your picture to be displayed on the Contributors page, please contact us on
+                                        WhatsApp. If you have already done so, please ignore this message.
+                                      </p>
+                                      <a
+                                        className="my-submission-info-link"
+                                        href={SITE_LINKS.whatsappGroup}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        Open WhatsApp
+                                      </a>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <span className={`my-submission-status status-${item.status}`}>
+                            {STATUS_LABELS[item.status]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                {mySubmissionsTotal > MY_SUBMISSIONS_PAGE_SIZE &&
+                  !mySubmissionsLoading &&
+                  Array.from({ length: Math.max(0, MY_SUBMISSIONS_PAGE_SIZE - mySubmissions.length) }).map((_, i) => (
+                    <div className="my-submission-item my-submission-placeholder" key={`placeholder-${i}`} aria-hidden="true">
+                      <span className="my-submission-label">&nbsp;</span>
+                      <span className="my-submission-status">&nbsp;</span>
+                    </div>
+                  ))}
               </div>
               {mySubmissionsTotal > MY_SUBMISSIONS_PAGE_SIZE && (
                 <div className="my-submissions-pagination">
                   <button
                     className="my-submissions-page-btn"
-                    disabled={mySubmissionsPage === 0}
-                    onClick={() => setMySubmissionsPage((p) => Math.max(0, p - 1))}
+                    disabled={mySubmissionsPage === 0 || mySubmissionsLoading}
+                    onClick={() => {
+                      setOpenReasonId(null)
+                      setMySubmissionsLoading(true)
+                      setMySubmissionsPage((p) => Math.max(0, p - 1))
+                    }}
                   >
                     Previous
                   </button>
@@ -440,8 +522,12 @@ const Contribute = () => {
                   </span>
                   <button
                     className="my-submissions-page-btn"
-                    disabled={(mySubmissionsPage + 1) * MY_SUBMISSIONS_PAGE_SIZE >= mySubmissionsTotal}
-                    onClick={() => setMySubmissionsPage((p) => p + 1)}
+                    disabled={(mySubmissionsPage + 1) * MY_SUBMISSIONS_PAGE_SIZE >= mySubmissionsTotal || mySubmissionsLoading}
+                    onClick={() => {
+                      setOpenReasonId(null)
+                      setMySubmissionsLoading(true)
+                      setMySubmissionsPage((p) => p + 1)
+                    }}
                   >
                     Next
                   </button>
@@ -454,7 +540,13 @@ const Contribute = () => {
         <section className="contributors-section">
           <h2>Our Student Contributors</h2>
           <div className="contributors-grid">
-            {studentContributors.map((contributor) => (
+            {showContributorSkeleton ? SKELETON_CARDS.map((i) => (
+              <div key={`skeleton-${i}`} className="contributor-card" aria-hidden="true">
+                <span className="skeleton skeleton-pfp" />
+                <span className="skeleton skeleton-name" />
+                <span className="skeleton skeleton-sub" />
+              </div>
+            )) : studentContributors.map((contributor) => (
               <div
                 key={contributor.id}
                 className={`contributor-card ${contributor.is_top_contributor ? 'top-contributor-glow' : ''}`}
@@ -482,7 +574,13 @@ const Contribute = () => {
         <section className="contributors-section">
           <h2>Our Faculty Contributors</h2>
           <div className="contributors-grid">
-            {facultyContributors.map((faculty) => (
+            {showContributorSkeleton ? SKELETON_CARDS.map((i) => (
+              <div key={`skeleton-${i}`} className="contributor-card" aria-hidden="true">
+                <span className="skeleton skeleton-pfp" />
+                <span className="skeleton skeleton-name" />
+                <span className="skeleton skeleton-sub" />
+              </div>
+            )) : facultyContributors.map((faculty) => (
               <div key={faculty.id} className="contributor-card">
                 <div className="contributor-pfp">
                   {faculty.profile_pic ? (

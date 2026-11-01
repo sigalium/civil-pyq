@@ -8,12 +8,35 @@
   flex-direction: column;
   animation: fadeIn 0.3s ease-in-out;
   opacity: 1;
-  transition: opacity 0.32s ease, backdrop-filter 0.32s ease;
+  transition: opacity 0.32s ease, background-color 0.3s ease, backdrop-filter 0.3s ease;
 }
 
 .pdf-window-backdrop.closing {
   opacity: 0;
   backdrop-filter: blur(0px);
+}
+
+.pdf-window-backdrop.closing-visible {
+  background-color: transparent;
+  backdrop-filter: blur(0px);
+}
+
+.pdf-window-backdrop.closing-visible .pdf-window-grid {
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+.pdf-window-backdrop.idle {
+  z-index: 1900;
+  justify-content: flex-end;
+  background-color: transparent;
+  backdrop-filter: blur(0px);
+  pointer-events: none;
+  animation: none;
+}
+
+.pdf-window-backdrop.idle .pdf-taskbar {
+  pointer-events: auto;
 }
 
 .pdf-window-grid {
@@ -48,19 +71,6 @@
 .pdf-window-cell.single {
   width: min(1100px, 100%);
   height: 100%;
-}
-
-.pdf-taskbar-only {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1900;
-  pointer-events: none;
-}
-
-.pdf-taskbar-only .pdf-taskbar {
-  pointer-events: auto;
 }
 
 .pdf-taskbar {

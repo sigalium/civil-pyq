@@ -102,13 +102,13 @@ export function NotificationProvider({ children }) {
     }))
   }, [scheduleTimer])
 
-  const setStatus = useCallback((key, { message, variant = 'warning' } = {}) => {
+  const setStatus = useCallback((key, { message, variant = 'warning', icon, dismissible } = {}) => {
     setNotifications((prev) => {
       const existing = prev.find((n) => n.id === key && n.kind === 'status')
       if (existing) {
-        return prev.map((n) => (n.id === key ? { ...n, message, variant } : n))
+        return prev.map((n) => (n.id === key ? { ...n, message, variant, icon, dismissible } : n))
       }
-      return [{ id: key, kind: 'status', variant, message, collapsed: readCollapsed(key) }, ...prev]
+      return [{ id: key, kind: 'status', variant, message, icon, dismissible, collapsed: readCollapsed(key) }, ...prev]
     })
   }, [])
 
